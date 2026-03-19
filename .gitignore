@@ -6,3 +6,5 @@ dist
 .env.local
 *.log
 *.tmp
+.open-next
+.wrangler

@@ -69,6 +69,24 @@ UI route guarding uses cookie `userId` in `src/middleware.ts`.
 5. Run `npm run dev`.
 6. Open `http://localhost:3000`.
 
+## Cloudflare deployment
+This app is a full-stack Next.js application with API routes, middleware, auth, SSE, and Prisma. It should be deployed to Cloudflare Workers using OpenNext, not as a plain Cloudflare Pages static site.
+
+If `https://pakscorer.pages.dev/` returns 404, that usually means there is no Pages project serving that hostname. The supported deployment path in this repo is:
+
+1. Install dependencies with `npm install`.
+2. Log in to Cloudflare with `npx wrangler login`.
+3. Build the Worker bundle with `npm run cf:build`.
+4. Deploy with `npm run cf:deploy`.
+
+Required production secrets/environment variables:
+- `DATABASE_URL`
+- `NEXTAUTH_SECRET` or `AUTH_SECRET`
+- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` if Google login is enabled
+- `REDIS_URL` if realtime Redis publishing is enabled
+
+After deployment, Cloudflare will give you a Workers URL or let you attach a custom domain. A `pages.dev` hostname will not be created unless you separately create a Cloudflare Pages project.
+
 ## Test
 - Run `npm run test`.
 
