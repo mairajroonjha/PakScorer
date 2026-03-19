@@ -1,0 +1,324 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String                    @id
+  name                String
+  email               String?                   @unique
+  passwordHash        String?
+  image               String?
+  role                Role                      @default(PUBLIC_VIEWER)
+  regionId            String                    @default("bela")
+  phone               String?                   @unique
+  createdAt           DateTime                  @default(now())
+  requestedTournaments Tournament[]             @relation("TournamentRequester")
+  approvedTournaments Tournament[]              @relation("TournamentApprover")
+  managedTournaments  Tournament[]              @relation("TournamentManager")
+  ownedTeams          Team[]                    @relation("TeamOwner")
+  teamApplications    TeamTournamentApplication[] @relation("TeamApplicationRequester")
+  directMatchRequests DirectMatchRequest[]
+  ballEvents          BallEvent[]               @relation("BallCreatedBy")
+  correctionRequests  ScoreCorrection[]         @relation("CorrectionRequestedBy")
+  correctionApprovals ScoreCorrection[]         @relation("CorrectionApprovedBy")
+  auditLogs           AuditLog[]
+}
+
+model Tournament {
+  id               String            @id
+  name             String
+  regionId         String
+  city             String?
+  venue            String?
+  format           String?
+  overs            Int?
+  ballType         String?
+  tournamentType   String?
+  organizerName    String?
+  organizerPhone   String?
+  sponsorName      String?
+  totalTeams       Int?
+  startDate        DateTime?
+  endDate          DateTime?
+  ruleSummary      String?
+  adminUserId      String?
+  status           TournamentStatus  @default(PENDING)
+  requestedBy      String
+  approvedBy       String?
+  createdAt        DateTime          @default(now())
+  requester        User              @relation("TournamentRequester", fields: [requestedBy], references: [id])
+  approver         User?             @relation("TournamentApprover", fields: [approvedBy], references: [id])
+  admin            User?             @relation("TournamentManager", fields: [adminUserId], references: [id])
+  teams            Team[]
+  teamApplications TeamTournamentApplication[]
+  matches          Match[]
+}
+
+model TournamentRegistrationRequest {
+  id              String                             @id
+  name            String
+  regionId        String
+  city            String
+  venue           String
+  format          String
+  overs           Int
+  ballType        String
+  tournamentType  String
+  organizerName   String
+  organizerPhone  String
+  sponsorName     String?
+  totalTeams      Int
+  startDate       DateTime
+  endDate         DateTime
+  ruleSummary     String
+  adminName       String
+  adminEmail      String
+  adminPhone      String
+  adminPasswordHash String
+  status          TournamentRegistrationRequestStatus @default(PENDING)
+  rejectionReason String?
+  submittedAt     DateTime                           @default(now())
+  reviewedAt      DateTime?
+  reviewedBy      String?
+}
+
+model Team {
+  id                 String                    @id
+  name               String
+  sponsorName        String?
+  city               String?
+  logoUrl            String?
+  captainName        String?
+  contactPhone       String?
+  ownerUserId        String?
+  tournamentId       String?
+  owner              User?                     @relation("TeamOwner", fields: [ownerUserId], references: [id])
+  tournament         Tournament?               @relation(fields: [tournamentId], references: [id])
+  homeMatchesA       Match[]                   @relation("TeamA")
+  homeMatchesB       Match[]                   @relation("TeamB")
+  squadEntries       SquadEntry[]
+  teamApplications   TeamTournamentApplication[]
+  directRequestsSent DirectMatchRequest[]      @relation("DirectRequesterTeam")
+  directRequestsReceived DirectMatchRequest[]  @relation("DirectOpponentTeam")
+}
+
+model Player {
+  id                 String              @id
+  bcaId              String              @unique
+  fullName           String
+  verificationStatus VerificationStatus  @default(VERIFIED)
+  squadEntries       SquadEntry[]
+  battingEvents      BallEvent[]         @relation("BallStriker")
+  bowlingEvents      BallEvent[]         @relation("BallBowler")
+  fanVotes           FanVote[]
+}
+
+model SquadEntry {
+  id           String   @id
+  teamId       String
+  playerId     String
+  tournamentId String
+  createdAt    DateTime @default(now())
+  team         Team     @relation(fields: [teamId], references: [id])
+  player       Player   @relation(fields: [playerId], references: [id])
+  @@unique([playerId, tournamentId])
+}
+
+model Match {
+  id               String            @id
+  tournamentId     String?
+  teamAId          String
+  teamBId          String
+  mode             MatchMode         @default(TOURNAMENT)
+  state            MatchState        @default(SCHEDULED)
+  startAt          DateTime
+  squadLockAt      DateTime
+  tossWinnerTeamId String?
+  electedTo        ElectChoice?
+  winnerTeamId     String?
+  tournament       Tournament?       @relation(fields: [tournamentId], references: [id])
+  teamA            Team              @relation("TeamA", fields: [teamAId], references: [id])
+  teamB            Team              @relation("TeamB", fields: [teamBId], references: [id])
+  ballEvents       BallEvent[]
+  corrections      ScoreCorrection[]
+  fanVotes         FanVote[]
+}
+
+model TeamTournamentApplication {
+  id              String                @id
+  teamId          String
+  tournamentId    String
+  requestedBy     String
+  status          TeamApplicationStatus @default(PENDING)
+  rejectionReason String?
+  createdAt       DateTime              @default(now())
+  reviewedBy      String?
+  team            Team                  @relation(fields: [teamId], references: [id])
+  tournament      Tournament            @relation(fields: [tournamentId], references: [id])
+  requester       User                  @relation("TeamApplicationRequester", fields: [requestedBy], references: [id])
+  @@unique([teamId, tournamentId])
+}
+
+model DirectMatchRequest {
+  id              String                   @id
+  requesterTeamId String
+  opponentTeamId  String
+  requestedBy     String
+  format          String
+  venue           String
+  startAt         DateTime
+  status          DirectMatchRequestStatus @default(PENDING)
+  createdAt       DateTime                 @default(now())
+  requesterTeam   Team                     @relation("DirectRequesterTeam", fields: [requesterTeamId], references: [id])
+  opponentTeam    Team                     @relation("DirectOpponentTeam", fields: [opponentTeamId], references: [id])
+  requester       User                     @relation(fields: [requestedBy], references: [id])
+}
+
+model BallEvent {
+  id             String   @id
+  matchId        String
+  over           Int
+  ball           Int
+  strikerId      String
+  bowlerId       String
+  runs           Int
+  isWicket       Boolean
+  extraType      ExtraType?
+  wagonZone      String?
+  commentaryText String?
+  createdBy      String
+  createdAt      DateTime @default(now())
+  match          Match    @relation(fields: [matchId], references: [id])
+  striker        Player   @relation("BallStriker", fields: [strikerId], references: [id])
+  bowler         Player   @relation("BallBowler", fields: [bowlerId], references: [id])
+  creator        User     @relation("BallCreatedBy", fields: [createdBy], references: [id])
+}
+
+model ScoreCorrection {
+  id           String   @id
+  matchId      String
+  targetEventId String
+  reason       String
+  requestedBy  String
+  approvedBy   String?
+  approvedAt   DateTime?
+  match        Match    @relation(fields: [matchId], references: [id])
+  requester    User     @relation("CorrectionRequestedBy", fields: [requestedBy], references: [id])
+  approver     User?    @relation("CorrectionApprovedBy", fields: [approvedBy], references: [id])
+}
+
+model LeaderboardSnapshot {
+  id          String             @id
+  scope       String
+  generatedAt DateTime
+  entries     LeaderboardEntry[]
+}
+
+model LeaderboardEntry {
+  id          String              @id
+  snapshotId  String
+  subjectId   String
+  label       String
+  value       Int
+  metric      LeaderboardMetric
+  snapshot    LeaderboardSnapshot @relation(fields: [snapshotId], references: [id])
+}
+
+model FanVote {
+  id         String   @id
+  matchId     String
+  playerId    String
+  voterHash   String
+  createdAt   DateTime @default(now())
+  match       Match    @relation(fields: [matchId], references: [id])
+  player      Player   @relation(fields: [playerId], references: [id])
+  @@unique([matchId, voterHash])
+}
+
+model NewsPost {
+  id          String   @id
+  title       String
+  body        String
+  publishedAt DateTime
+}
+
+model AuditLog {
+  id         String   @id
+  action     String
+  actorId    String
+  entityId   String
+  metaJson   String?
+  createdAt  DateTime @default(now())
+  actor      User     @relation(fields: [actorId], references: [id])
+}
+
+enum Role {
+  SUPER_ADMIN
+  TOURNAMENT_ADMIN
+  TEAM_ADMIN
+  MATCH_SCORER
+  PUBLIC_VIEWER
+}
+
+enum TournamentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum VerificationStatus {
+  VERIFIED
+  FLAGGED
+}
+
+enum MatchState {
+  SCHEDULED
+  LIVE
+  COMPLETED
+}
+
+enum ElectChoice {
+  BAT
+  BOWL
+}
+
+enum MatchMode {
+  TOURNAMENT
+  DIRECT
+}
+
+enum ExtraType {
+  WD
+  NB
+  LB
+  B
+}
+
+enum LeaderboardMetric {
+  RUNS
+  WICKETS
+  POINTS
+}
+
+enum TeamApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DirectMatchRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum TournamentRegistrationRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
