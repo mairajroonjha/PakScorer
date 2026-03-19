@@ -14,9 +14,13 @@ model User {
   passwordHash        String?
   image               String?
   role                Role                      @default(PUBLIC_VIEWER)
+  status              UserStatus                @default(ACTIVE)
   regionId            String                    @default("bela")
   phone               String?                   @unique
   createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  blockedAt           DateTime?
+  blockedReason       String?
   requestedTournaments Tournament[]             @relation("TournamentRequester")
   approvedTournaments Tournament[]              @relation("TournamentApprover")
   managedTournaments  Tournament[]              @relation("TournamentManager")
@@ -24,6 +28,7 @@ model User {
   teamApplications    TeamTournamentApplication[] @relation("TeamApplicationRequester")
   directMatchRequests DirectMatchRequest[]
   ballEvents          BallEvent[]               @relation("BallCreatedBy")
+  matchAssignments    MatchOfficialAssignment[]
   correctionRequests  ScoreCorrection[]         @relation("CorrectionRequestedBy")
   correctionApprovals ScoreCorrection[]         @relation("CorrectionApprovedBy")
   auditLogs           AuditLog[]
@@ -43,6 +48,11 @@ model Tournament {
   organizerPhone   String?
   sponsorName      String?
   totalTeams       Int?
+  fixtureType      TournamentFixtureType? @default(ROUND_ROBIN)
+  pointsWin        Int               @default(2)
+  pointsLoss       Int               @default(0)
+  pointsDraw       Int               @default(1)
+  pointsTie        Int               @default(1)
   startDate        DateTime?
   endDate          DateTime?
   ruleSummary      String?
@@ -51,12 +61,14 @@ model Tournament {
   requestedBy      String
   approvedBy       String?
   createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   requester        User              @relation("TournamentRequester", fields: [requestedBy], references: [id])
   approver         User?             @relation("TournamentApprover", fields: [approvedBy], references: [id])
   admin            User?             @relation("TournamentManager", fields: [adminUserId], references: [id])
   teams            Team[]
   teamApplications TeamTournamentApplication[]
   matches          Match[]
+  pointsTableRows  PointsTableRow[]
 }
 
 model TournamentRegistrationRequest {
@@ -101,10 +113,13 @@ model Team {
   tournament         Tournament?               @relation(fields: [tournamentId], references: [id])
   homeMatchesA       Match[]                   @relation("TeamA")
   homeMatchesB       Match[]                   @relation("TeamB")
+  battingInnings     MatchInnings[]            @relation("BattingTeamInnings")
+  bowlingInnings     MatchInnings[]            @relation("BowlingTeamInnings")
   squadEntries       SquadEntry[]
   teamApplications   TeamTournamentApplication[]
   directRequestsSent DirectMatchRequest[]      @relation("DirectRequesterTeam")
   directRequestsReceived DirectMatchRequest[]  @relation("DirectOpponentTeam")
+  pointsTableRows    PointsTableRow[]
 }
 
 model Player {
@@ -114,7 +129,10 @@ model Player {
   verificationStatus VerificationStatus  @default(VERIFIED)
   squadEntries       SquadEntry[]
   battingEvents      BallEvent[]         @relation("BallStriker")
+  nonStrikerEvents   BallEvent[]         @relation("BallNonStriker")
   bowlingEvents      BallEvent[]         @relation("BallBowler")
+  dismissedInEvents  BallEvent[]         @relation("BallDismissedPlayer")
+  promotedInEvents   BallEvent[]         @relation("BallNewBatter")
   fanVotes           FanVote[]
 }
 
@@ -136,14 +154,28 @@ model Match {
   teamBId          String
   mode             MatchMode         @default(TOURNAMENT)
   state            MatchState        @default(SCHEDULED)
+  venue            String?
   startAt          DateTime
+  scheduledOvers   Int?
+  ballsPerOver     Int               @default(6)
+  powerplayOvers   Int?
+  maxOversPerBowler Int?
+  allowSuperOver   Boolean           @default(false)
   squadLockAt      DateTime
   tossWinnerTeamId String?
   electedTo        ElectChoice?
   winnerTeamId     String?
+  winType          MatchWinType?
+  winMarginRuns    Int?
+  winMarginWickets Int?
+  targetRuns       Int?
+  currentInnings   Int               @default(1)
+  updatedAt        DateTime          @updatedAt
   tournament       Tournament?       @relation(fields: [tournamentId], references: [id])
   teamA            Team              @relation("TeamA", fields: [teamAId], references: [id])
   teamB            Team              @relation("TeamB", fields: [teamBId], references: [id])
+  officialAssignments MatchOfficialAssignment[]
+  innings          MatchInnings[]
   ballEvents       BallEvent[]
   corrections      ScoreCorrection[]
   fanVotes         FanVote[]
@@ -182,20 +214,34 @@ model DirectMatchRequest {
 model BallEvent {
   id             String   @id
   matchId        String
+  inningsId      String?
   over           Int
   ball           Int
+  legalBallNumber Int?
   strikerId      String
+  nonStrikerId   String?
   bowlerId       String
   runs           Int
+  runsBat        Int      @default(0)
+  extras         Int      @default(0)
   isWicket       Boolean
   extraType      ExtraType?
+  wicketType     WicketType?
+  outPlayerId    String?
+  newBatterId    String?
   wagonZone      String?
   commentaryText String?
+  isUndo         Boolean  @default(false)
+  undoOfEventId  String?
   createdBy      String
   createdAt      DateTime @default(now())
   match          Match    @relation(fields: [matchId], references: [id])
+  innings        MatchInnings? @relation(fields: [inningsId], references: [id])
   striker        Player   @relation("BallStriker", fields: [strikerId], references: [id])
+  nonStriker     Player?  @relation("BallNonStriker", fields: [nonStrikerId], references: [id])
   bowler         Player   @relation("BallBowler", fields: [bowlerId], references: [id])
+  dismissedPlayer Player? @relation("BallDismissedPlayer", fields: [outPlayerId], references: [id])
+  newBatter      Player?  @relation("BallNewBatter", fields: [newBatterId], references: [id])
   creator        User     @relation("BallCreatedBy", fields: [createdBy], references: [id])
 }
 
@@ -205,11 +251,76 @@ model ScoreCorrection {
   targetEventId String
   reason       String
   requestedBy  String
+  status       ScoreCorrectionStatus @default(REQUESTED)
   approvedBy   String?
   approvedAt   DateTime?
+  createdAt    DateTime @default(now())
   match        Match    @relation(fields: [matchId], references: [id])
   requester    User     @relation("CorrectionRequestedBy", fields: [requestedBy], references: [id])
   approver     User?    @relation("CorrectionApprovedBy", fields: [approvedBy], references: [id])
+}
+
+model MatchOfficialAssignment {
+  id             String              @id
+  matchId         String
+  userId          String
+  assignmentRole  MatchAssignmentRole
+  assignedAt      DateTime            @default(now())
+  assignedBy      String?
+  match           Match               @relation(fields: [matchId], references: [id])
+  user            User                @relation(fields: [userId], references: [id])
+
+  @@unique([matchId, userId, assignmentRole])
+}
+
+model MatchInnings {
+  id            String     @id
+  matchId        String
+  inningsNumber Int
+  battingTeamId  String
+  bowlingTeamId  String
+  runs          Int        @default(0)
+  wickets       Int        @default(0)
+  balls         Int        @default(0)
+  extras        Int        @default(0)
+  byes          Int        @default(0)
+  legByes       Int        @default(0)
+  wides         Int        @default(0)
+  noBalls       Int        @default(0)
+  target        Int?
+  startedAt     DateTime   @default(now())
+  endedAt       DateTime?
+  isCompleted   Boolean    @default(false)
+  match         Match      @relation(fields: [matchId], references: [id])
+  battingTeam   Team       @relation("BattingTeamInnings", fields: [battingTeamId], references: [id])
+  bowlingTeam   Team       @relation("BowlingTeamInnings", fields: [bowlingTeamId], references: [id])
+  ballEvents    BallEvent[]
+
+  @@unique([matchId, inningsNumber])
+}
+
+model PointsTableRow {
+  id               String      @id
+  tournamentId     String
+  teamId           String
+  played           Int         @default(0)
+  won              Int         @default(0)
+  lost             Int         @default(0)
+  drawn            Int         @default(0)
+  tied             Int         @default(0)
+  noResult         Int         @default(0)
+  points           Int         @default(0)
+  runsFor          Int         @default(0)
+  oversFacedBalls  Int         @default(0)
+  runsAgainst      Int         @default(0)
+  oversBowledBalls Int         @default(0)
+  netRunRate       Float       @default(0)
+  position         Int?
+  updatedAt        DateTime    @updatedAt
+  tournament       Tournament  @relation(fields: [tournamentId], references: [id])
+  team             Team        @relation(fields: [teamId], references: [id])
+
+  @@unique([tournamentId, teamId])
 }
 
 model LeaderboardSnapshot {
@@ -265,10 +376,23 @@ enum Role {
   PUBLIC_VIEWER
 }
 
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+  PENDING
+}
+
 enum TournamentStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum TournamentFixtureType {
+  ROUND_ROBIN
+  KNOCKOUT
+  GROUP_STAGE
+  HYBRID
 }
 
 enum VerificationStatus {
@@ -279,7 +403,10 @@ enum VerificationStatus {
 enum MatchState {
   SCHEDULED
   LIVE
+  INNINGS_BREAK
   COMPLETED
+  ABANDONED
+  CANCELLED
 }
 
 enum ElectChoice {
@@ -290,6 +417,20 @@ enum ElectChoice {
 enum MatchMode {
   TOURNAMENT
   DIRECT
+  FRIENDLY
+}
+
+enum MatchAssignmentRole {
+  SCORER
+  TOURNAMENT_ADMIN
+  UMPIRE
+}
+
+enum MatchWinType {
+  RUNS
+  WICKETS
+  TIE
+  NO_RESULT
 }
 
 enum ExtraType {
@@ -297,6 +438,19 @@ enum ExtraType {
   NB
   LB
   B
+}
+
+enum WicketType {
+  BOWLED
+  CAUGHT
+  LBW
+  RUN_OUT
+  STUMPED
+  HIT_WICKET
+  OBSTRUCTING_FIELD
+  TIMED_OUT
+  RETIRED_OUT
+  HANDLED_BALL
 }
 
 enum LeaderboardMetric {
@@ -314,6 +468,12 @@ enum TeamApplicationStatus {
 enum DirectMatchRequestStatus {
   PENDING
   ACCEPTED
+  REJECTED
+}
+
+enum ScoreCorrectionStatus {
+  REQUESTED
+  APPROVED
   REJECTED
 }
 

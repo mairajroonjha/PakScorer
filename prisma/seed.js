@@ -70,7 +70,13 @@ async function main() {
 
   await prisma.tournament.upsert({
     where: { id: "t-1" },
-    update: {},
+    update: {
+      fixtureType: "ROUND_ROBIN",
+      pointsWin: 2,
+      pointsLoss: 0,
+      pointsDraw: 1,
+      pointsTie: 1
+    },
     create: {
       id: "t-1",
       name: "Bela Champions Cup",
@@ -85,6 +91,11 @@ async function main() {
       organizerPhone: "03005550000",
       sponsorName: "Makran Energy",
       totalTeams: 8,
+      fixtureType: "ROUND_ROBIN",
+      pointsWin: 2,
+      pointsLoss: 0,
+      pointsDraw: 1,
+      pointsTie: 1,
       startDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
       endDate: new Date(Date.now() + 9 * 24 * 60 * 60 * 1000),
       ruleSummary: "Verified players only. T20 format with points table and knockout finish.",
@@ -120,7 +131,12 @@ async function main() {
             id: "m-1",
             teamAId: "team-a",
             teamBId: "team-b",
+            venue: "BCA Ground",
             state: "SCHEDULED",
+            scheduledOvers: 20,
+            ballsPerOver: 6,
+            powerplayOvers: 6,
+            maxOversPerBowler: 4,
             startAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
             squadLockAt: new Date(Date.now() + 90 * 60 * 1000)
           }
@@ -141,6 +157,71 @@ async function main() {
       ownerUserId: "u-super"
     }
   });
+
+  await prisma.match.upsert({
+    where: { id: "m-1" },
+    update: {
+      venue: "BCA Ground",
+      scheduledOvers: 20,
+      ballsPerOver: 6,
+      powerplayOvers: 6,
+      maxOversPerBowler: 4,
+      allowSuperOver: false
+    },
+    create: {
+      id: "m-1",
+      tournamentId: "t-1",
+      teamAId: "team-a",
+      teamBId: "team-b",
+      venue: "BCA Ground",
+      state: "SCHEDULED",
+      mode: "TOURNAMENT",
+      scheduledOvers: 20,
+      ballsPerOver: 6,
+      powerplayOvers: 6,
+      maxOversPerBowler: 4,
+      allowSuperOver: false,
+      startAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
+      squadLockAt: new Date(Date.now() + 90 * 60 * 60 * 1000)
+    }
+  });
+
+  await prisma.matchOfficialAssignment.upsert({
+    where: {
+      matchId_userId_assignmentRole: {
+        matchId: "m-1",
+        userId: "u-scorer",
+        assignmentRole: "SCORER"
+      }
+    },
+    update: {
+      assignedBy: "u-tadmin"
+    },
+    create: {
+      id: "assign-m1-scorer",
+      matchId: "m-1",
+      userId: "u-scorer",
+      assignmentRole: "SCORER",
+      assignedBy: "u-tadmin"
+    }
+  });
+
+  for (const teamId of ["team-a", "team-b"]) {
+    await prisma.pointsTableRow.upsert({
+      where: {
+        tournamentId_teamId: {
+          tournamentId: "t-1",
+          teamId
+        }
+      },
+      update: {},
+      create: {
+        id: `ptr-${teamId}`,
+        tournamentId: "t-1",
+        teamId
+      }
+    });
+  }
 
 }
 
