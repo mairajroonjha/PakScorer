@@ -1,7 +1,5 @@
-import { PublicDashboard } from "@/components/dashboard-pages";
+import { PublicCenterView } from "@/components/public-view";
 
-export const dynamic = "force-dynamic";
-
-export default function PublicPage() {
-  return <PublicDashboard />;
+export default async function PublicPage() {
+  return <PublicCenterView />;
 }

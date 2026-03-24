@@ -3,6 +3,8 @@ import { Role } from "@/types/domain";
 const rolePolicies: Record<Role, Set<string>> = {
   SUPER_ADMIN: new Set([
     "user:role:write",
+    "user:scorer:create",
+    "user:scorer:manage",
     "tournament:create",
     "tournament:approve",
     "tournament:reject",
@@ -13,10 +15,15 @@ const rolePolicies: Record<Role, Set<string>> = {
     "team:application:apply",
     "team:application:review",
     "match:direct:create",
+    "match:direct:review",
+    "match:assignment:write",
+    "match:innings:write",
+    "match:undo:write",
     "match:correction:approve",
     "match:correction:request",
     "match:override-lock",
     "match:toss:write",
+    "match:lineup:write",
     "match:ball:write",
     "match:commentary:write",
     "team:squad:write",
@@ -27,11 +34,17 @@ const rolePolicies: Record<Role, Set<string>> = {
     "leaderboard:view"
   ]),
   TOURNAMENT_ADMIN: new Set([
+    "user:scorer:create",
+    "user:scorer:manage",
     "tournament:request",
     "tournament:view",
     "team:squad:write",
     "team:application:review",
+    "match:assignment:write",
+    "match:innings:write",
+    "match:undo:write",
     "match:toss:write",
+    "match:lineup:write",
     "match:correction:request",
     "match:view",
     "news:read",
@@ -44,19 +57,23 @@ const rolePolicies: Record<Role, Set<string>> = {
     "team:squad:write",
     "team:application:apply",
     "match:direct:create",
+    "match:direct:review",
     "match:view",
     "leaderboard:view",
     "news:read"
   ]),
   MATCH_SCORER: new Set([
     "match:toss:write",
+    "match:lineup:write",
     "match:ball:write",
+    "match:innings:write",
+    "match:undo:write",
     "match:commentary:write",
     "match:view",
     "news:read",
     "leaderboard:view"
   ]),
-  PUBLIC_VIEWER: new Set(["match:view", "leaderboard:view", "news:read", "fanvote:write"])
+  PUBLIC_VIEWER: new Set(["match:view", "leaderboard:view", "news:read", "fanvote:write", "team:register", "tournament:request"])
 };
 
 export function can(role: Role, capability: string): boolean {

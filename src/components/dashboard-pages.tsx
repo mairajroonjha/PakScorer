@@ -1,18 +1,13 @@
 import { OverviewPanels } from "@/components/dashboard-panels";
-import LiveEventFeed from "@/components/live-event-feed";
 import {
-  CommentaryForm,
-  DirectMatchRequestForm,
   FanVoteForm,
   PlayerRegistrationForm,
   TeamApplicationReviewForm,
-  TeamRegistrationForm,
-  TeamTournamentApplicationForm,
-  TossControlForm,
-  TournamentRequestForm
 } from "@/components/ops-forms";
+import ScorerConsole from "@/components/scorer-console";
 import SuperAdminControlRoom from "@/components/super-admin-control-room";
-import ScorerPad from "@/components/scorer-pad";
+import TeamOwnerWorkspace from "@/components/team-owner-workspace";
+import TournamentMatchOps from "@/components/tournament-match-ops";
 
 function DashboardHero({
   theme,
@@ -97,12 +92,12 @@ export function TournamentAdminDashboard() {
       <ToolSection
         eyebrow="Tournament Setup"
         title="Organizer Workflow"
-        description="These actions stay internal because they affect registration, compliance, and competition fairness."
+        description="Keep the organizer view focused on entry review, player verification, and scorer operations. Tournament requests now start from the public registration flow."
       >
-        <TournamentRequestForm />
         <TeamApplicationReviewForm />
         <PlayerRegistrationForm />
       </ToolSection>
+      <TournamentMatchOps />
     </main>
   );
 }
@@ -117,17 +112,7 @@ export function TeamAdminDashboard() {
         description="A club can create its identity once, apply to tournaments, and issue direct-match challenges without relying on tournament organizers for every step."
         chips={["Profile ownership", "Tournament applications", "Direct challenges"]}
       />
-      <OverviewPanels role="TEAM_ADMIN" />
-      <ToolSection
-        eyebrow="Club Actions"
-        title="What Team Admins Can Control"
-        description="Teams can manage their own profile and requests, but they cannot see platform audit trails or internal approval logs."
-      >
-        <TeamRegistrationForm />
-        <TeamTournamentApplicationForm />
-        <DirectMatchRequestForm />
-        <PlayerRegistrationForm />
-      </ToolSection>
+      <TeamOwnerWorkspace />
     </main>
   );
 }
@@ -140,24 +125,9 @@ export function ScorerDashboard() {
         eyebrow="Ground Console"
         title="Scorer Matchday Interface"
         description="Fast buttons, short commentary, and the minimum required context. The scorer should not be distracted by admin workflows."
-        chips={["Button-first input", "Realtime stream", "Low-friction scoring"]}
+        chips={["Button-first input", "Lineup control", "Low-friction scoring"]}
       />
-      <OverviewPanels role="MATCH_SCORER" />
-      <section className="scorer-layout">
-        <ScorerPad />
-        <section className="tool-section tool-section--compact">
-          <div className="section-heading">
-            <p className="section-heading__eyebrow">Utilities</p>
-            <h2>Fast Match Controls</h2>
-            <p className="muted">Only tools required during live play are visible here.</p>
-          </div>
-          <div className="tool-grid">
-            <TossControlForm />
-            <CommentaryForm />
-            <LiveEventFeed />
-          </div>
-        </section>
-      </section>
+      <ScorerConsole />
     </main>
   );
 }

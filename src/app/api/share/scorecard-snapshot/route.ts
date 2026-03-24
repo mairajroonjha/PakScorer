@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     return ok({
       snapshotUrl,
       social: {
-        title: "CricBela Live Scorecard",
+        title: "PakScorer Live Scorecard",
         description: `Runs: ${score.runs}, Wickets: ${score.wickets}`
       }
     });

@@ -1,7 +1,10 @@
 .next
+out
 node_modules
 coverage
 dist
+.pages-build-temp
+tsconfig.tsbuildinfo
 .env
 .env.local
 *.log

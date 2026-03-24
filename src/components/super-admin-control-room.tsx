@@ -4,12 +4,10 @@ import {
   NewsPostForm,
   PlayerRegistrationForm,
   SquadLockOverrideForm,
-  TournamentRegistrationReviewForm,
   TeamApplicationReviewForm,
-  TournamentDecisionForm,
   UserRoleUpdateForm
 } from "@/components/ops-forms";
-import SuperTournamentStudio from "@/components/super-tournament-studio";
+import TournamentRegistrationReviewQueue from "@/components/tournament-registration-review-queue";
 import { getDbDashboardOverview } from "@/lib/db-store";
 import { getInfrastructureStatus } from "@/lib/infrastructure";
 
@@ -122,10 +120,10 @@ export default async function SuperAdminControlRoom() {
         </div>
         <div className="super-command-board__side">
           <SuperMetric
-            eyebrow="Approval Queue"
-            value={String(approvalLoad)}
-            label="Registration requests, tournaments, and team applications requiring platform action."
-            tone={approvalLoad > 0 ? "warning" : "success"}
+            eyebrow="Registration Queue"
+            value={String(pendingRegistrationRequests.length)}
+            label="Tournament requests submitted by organizers and waiting for final review."
+            tone={pendingRegistrationRequests.length > 0 ? "warning" : "success"}
           />
           <SuperMetric
             eyebrow="Integrity Alerts"
@@ -144,46 +142,22 @@ export default async function SuperAdminControlRoom() {
 
       <section className="super-layout">
         <div className="super-layout__main">
-          <section className="dashboard-panel super-panel super-studio-panel">
-            <SuperTournamentStudio />
-          </section>
-
           <div className="super-grid">
             <SuperListPanel
               eyebrow="Incoming Requests"
               title="Tournament Registration Requests"
-              subtitle="Organizers submit these forms directly. Super Admin reviews the request before the tournament exists on the platform."
+              subtitle="Organizers fill one simple form. Review the request here, then approve or disapprove it."
             >
-              {pendingRegistrationRequests.length === 0 ? (
-                <EmptyState text="No tournament registration requests are pending." />
-              ) : (
-                <div className="panel-list">
-                  {pendingRegistrationRequests.map((request) => (
-                    <article key={request.id} className="panel-item">
-                      <div className="panel-item__row">
-                        <strong>{request.name}</strong>
-                        <StatusChip tone="warning">{request.regionId.toUpperCase()}</StatusChip>
-                      </div>
-                      <p className="muted">
-                        {request.city} · {request.venue} · {request.format} · {request.totalTeams} teams
-                      </p>
-                      <p className="muted">
-                        Organizer: {request.organizerName} · Admin: {request.adminEmail}
-                      </p>
-                      <p className="super-meta-line">Request ID: {request.id}</p>
-                    </article>
-                  ))}
-                </div>
-              )}
+              <TournamentRegistrationReviewQueue requests={pendingRegistrationRequests} />
             </SuperListPanel>
 
             <SuperListPanel
               eyebrow="Approvals"
-              title="Tournament Approval Queue"
-              subtitle="Approve only legitimate competitions. This is the first trust gate in the platform."
+              title="Legacy Tournament Approval Queue"
+              subtitle="Older direct tournament requests remain visible here until they are cleared."
             >
               {pendingTournaments.length === 0 ? (
-                <EmptyState text="No tournament requests are pending." />
+                <EmptyState text="No direct tournament records are pending." />
               ) : (
                 <div className="panel-list">
                   {pendingTournaments.map((tournament) => (
@@ -194,8 +168,8 @@ export default async function SuperAdminControlRoom() {
                       </div>
                       <p className="muted">
                         Requested by {userNameById.get(tournament.requestedBy) ?? tournament.requestedBy}
-                        {tournament.city ? ` · ${tournament.city}` : ""}
-                        {tournament.format ? ` · ${tournament.format}` : ""}
+                        {tournament.city ? ` - ${tournament.city}` : ""}
+                        {tournament.format ? ` - ${tournament.format}` : ""}
                       </p>
                       <p className="super-meta-line">Tournament ID: {tournament.id}</p>
                     </article>
@@ -220,7 +194,7 @@ export default async function SuperAdminControlRoom() {
                         <StatusChip tone="warning">Pending</StatusChip>
                       </div>
                       <p className="muted">
-                        {tournamentNameById.get(application.tournamentId) ?? application.tournamentId} · Requested by{" "}
+                        {tournamentNameById.get(application.tournamentId) ?? application.tournamentId} - requested by{" "}
                         {userNameById.get(application.requestedBy) ?? application.requestedBy}
                       </p>
                       <p className="super-meta-line">Application ID: {application.id}</p>
@@ -246,7 +220,7 @@ export default async function SuperAdminControlRoom() {
                         <StatusChip tone="danger">Review</StatusChip>
                       </div>
                       <p className="muted">
-                        Match {correction.matchId} · Target event {correction.targetEventId}
+                        Match {correction.matchId} - target event {correction.targetEventId}
                       </p>
                       <p className="super-meta-line">Correction ID: {correction.id}</p>
                     </article>
@@ -304,7 +278,7 @@ export default async function SuperAdminControlRoom() {
                       <strong>{user.name}</strong>
                       <StatusChip tone="neutral">{user.role.replaceAll("_", " ")}</StatusChip>
                     </div>
-                    <p className="muted">{user.email ?? "No email"} · User ID: {user.id}</p>
+                    <p className="muted">{user.email ?? "No email"} - User ID: {user.id}</p>
                   </article>
                 ))}
               </div>
@@ -349,7 +323,7 @@ export default async function SuperAdminControlRoom() {
                           <StatusChip tone="success">Completed</StatusChip>
                         </div>
                         <p className="muted">
-                          {match.score.runs}/{match.score.wickets} · {formatDateTime(match.startAt)}
+                          {match.score.runs}/{match.score.wickets} - {formatDateTime(match.startAt)}
                         </p>
                         <p className="super-meta-line">Mode: {match.mode}</p>
                       </article>
@@ -395,7 +369,7 @@ export default async function SuperAdminControlRoom() {
                           <StatusChip tone={request.status === "PENDING" ? "warning" : "neutral"}>{request.status}</StatusChip>
                         </div>
                         <p className="muted">
-                          {request.format} · {request.venue} · {formatDateTime(request.startAt)}
+                          {request.format} - {request.venue} - {formatDateTime(request.startAt)}
                         </p>
                       </article>
                     ))}
@@ -411,11 +385,9 @@ export default async function SuperAdminControlRoom() {
             <div className="section-heading">
               <p className="section-heading__eyebrow">Action Rail</p>
               <h2>Governance Controls</h2>
-              <p className="muted">These are the high-authority actions the Super Admin can execute directly.</p>
+              <p className="muted">Use these tools for exception handling that does not belong in the request queue.</p>
             </div>
             <div className="super-tool-stack">
-              <TournamentRegistrationReviewForm />
-              <TournamentDecisionForm />
               <TeamApplicationReviewForm />
               <CorrectionApprovalForm />
               <SquadLockOverrideForm />

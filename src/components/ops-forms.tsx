@@ -384,13 +384,22 @@ export function TeamRegistrationForm() {
       body: JSON.stringify({
         name: String(formData.get("name") || ""),
         city: String(formData.get("city") || ""),
+        description: String(formData.get("description") || "") || undefined,
+        ownerName: String(formData.get("ownerName") || ""),
+        ownerEmail: String(formData.get("ownerEmail") || "") || undefined,
+        ownerPhone: String(formData.get("ownerPhone") || ""),
         captainName: String(formData.get("captainName") || ""),
         contactPhone: String(formData.get("contactPhone") || ""),
+        managerName: String(formData.get("managerName") || "") || undefined,
+        managerPhone: String(formData.get("managerPhone") || "") || undefined,
+        homeGround: String(formData.get("homeGround") || "") || undefined,
+        leagueAffiliation: String(formData.get("leagueAffiliation") || "") || undefined,
+        logoUrl: String(formData.get("logoUrl") || "") || undefined,
         sponsorName: String(formData.get("sponsorName") || "") || undefined
       })
     });
     const result = await response.json();
-    setMessage(result.ok ? `Team created: ${result.data.name}` : result.error);
+    setMessage(result.ok ? `Team created: ${result.data.team.name} · Invite code ${result.data.team.inviteCode ?? "pending"}` : result.error);
   }
 
   return (
@@ -398,8 +407,17 @@ export function TeamRegistrationForm() {
       <h3>Team Profile</h3>
       <input name="name" placeholder="Team name" className="input" />
       <input name="city" placeholder="City" className="input" style={{ marginTop: 8 }} />
+      <textarea name="description" placeholder="Short team description" className="input" style={{ marginTop: 8, minHeight: 88, resize: "vertical" }} />
+      <input name="ownerName" placeholder="Owner / Club lead" className="input" style={{ marginTop: 8 }} />
+      <input name="ownerEmail" placeholder="Owner email" className="input" style={{ marginTop: 8 }} />
+      <input name="ownerPhone" placeholder="Owner phone" className="input" style={{ marginTop: 8 }} />
       <input name="captainName" placeholder="Captain name" className="input" style={{ marginTop: 8 }} />
-      <input name="contactPhone" placeholder="Contact phone" className="input" style={{ marginTop: 8 }} />
+      <input name="contactPhone" placeholder="Captain / primary contact phone" className="input" style={{ marginTop: 8 }} />
+      <input name="managerName" placeholder="Manager name (optional)" className="input" style={{ marginTop: 8 }} />
+      <input name="managerPhone" placeholder="Manager phone (optional)" className="input" style={{ marginTop: 8 }} />
+      <input name="homeGround" placeholder="Home ground" className="input" style={{ marginTop: 8 }} />
+      <input name="leagueAffiliation" placeholder="League / domestic affiliation" className="input" style={{ marginTop: 8 }} />
+      <input name="logoUrl" placeholder="Logo URL (optional)" className="input" style={{ marginTop: 8 }} />
       <input name="sponsorName" placeholder="Sponsor (optional)" className="input" style={{ marginTop: 8 }} />
       <div className="actions" style={{ marginTop: 12 }}>
         <button type="submit">Create Team</button>
@@ -502,6 +520,63 @@ export function DirectMatchRequestForm() {
       <input name="startAt" placeholder="2026-03-20T15:00:00.000Z" className="input" style={{ marginTop: 8 }} />
       <div className="actions" style={{ marginTop: 12 }}>
         <button type="submit">Send Challenge</button>
+      </div>
+      <p className="muted">{message}</p>
+    </form>
+  );
+}
+
+export function TeamRosterManagementForm() {
+  const [message, setMessage] = useState("");
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const teamId = String(formData.get("teamId") || "");
+    const tournamentId = String(formData.get("tournamentId") || "");
+    const rawRows = String(formData.get("players") || "");
+    const players = rawRows
+      .split("\n")
+      .map((row) => row.trim())
+      .filter(Boolean)
+      .map((row) => {
+        const [bcaId, roleTag, availabilityStatus, substituteFlag] = row.split("|").map((cell) => cell.trim());
+        return {
+          bcaId,
+          roleTag: roleTag || "Squad Player",
+          availabilityStatus: availabilityStatus || "AVAILABLE",
+          isSubstitute: substituteFlag?.toLowerCase() === "sub"
+        };
+      });
+
+    const response = await fetch(`/api/teams/${teamId}/roster`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tournamentId,
+        players
+      })
+    });
+    const result = await response.json();
+    setMessage(result.ok ? `Roster synced: ${result.data.length} players saved.` : result.error);
+  }
+
+  return (
+    <form className="card" onSubmit={(event) => void onSubmit(event)}>
+      <h3>Roster Planner</h3>
+      <input name="teamId" placeholder="Team ID" className="input" />
+      <input name="tournamentId" placeholder="Tournament ID" className="input" style={{ marginTop: 8 }} />
+      <textarea
+        name="players"
+        placeholder={"BCA-201|Batsman|AVAILABLE\nBCA-202|Bowler|AVAILABLE\nBCA-203|All-rounder|QUESTIONABLE|sub"}
+        className="input"
+        style={{ marginTop: 8, minHeight: 132, resize: "vertical" }}
+      />
+      <p className="muted" style={{ marginTop: 8 }}>
+        Format: `BCA-ID | Role | Availability | sub(optional)`
+      </p>
+      <div className="actions" style={{ marginTop: 12 }}>
+        <button type="submit">Save Roster</button>
       </div>
       <p className="muted">{message}</p>
     </form>

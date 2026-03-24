@@ -25,6 +25,14 @@ export default function AccountLogin() {
   const messageTone =
     message === "Invalid account or password." ? "danger" : message === "Login successful. Redirecting..." ? "success" : "neutral";
 
+  const signupHref = (() => {
+    const nextPath = searchParams.get("next");
+    if (nextPath && nextPath.startsWith("/")) {
+      return `/signup?next=${encodeURIComponent(nextPath)}` as Route;
+    }
+    return "/signup" as Route;
+  })();
+
   async function handleCredentialsLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const callbackUrl = getCallbackPath(searchParams.get("next"));
@@ -54,7 +62,7 @@ export default function AccountLogin() {
         <div className="login-copy">
           <p className="login-kicker">Secure Access</p>
           <h1>Hello!</h1>
-          <p className="muted">Sign in with your account email and password. Internal dashboards open only after successful authentication.</p>
+          <p className="muted">Sign in with your account email and password. New users should create a public account first, then start team or tournament entry after login.</p>
         </div>
 
         <form className="login-form" onSubmit={(event) => void handleCredentialsLogin(event)}>
@@ -114,6 +122,13 @@ export default function AccountLogin() {
           </button>
 
           <p className={`login-message login-message--${messageTone}`}>{message}</p>
+
+          <p className="auth-helper">
+            New here?{" "}
+            <Link href={signupHref} className="auth-helper__link">
+              Create account
+            </Link>
+          </p>
         </form>
       </div>
 
@@ -121,12 +136,12 @@ export default function AccountLogin() {
         <p className="login-panel__eyebrow">Welcome Back</p>
         <h2>Private cricket operations stay behind one secure login.</h2>
         <p className="login-panel__body">
-          Tournament controls, scorer tools, team dashboards, and platform administration are not exposed to ordinary visitors. Public users only see the public match center.
+          Tournament controls, scorer tools, team dashboards, and platform administration are not exposed to ordinary visitors. Public users create one account first, then sign in and start with team registration or tournament request.
         </p>
         <div className="login-panel__chips">
           <span className="login-panel__chip">Private dashboards</span>
           <span className="login-panel__chip">Role-based routing</span>
-          <span className="login-panel__chip">Public match center separate</span>
+          <span className="login-panel__chip">Team and tournament starter flow</span>
         </div>
         <Link href="/public" className="login-panel__link">
           Open Public Center

@@ -15,6 +15,7 @@ export type MatchAssignmentRole = "SCORER" | "TOURNAMENT_ADMIN" | "UMPIRE";
 export type MatchWinType = "RUNS" | "WICKETS" | "TIE" | "NO_RESULT";
 export type TeamApplicationStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type DirectMatchRequestStatus = "PENDING" | "ACCEPTED" | "REJECTED";
+export type DirectMatchResponseAction = "ACCEPT" | "REJECT" | "COUNTER";
 export type ScoreCorrectionStatus = "REQUESTED" | "APPROVED" | "REJECTED";
 export type TournamentRegistrationRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type WicketType =
@@ -37,6 +38,7 @@ export interface User {
   regionId: string;
   email?: string;
   phone?: string;
+  managedByUserId?: string;
   blockedAt?: string;
   blockedReason?: string;
 }
@@ -102,10 +104,19 @@ export interface Team {
   name: string;
   tournamentId?: string;
   ownerUserId?: string;
+  description?: string;
   city?: string;
   logoUrl?: string;
+  ownerName?: string;
+  ownerEmail?: string;
+  ownerPhone?: string;
   captainName?: string;
   contactPhone?: string;
+  managerName?: string;
+  managerPhone?: string;
+  homeGround?: string;
+  leagueAffiliation?: string;
+  inviteCode?: string;
   sponsorName?: string;
 }
 
@@ -113,13 +124,19 @@ export interface Player {
   id: string;
   bcaId: string;
   fullName: string;
+  phone?: string;
   verificationStatus: "VERIFIED" | "FLAGGED";
 }
 
 export interface SquadEntry {
+  id?: string;
   teamId: string;
+  playerId?: string;
   playerBcaId: string;
   tournamentId: string;
+  roleTag?: string;
+  availabilityStatus?: string;
+  isSubstitute?: boolean;
 }
 
 export interface Match {
@@ -215,6 +232,20 @@ export interface MatchOfficialAssignment {
   assignmentRole: MatchAssignmentRole;
   assignedAt: string;
   assignedBy?: string;
+}
+
+export interface MatchLineupEntry {
+  id: string;
+  matchId: string;
+  teamId: string;
+  playerId: string;
+  roleTag?: string;
+  battingOrder?: number;
+  isCaptain?: boolean;
+  isViceCaptain?: boolean;
+  isWicketkeeper?: boolean;
+  isSubstitute?: boolean;
+  createdAt: string;
 }
 
 export interface MatchInnings {

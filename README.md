@@ -70,14 +70,45 @@ UI route guarding uses cookie `userId` in `src/middleware.ts`.
 6. Open `http://localhost:3000`.
 
 ## Cloudflare deployment
-This app is a full-stack Next.js application with API routes, middleware, auth, SSE, and Prisma. It should be deployed to Cloudflare Workers using OpenNext, not as a plain Cloudflare Pages static site.
 
-If `https://pakscorer.pages.dev/` returns 404, that usually means there is no Pages project serving that hostname. The supported deployment path in this repo is:
+### Option 1: Real app on Cloudflare Workers
+This is the full-stack deployment path with auth, API routes, middleware, scoring tools, and database-backed flows.
 
 1. Install dependencies with `npm install`.
 2. Log in to Cloudflare with `npx wrangler login`.
 3. Build the Worker bundle with `npm run cf:build`.
 4. Deploy with `npm run cf:deploy`.
+
+### Option 2: Static demo on Cloudflare Pages
+This repo now supports a static Pages build for public/demo use only.
+
+What stays live on Pages:
+- public home
+- public tournament hub
+- demo live/upcoming/finished matches
+- demo player profile pages
+- preview pages for login, signup, team, scorer, and admin routes
+
+What does not work on Pages:
+- real login or Google auth
+- API routes
+- middleware-protected role routing
+- tournament operations
+- team management writes
+- scorer console actions
+- database-backed workflows
+
+Build it with:
+
+1. Install dependencies with `npm install`.
+2. Run `npm run build:pages`.
+3. Deploy the generated `out` directory to Cloudflare Pages.
+
+Cloudflare Pages settings:
+- Framework preset: `Next.js` or `None`
+- Build command: `npm run build:pages`
+- Build output directory: `out`
+- Root directory: `/`
 
 Required production secrets/environment variables:
 - `DATABASE_URL`

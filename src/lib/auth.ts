@@ -115,7 +115,7 @@ export const authOptions: NextAuthOptions = {
   },
   providers,
   callbacks: {
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user, account, profile, trigger, session }) {
       if (account?.provider === "google") {
         const email = token.email ?? user?.email ?? (typeof profile?.email === "string" ? profile.email : undefined);
         if (email) {
@@ -131,6 +131,23 @@ export const authOptions: NextAuthOptions = {
           token.name = dbUser.name;
           token.picture = dbUser.image ?? token.picture;
         }
+        return token;
+      }
+
+      if (trigger === "update") {
+        if (session && typeof session === "object") {
+          const nextRole = "role" in session ? session.role : undefined;
+          const nextRegionId = "regionId" in session ? session.regionId : undefined;
+
+          if (typeof nextRole === "string") {
+            token.role = nextRole as Role;
+          }
+
+          if (typeof nextRegionId === "string") {
+            token.regionId = nextRegionId;
+          }
+        }
+
         return token;
       }
 

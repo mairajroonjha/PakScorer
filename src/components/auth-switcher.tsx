@@ -10,7 +10,8 @@ export default function AuthSwitcher() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const [isPending, startTransition] = useTransition();
-  const shouldHide = pathname === "/" || pathname.startsWith("/public") || pathname.startsWith("/login");
+  const staticExport = process.env.NEXT_PUBLIC_STATIC_EXPORT === "true";
+  const shouldHide = staticExport || pathname === "/" || pathname.startsWith("/public") || pathname.startsWith("/login");
 
   async function logout() {
     startTransition(() => {

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { getDashboardPathForRole, protectedRoutePolicies } from "@/lib/dashboard-paths";
 
+const staticExport = process.env.STATIC_EXPORT === "true" || process.env.CF_PAGES === "1";
+
 const legacyRouteMap: Record<string, string> = {
   "/super-admin": "/admin/super",
   "/tournament-admin": "/admin/tournament",
@@ -9,6 +11,10 @@ const legacyRouteMap: Record<string, string> = {
 };
 
 export async function middleware(request: NextRequest) {
+  if (staticExport) {
+    return NextResponse.next();
+  }
+
   const pathname = request.nextUrl.pathname;
   for (const [legacyPrefix, canonicalPrefix] of Object.entries(legacyRouteMap)) {
     if (pathname === legacyPrefix || pathname.startsWith(`${legacyPrefix}/`)) {
@@ -40,7 +46,9 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/admin/:path*",
+    "/account",
     "/dashboard",
+    "/get-started",
     "/team/:path*",
     "/scorer/:path*",
     "/login",

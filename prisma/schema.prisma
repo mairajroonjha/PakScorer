@@ -17,15 +17,19 @@ model User {
   status              UserStatus                @default(ACTIVE)
   regionId            String                    @default("bela")
   phone               String?                   @unique
+  managedByUserId     String?
   createdAt           DateTime                  @default(now())
-  updatedAt           DateTime                  @updatedAt
+  updatedAt           DateTime                  @default(now()) @updatedAt
   blockedAt           DateTime?
   blockedReason       String?
+  manager             User?                     @relation("ScorerManager", fields: [managedByUserId], references: [id])
+  managedScorers      User[]                    @relation("ScorerManager")
   requestedTournaments Tournament[]             @relation("TournamentRequester")
   approvedTournaments Tournament[]              @relation("TournamentApprover")
   managedTournaments  Tournament[]              @relation("TournamentManager")
   ownedTeams          Team[]                    @relation("TeamOwner")
   teamApplications    TeamTournamentApplication[] @relation("TeamApplicationRequester")
+  scorerTournamentPools TournamentScorerPool[]
   directMatchRequests DirectMatchRequest[]
   ballEvents          BallEvent[]               @relation("BallCreatedBy")
   matchAssignments    MatchOfficialAssignment[]
@@ -61,7 +65,7 @@ model Tournament {
   requestedBy      String
   approvedBy       String?
   createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  updatedAt        DateTime          @default(now()) @updatedAt
   requester        User              @relation("TournamentRequester", fields: [requestedBy], references: [id])
   approver         User?             @relation("TournamentApprover", fields: [approvedBy], references: [id])
   admin            User?             @relation("TournamentManager", fields: [adminUserId], references: [id])
@@ -69,6 +73,19 @@ model Tournament {
   teamApplications TeamTournamentApplication[]
   matches          Match[]
   pointsTableRows  PointsTableRow[]
+  scorerPools      TournamentScorerPool[]
+}
+
+model TournamentScorerPool {
+  id           String     @id
+  tournamentId String
+  scorerUserId String
+  createdAt    DateTime   @default(now())
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  scorer       User       @relation(fields: [scorerUserId], references: [id])
+
+  @@unique([tournamentId, scorerUserId])
+  @@index([scorerUserId])
 }
 
 model TournamentRegistrationRequest {
@@ -102,11 +119,20 @@ model TournamentRegistrationRequest {
 model Team {
   id                 String                    @id
   name               String
+  description        String?
   sponsorName        String?
   city               String?
   logoUrl            String?
+  ownerName          String?
+  ownerEmail         String?
+  ownerPhone         String?
   captainName        String?
   contactPhone       String?
+  managerName        String?
+  managerPhone       String?
+  homeGround         String?
+  leagueAffiliation  String?
+  inviteCode         String?                   @unique
   ownerUserId        String?
   tournamentId       String?
   owner              User?                     @relation("TeamOwner", fields: [ownerUserId], references: [id])
@@ -120,12 +146,14 @@ model Team {
   directRequestsSent DirectMatchRequest[]      @relation("DirectRequesterTeam")
   directRequestsReceived DirectMatchRequest[]  @relation("DirectOpponentTeam")
   pointsTableRows    PointsTableRow[]
+  lineupEntries      MatchLineupEntry[]
 }
 
 model Player {
   id                 String              @id
   bcaId              String              @unique
   fullName           String
+  phone              String?
   verificationStatus VerificationStatus  @default(VERIFIED)
   squadEntries       SquadEntry[]
   battingEvents      BallEvent[]         @relation("BallStriker")
@@ -134,16 +162,20 @@ model Player {
   dismissedInEvents  BallEvent[]         @relation("BallDismissedPlayer")
   promotedInEvents   BallEvent[]         @relation("BallNewBatter")
   fanVotes           FanVote[]
+  lineupEntries      MatchLineupEntry[]
 }
 
 model SquadEntry {
-  id           String   @id
-  teamId       String
-  playerId     String
-  tournamentId String
-  createdAt    DateTime @default(now())
-  team         Team     @relation(fields: [teamId], references: [id])
-  player       Player   @relation(fields: [playerId], references: [id])
+  id                 String   @id
+  teamId             String
+  playerId           String
+  tournamentId       String
+  roleTag            String?
+  availabilityStatus String?   @default("AVAILABLE")
+  isSubstitute       Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  team               Team      @relation(fields: [teamId], references: [id])
+  player             Player    @relation(fields: [playerId], references: [id])
   @@unique([playerId, tournamentId])
 }
 
@@ -170,7 +202,7 @@ model Match {
   winMarginWickets Int?
   targetRuns       Int?
   currentInnings   Int               @default(1)
-  updatedAt        DateTime          @updatedAt
+  updatedAt        DateTime          @default(now()) @updatedAt
   tournament       Tournament?       @relation(fields: [tournamentId], references: [id])
   teamA            Team              @relation("TeamA", fields: [teamAId], references: [id])
   teamB            Team              @relation("TeamB", fields: [teamBId], references: [id])
@@ -179,6 +211,7 @@ model Match {
   ballEvents       BallEvent[]
   corrections      ScoreCorrection[]
   fanVotes         FanVote[]
+  lineupEntries    MatchLineupEntry[]
 }
 
 model TeamTournamentApplication {
@@ -271,6 +304,25 @@ model MatchOfficialAssignment {
   user            User                @relation(fields: [userId], references: [id])
 
   @@unique([matchId, userId, assignmentRole])
+}
+
+model MatchLineupEntry {
+  id             String   @id
+  matchId        String
+  teamId         String
+  playerId       String
+  roleTag        String?
+  battingOrder   Int?
+  isCaptain      Boolean  @default(false)
+  isViceCaptain  Boolean  @default(false)
+  isWicketkeeper Boolean  @default(false)
+  isSubstitute   Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  match          Match    @relation(fields: [matchId], references: [id])
+  team           Team     @relation(fields: [teamId], references: [id])
+  player         Player   @relation(fields: [playerId], references: [id])
+
+  @@unique([matchId, teamId, playerId])
 }
 
 model MatchInnings {
