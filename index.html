@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome Back, Mairaj</title>
+  <style>
+    :root {
+      --bg: #071018;
+      --panel: rgba(255, 255, 255, 0.08);
+      --text: #f7fbff;
+      --muted: #a8bfd4;
+      --accent: #42e2b8;
+      --accent-2: #ffd166;
+      --accent-3: #ef476f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(66, 226, 184, 0.22), transparent 28%),
+        radial-gradient(circle at 85% 20%, rgba(255, 209, 102, 0.18), transparent 26%),
+        radial-gradient(circle at 50% 95%, rgba(239, 71, 111, 0.18), transparent 32%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .stage {
+      width: min(92vw, 840px);
+      padding: clamp(28px, 6vw, 72px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(22px);
+      text-align: center;
+      position: relative;
+      isolation: isolate;
+    }
+
+    .stage::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(120deg, transparent, rgba(66, 226, 184, 0.9), transparent, rgba(255, 209, 102, 0.85), transparent);
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      mask-composite: exclude;
+      animation: borderSweep 5s linear infinite;
+      z-index: -1;
+    }
+
+    .eyebrow {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: clamp(0.78rem, 2vw, 0.92rem);
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      opacity: 0;
+      transform: translateY(14px);
+      animation: riseIn 700ms ease forwards 150ms;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.8rem, 11vw, 7.5rem);
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+
+    .word {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(48px) scale(0.92);
+      animation: wordPop 850ms cubic-bezier(0.2, 0.9, 0.22, 1.18) forwards;
+    }
+
+    .word:nth-child(1) {
+      animation-delay: 320ms;
+    }
+
+    .word:nth-child(2) {
+      animation-delay: 520ms;
+    }
+
+    .name {
+      display: block;
+      margin-top: 10px;
+      color: transparent;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3), var(--accent));
+      background-size: 240% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: wordPop 850ms cubic-bezier(0.2, 0.9, 0.22, 1.18) forwards 780ms, shimmer 3s ease-in-out infinite 1.2s;
+    }
+
+    .subtitle {
+      max-width: 560px;
+      margin: 24px auto 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      line-height: 1.7;
+      opacity: 0;
+      transform: translateY(14px);
+      animation: riseIn 700ms ease forwards 1.15s;
+    }
+
+    .sparkle {
+      position: fixed;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-2);
+      box-shadow: 0 0 22px currentColor;
+      opacity: 0;
+      animation: floatUp var(--duration) ease-in-out infinite;
+      animation-delay: var(--delay);
+      left: var(--x);
+      top: var(--y);
+    }
+
+    @keyframes wordPop {
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes riseIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes shimmer {
+      0%, 100% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+    }
+
+    @keyframes borderSweep {
+      to {
+        filter: hue-rotate(360deg);
+      }
+    }
+
+    @keyframes floatUp {
+      0% {
+        opacity: 0;
+        transform: translate3d(0, 22px, 0) scale(0.5);
+      }
+
+      18%, 72% {
+        opacity: 0.85;
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate3d(18px, -88px, 0) scale(1.2);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage" aria-label="Animated welcome message">
+    <p class="eyebrow">Ready to build</p>
+    <h1>
+      <span class="word">Welcome</span>
+      <span class="word">back,</span>
+      <span class="word name">Mairaj</span>
+    </h1>
+    <p class="subtitle">Your PakScorer workspace is connected and ready for the next idea.</p>
+  </main>
+
+  <script>
+    const colors = ["#42e2b8", "#ffd166", "#ef476f", "#8ecae6"];
+
+    for (let i = 0; i < 34; i += 1) {
+      const sparkle = document.createElement("span");
+      sparkle.className = "sparkle";
+      sparkle.style.setProperty("--x", `${Math.random() * 100}vw`);
+      sparkle.style.setProperty("--y", `${Math.random() * 100}vh`);
+      sparkle.style.setProperty("--delay", `${Math.random() * 4}s`);
+      sparkle.style.setProperty("--duration", `${3 + Math.random() * 4}s`);
+      sparkle.style.color = colors[i % colors.length];
+      document.body.appendChild(sparkle);
+    }
+  </script>
+</body>
+</html>
