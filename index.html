@@ -1027,14 +1027,30 @@
             <h2>Match Setup</h2>
             <span id="activeMatchStatus">No match selected</span>
           </div>
-          <div class="panel-body form-grid" style="align-items: end;">
-            <label>Select Match
-              <select id="scoringMatchSelect"><option value="">-- Select a match --</option></select>
-            </label>
-            <div style="display:flex; gap:8px;">
-              <button class="btn primary" id="startMatchBtn">Start/Resume Match</button>
-              <button class="btn" id="cancelMatchBtn">Cancel</button>
-              <button class="btn danger" id="endMatchBtn">End Match</button>
+          <div class="panel-body">
+            <div class="form-grid" style="align-items: end; margin-bottom: 12px;">
+              <label>Select Match
+                <select id="scoringMatchSelect"><option value="">-- Select a match --</option></select>
+              </label>
+              <div style="display:flex; gap:8px;">
+                <button class="btn primary" id="startMatchBtn">Start/Resume Match</button>
+                <button class="btn" id="cancelMatchBtn">Cancel</button>
+                <button class="btn danger" id="endMatchBtn">End Match</button>
+              </div>
+            </div>
+            
+            <div id="tossSetup" class="form-grid" style="display: none; padding-top: 16px; border-top: 1px solid var(--border);">
+              <label>Toss Winner
+                <select id="tossWinnerSelect">
+                  <option value="">-- Select Winner --</option>
+                </select>
+              </label>
+              <label>Elected To
+                <select id="tossDecisionSelect">
+                  <option value="Bat">Bat</option>
+                  <option value="Bowl">Bowl</option>
+                </select>
+              </label>
             </div>
           </div>
         </section>
@@ -1564,6 +1580,21 @@
       const { data, error } = await supabase
         .from("matches")
         .update({ status })
+        .eq("id", id)
+        .select("id,status")
+        .single();
+      if (error) throw error;
+      return data;
+    }
+
+    async function startMatchInDatabase(id, tossWinnerId, battingFirstId) {
+      const { data, error } = await supabase
+        .from("matches")
+        .update({ 
+          status: "Live",
+          toss_winner_team_id: tossWinnerId || null,
+          batting_first_team_id: battingFirstId || null
+        })
         .eq("id", id)
         .select("id,status")
         .single();
@@ -2355,6 +2386,24 @@
       message.classList.add("success");
     });
 
+    document.querySelector("#scoringMatchSelect").addEventListener("change", (event) => {
+      const matchId = event.target.value;
+      const match = state.matches.find(m => m.id === matchId || m.id === Number(matchId));
+      const tossSetup = document.querySelector("#tossSetup");
+      const tossWinnerSelect = document.querySelector("#tossWinnerSelect");
+      
+      if (match && match.status !== "Live") {
+        tossSetup.style.display = "flex";
+        tossWinnerSelect.innerHTML = `
+          <option value="">-- Select Winner --</option>
+          <option value="${match.teamAId}">${match.teamA}</option>
+          <option value="${match.teamBId}">${match.teamB}</option>
+        `;
+      } else {
+        tossSetup.style.display = "none";
+      }
+    });
+
     document.querySelector("#startMatchBtn").addEventListener("click", async () => {
       const select = document.querySelector("#scoringMatchSelect");
       const matchId = select.value;
@@ -2363,18 +2412,46 @@
       const match = state.matches.find(m => m.id === matchId || m.id === Number(matchId));
       if (!match) return;
 
+      let battingTeamId = match.teamAId;
+      let bowlingTeamId = match.teamBId;
+      let battingTeamName = match.teamA;
+      let bowlingTeamName = match.teamB;
+      let tossWinnerId = null;
+      let battingFirstId = null;
+
+      if (match.status !== "Live") {
+        tossWinnerId = document.querySelector("#tossWinnerSelect").value;
+        const tossDecision = document.querySelector("#tossDecisionSelect").value;
+        
+        if (!tossWinnerId) return alert("Please select the Toss Winner before starting the match.");
+
+        if ((tossWinnerId === String(match.teamAId) && tossDecision === "Bat") || (tossWinnerId === String(match.teamBId) && tossDecision === "Bowl")) {
+          battingFirstId = match.teamAId;
+          battingTeamId = match.teamAId;
+          bowlingTeamId = match.teamBId;
+          battingTeamName = match.teamA;
+          bowlingTeamName = match.teamB;
+        } else {
+          battingFirstId = match.teamBId;
+          battingTeamId = match.teamBId;
+          bowlingTeamId = match.teamAId;
+          battingTeamName = match.teamB;
+          bowlingTeamName = match.teamA;
+        }
+      }
+
       document.querySelector("#startMatchBtn").textContent = "Loading...";
 
       if (state.usingDatabase) {
         try {
           if (match.status !== "Live") {
-            await updateMatchStatusInDatabase(match.id, "Live");
+            await startMatchInDatabase(match.id, tossWinnerId, battingFirstId);
             match.status = "Live";
           }
           
           let innings = await loadInningsFromDatabase(match.id);
           if (!innings) {
-            innings = await createInningsInDatabase(match.id, match.teamAId, match.teamBId, match.teamA, match.teamB, 1);
+            innings = await createInningsInDatabase(match.id, battingTeamId, bowlingTeamId, battingTeamName, bowlingTeamName, 1);
           }
           
           const balls = await loadBallsFromDatabase(innings.id);
@@ -2385,8 +2462,8 @@
           state.score.runs = innings.runs;
           state.score.wickets = innings.wickets;
           state.score.legalBalls = innings.legal_balls;
-          state.score.battingTeam = match.teamA;
-          state.score.bowlingTeam = match.teamB;
+          state.score.battingTeam = innings.batting_team;
+          state.score.bowlingTeam = innings.bowling_team;
           state.score.target = 0;
           state.score.last = balls.slice(-6).map(b => b.is_wicket ? "W" : b.extra_type ? (b.extra_type==="Wide"?"Wd":b.extra_type==="No Ball"?"Nb":b.extra_type==="Bye"?"B":"Lb") : b.runs_bat.toString());
           state.score.history = balls.slice(-10).reverse().map(b => ({
