@@ -597,6 +597,32 @@
       font-weight: 900;
     }
 
+    .public-live-flash {
+      animation: liveFlash 720ms ease;
+    }
+
+    .public-score.boundary-flash {
+      border-color: rgba(32, 200, 120, 0.78);
+      box-shadow: 0 0 0 4px rgba(32, 200, 120, 0.13), var(--shadow);
+    }
+
+    .public-score.danger-flash {
+      border-color: rgba(239, 71, 111, 0.82);
+      box-shadow: 0 0 0 4px rgba(239, 71, 111, 0.13), var(--shadow);
+    }
+
+    .ball-chip.boundary {
+      background: rgba(32, 200, 120, 0.92);
+      color: #061116;
+      animation: ballPop 700ms ease;
+    }
+
+    .ball-chip.danger {
+      background: rgba(239, 71, 111, 0.92);
+      color: #fff7f9;
+      animation: ballShake 650ms ease;
+    }
+
     .field-orbit {
       height: 240px;
       position: relative;
@@ -650,6 +676,55 @@
 
       to {
         transform: rotate(360deg) translateX(115px) rotate(-360deg);
+      }
+    }
+
+    @keyframes ballPop {
+      0% {
+        transform: scale(0.72);
+        box-shadow: 0 0 0 0 rgba(32, 200, 120, 0.6);
+      }
+
+      55% {
+        transform: scale(1.2);
+        box-shadow: 0 0 0 12px rgba(32, 200, 120, 0);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes ballShake {
+      0%,
+      100% {
+        transform: translateX(0) scale(1);
+      }
+
+      25% {
+        transform: translateX(-3px) scale(1.08);
+      }
+
+      50% {
+        transform: translateX(3px) scale(1.08);
+      }
+
+      75% {
+        transform: translateX(-2px) scale(1.04);
+      }
+    }
+
+    @keyframes liveFlash {
+      0% {
+        transform: scale(0.99);
+      }
+
+      55% {
+        transform: scale(1.01);
+      }
+
+      100% {
+        transform: scale(1);
       }
     }
 
@@ -874,6 +949,7 @@
                   <option>Wicketkeeper</option>
                 </select>
               </label>
+              <p class="form-message" id="playerFormMessage" aria-live="polite"></p>
               <button class="btn primary" type="submit">Add Player</button>
             </form>
           </section>
@@ -960,7 +1036,7 @@
       </section>
 
       <section class="page" id="public">
-        <div class="public-score">
+        <div class="public-score" id="publicScorePanel">
           <span class="tag green">Public live match</span>
           <h2>Pak Lions <span id="publicScore">87/3</span></h2>
           <p class="muted" id="publicDetail">10.4 overs. Need 77 from 56 balls.</p>
@@ -1043,6 +1119,7 @@
         target: 164,
         currentBowler: "Umar Khan",
         last: ["1", "4", "0", "Wd", "2", "W"],
+        lastEventType: "danger",
         history: [
           { label: "10.4", text: "Wicket. Hamza Shah caught at long-on." },
           { label: "10.3", text: "Two runs into the leg side." },
@@ -1181,12 +1258,32 @@
       document.querySelector("#publicDetail").textContent = `${overs} overs. Need ${needed} from ${ballsLeft} balls.`;
       document.querySelector("#winChance").textContent = `${chance}%`;
 
-      const balls = score.last.slice(-6).map((ball) => `<span class="ball-chip">${ball}</span>`).join("");
+      const visibleBalls = score.last.slice(-6);
+      const balls = visibleBalls.map((ball, index) => {
+        const isLatest = index === visibleBalls.length - 1;
+        const eventClass = ball === "4" || ball === "6" ? "boundary" : ball === "W" || ball === "Nb" ? "danger" : "";
+        return `<span class="ball-chip ${isLatest ? eventClass : ""}">${ball}</span>`;
+      }).join("");
       document.querySelector("#lastBalls").innerHTML = balls;
       document.querySelector("#publicLastBalls").innerHTML = balls;
       document.querySelector("#commentary").innerHTML = score.history.slice(0, 6).map((item) => `
         <li><strong>${item.label}</strong><span>${item.text}</span></li>
       `).join("");
+    }
+
+    function animatePublicScore(type) {
+      const panel = document.querySelector("#publicScorePanel");
+      if (!panel || !type) return;
+
+      const className = type === "boundary" ? "boundary-flash" : type === "danger" ? "danger-flash" : "";
+      if (!className) return;
+
+      panel.classList.remove("boundary-flash", "danger-flash", "public-live-flash");
+      void panel.offsetWidth;
+      panel.classList.add(className, "public-live-flash");
+      window.setTimeout(() => {
+        panel.classList.remove(className, "public-live-flash");
+      }, 760);
     }
 
     function scoreSnapshot() {
@@ -1196,6 +1293,7 @@
         wickets: score.wickets,
         legalBalls: score.legalBalls,
         currentBowler: score.currentBowler,
+        lastEventType: score.lastEventType,
         last: [...score.last],
         history: score.history.map((item) => ({ ...item })),
       };
@@ -1207,6 +1305,7 @@
       score.wickets = snapshot.wickets;
       score.legalBalls = snapshot.legalBalls;
       score.currentBowler = snapshot.currentBowler;
+      score.lastEventType = snapshot.lastEventType;
       score.last = [...snapshot.last];
       score.history = snapshot.history.map((item) => ({ ...item }));
     }
@@ -1240,9 +1339,11 @@
       score.legalBalls += 1;
       if (isWicket) score.wickets = Math.min(10, score.wickets + 1);
       score.last.push(label);
+      score.lastEventType = isWicket ? "danger" : label === "4" || label === "6" ? "boundary" : "normal";
       score.history.unshift({ label: oversText(score.legalBalls), text: isWicket ? "Wicket. New batter comes in." : `${label} run${runs === 1 ? "" : "s"} added.` });
       askNextBowler();
       renderScore();
+      animatePublicScore(score.lastEventType);
     }
 
     function addExtra(label) {
@@ -1252,9 +1353,11 @@
       score.runs += 1;
       if (isLegalExtra) score.legalBalls += 1;
       score.last.push(label);
+      score.lastEventType = label === "Nb" ? "danger" : "normal";
       score.history.unshift({ label: oversText(score.legalBalls), text: `${label} extra added.` });
       if (isLegalExtra) askNextBowler();
       renderScore();
+      animatePublicScore(score.lastEventType);
     }
 
     document.querySelector("#teamForm").addEventListener("submit", (event) => {
@@ -1294,14 +1397,41 @@
 
     document.querySelector("#playerForm").addEventListener("submit", (event) => {
       event.preventDefault();
+      const message = document.querySelector("#playerFormMessage");
+      const name = document.querySelector("#newPlayerName").value.trim();
+      const team = document.querySelector("#newPlayerTeam").value;
+      const role = document.querySelector("#newPlayerRole").value;
+      const normalizedName = name.toLowerCase();
+      const normalizedTeam = team.toLowerCase();
+      const alreadyExists = state.players.some((player) => (
+        player.name.trim().toLowerCase() === normalizedName &&
+        player.team.trim().toLowerCase() === normalizedTeam
+      ));
+
+      message.className = "form-message";
+
+      if (!name) {
+        message.textContent = "Please enter a player name.";
+        message.classList.add("error");
+        return;
+      }
+
+      if (alreadyExists) {
+        message.textContent = "This player already exists in this team.";
+        message.classList.add("error");
+        return;
+      }
+
       state.players.push({
-        name: document.querySelector("#newPlayerName").value || "New Player",
-        team: document.querySelector("#newPlayerTeam").value,
-        role: document.querySelector("#newPlayerRole").value,
+        name,
+        team,
+        role,
         runs: 0,
         wickets: 0,
       });
       renderPlayers();
+      message.textContent = `${name} added to ${team}.`;
+      message.classList.add("success");
     });
 
     document.querySelector("#requestForm").addEventListener("submit", (event) => {
