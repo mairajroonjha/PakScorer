@@ -1631,10 +1631,27 @@
         .update({ 
           status: "Live",
           toss_winner_team_id: tossWinnerId || null,
-          batting_first_team_id: battingFirstId || null
+          batting_first_team_id: battingFirstId || null,
+          started_at: new Date().toISOString()
         })
         .eq("id", id)
         .select("id,status")
+        .single();
+      if (error) throw error;
+      return data;
+    }
+
+    async function updateMatchResultInDatabase(id, winnerId, resultText) {
+      const { data, error } = await supabase
+        .from("matches")
+        .update({ 
+          status: "Completed",
+          winner_team_id: winnerId,
+          result_text: resultText,
+          completed_at: new Date().toISOString()
+        })
+        .eq("id", id)
+        .select("*")
         .single();
       if (error) throw error;
       return data;
@@ -1663,7 +1680,7 @@
       return data.length > 0 ? data[0] : null;
     }
 
-    async function createInningsInDatabase(matchId, battingTeamId, bowlingTeamId, battingTeamName, bowlingTeamName, inningsNumber) {
+    async function createInningsInDatabase(matchId, battingTeamId, bowlingTeamId, battingTeamName, bowlingTeamName, inningsNumber, target = null) {
       const { data, error } = await supabase
         .from("innings")
         .insert({
@@ -1675,7 +1692,8 @@
           bowling_team: bowlingTeamName,
           runs: 0,
           wickets: 0,
-          legal_balls: 0
+          legal_balls: 0,
+          target: target
         })
         .select("*")
         .single();
@@ -1844,10 +1862,11 @@
       const score = state.score;
       const overs = oversText(score.legalBalls);
       const runRate = score.legalBalls ? (score.runs / (score.legalBalls / 6)).toFixed(2) : "0.00";
-      const ballsLeft = 120 - score.legalBalls;
-      const needed = Math.max(0, score.target - score.runs);
-      const chance = Math.max(18, Math.min(88, Math.round(44 + (score.runs / score.target) * 42 - score.wickets * 2)));
-
+      
+      const targetText = score.target > 0 ? `Target: ${score.target}` : "";
+      const inningsTextLabel = state.currentInnings ? `Innings ${state.currentInnings.innings_number}` : "Scoring";
+      
+      document.querySelector("#inningsStatus").textContent = `${score.battingTeam} batting (${inningsTextLabel}) ${targetText}`;
       document.querySelector("#scoreRuns").textContent = score.runs;
       document.querySelector("#scoreWickets").textContent = score.wickets;
       document.querySelector("#scoreOvers").textContent = overs;
@@ -1856,7 +1875,7 @@
       document.querySelector("#dashScore").textContent = `${score.runs}/${score.wickets}`;
       document.querySelector("#miniScore").textContent = `${score.runs}/${score.wickets}`;
       document.querySelector("#dashOvers").textContent = `${overs} overs`;
-      document.querySelector("#winChance").textContent = `${chance}%`;
+      document.querySelector("#winChance").textContent = `${chanceText(score)}`;
       document.querySelector("#bowlerChooser").hidden = !score.needsBowler;
 
       const visibleBalls = score.last.slice(-6);
@@ -1869,6 +1888,12 @@
       document.querySelector("#commentary").innerHTML = score.history.slice(0, 6).map((item) => `
         <li><strong>${item.label}</strong><span>${item.text}</span></li>
       `).join("");
+    }
+
+    function chanceText(score) {
+      if (score.target <= 0) return "50%";
+      const chance = Math.max(18, Math.min(88, Math.round(44 + (score.runs / score.target) * 42 - score.wickets * 2)));
+      return `${chance}%`;
     }
 
     function animatePublicScore(type) {
@@ -2037,8 +2062,8 @@
       score.lastEventType = isWicket ? "danger" : label === "4" || label === "6" ? "boundary" : "normal";
       score.history.unshift({ label: oversText(score.legalBalls), text: isWicket ? "Wicket. New batter comes in." : `${label} run${runs === 1 ? "" : "s"} added.` });
       askNextBowler();
-      renderScore();
       animatePublicScore(score.lastEventType);
+      checkInningsStatus();
 
       if (state.usingDatabase && state.currentInnings && state.currentMatch) {
         try {
@@ -2060,7 +2085,8 @@
           await updateInningsInDatabase(state.currentInnings.id, {
             runs: score.runs,
             wickets: score.wickets,
-            legal_balls: score.legalBalls
+            legal_balls: score.legalBalls,
+            status: (score.wickets >= 10 || score.legalBalls >= (state.currentMatch.overs * 6)) ? "Completed" : "Live"
           });
         } catch (error) {
            console.error("Failed to save ball to DB", error);
@@ -2084,8 +2110,8 @@
       score.lastEventType = label === "Nb" ? "danger" : "normal";
       score.history.unshift({ label: oversText(score.legalBalls), text: `${label} extra added.` });
       if (isLegalExtra) askNextBowler();
-      renderScore();
       animatePublicScore(score.lastEventType);
+      checkInningsStatus();
 
       if (state.usingDatabase && state.currentInnings && state.currentMatch) {
         try {
@@ -2108,12 +2134,116 @@
           await updateInningsInDatabase(state.currentInnings.id, {
             runs: score.runs,
             wickets: score.wickets,
-            legal_balls: score.legalBalls
+            legal_balls: score.legalBalls,
+            status: (score.wickets >= 10 || score.legalBalls >= (state.currentMatch.overs * 6)) ? "Completed" : "Live"
           });
         } catch (error) {
            console.error("Failed to save extra to DB", error);
         }
       }
+    }
+
+    async function checkInningsStatus() {
+      const score = state.score;
+      const match = state.currentMatch;
+      const innings = state.currentInnings;
+      if (!match || !innings) return;
+
+      const maxOvers = match.overs;
+      const maxBalls = maxOvers * 6;
+
+      if (innings.innings_number === 1) {
+        if (score.wickets >= 10 || score.legalBalls >= maxBalls) {
+          await handleEndOfInnings1();
+        }
+      } else if (innings.innings_number === 2) {
+        const target = score.target;
+        if (score.runs >= target) {
+          await handleEndOfMatch(true);
+        } else if (score.wickets >= 10 || score.legalBalls >= maxBalls) {
+          if (score.runs === target - 1) {
+            await handleEndOfMatch(null, "Tie");
+          } else {
+            await handleEndOfMatch(false);
+          }
+        }
+      }
+    }
+
+    async function handleEndOfInnings1() {
+      const score = state.score;
+      const match = state.currentMatch;
+      const target = score.runs + 1;
+      
+      alert(`Innings 1 complete! ${score.battingTeam} scored ${score.runs}/${score.wickets}. Target for ${score.bowlingTeam}: ${target}`);
+
+      const newBattingTeam = score.bowlingTeam;
+      const newBowlingTeam = score.battingTeam;
+      
+      const teamAId = match.teamAId;
+      const teamBId = match.teamBId;
+      const currentBattingId = state.currentInnings.batting_team_id;
+      const newBattingId = (currentBattingId === teamAId) ? teamBId : teamAId;
+      const newBowlingId = (currentBattingId === teamAId) ? teamAId : teamBId;
+
+      if (state.usingDatabase) {
+        try {
+          const newInnings = await createInningsInDatabase(match.id, newBattingId, newBowlingId, newBattingTeam, newBowlingTeam, 2, target);
+          state.currentInnings = newInnings;
+        } catch (error) {
+          console.error("Failed to transition to 2nd innings", error);
+        }
+      }
+
+      state.score.runs = 0;
+      state.score.wickets = 0;
+      state.score.legalBalls = 0;
+      state.score.target = target;
+      state.score.battingTeam = newBattingTeam;
+      state.score.bowlingTeam = newBowlingTeam;
+      state.score.last = [];
+      state.score.history = [{ label: "Target", text: `${newBattingTeam} needs ${target} runs to win.` }];
+      state.score.undoStack = [];
+      state.score.needsBowler = true;
+      
+      renderScore();
+    }
+
+    async function handleEndOfMatch(battingWins, specialStatus = null) {
+      const score = state.score;
+      const match = state.currentMatch;
+      const innings = state.currentInnings;
+      
+      let resultText = "";
+      let winnerId = null;
+
+      if (specialStatus === "Tie") {
+        resultText = "Match Tied!";
+      } else if (battingWins) {
+        resultText = `${score.battingTeam} won by ${10 - score.wickets} wickets!`;
+        winnerId = state.currentInnings.batting_team_id;
+      } else {
+        resultText = `${score.bowlingTeam} won by ${score.target - 1 - score.runs} runs!`;
+        winnerId = state.currentInnings.bowling_team_id;
+      }
+
+      alert(`Match Over! ${resultText}`);
+
+      if (state.usingDatabase) {
+        try {
+          await updateMatchResultInDatabase(match.id, winnerId, resultText);
+          match.status = "Completed";
+        } catch (error) {
+          console.error("Failed to save match result", error);
+        }
+      }
+
+      state.currentMatch = null;
+      state.currentInnings = null;
+      document.querySelector("#scoringControls").style.opacity = "0.5";
+      document.querySelector("#scoringControls").style.pointerEvents = "none";
+      document.querySelector("#activeMatchStatus").textContent = "Match Completed";
+      renderMatches();
     }
 
     document.querySelector("#teamForm").addEventListener("submit", async (event) => {
@@ -2600,7 +2730,7 @@
           state.score.legalBalls = innings.legal_balls;
           state.score.battingTeam = innings.batting_team;
           state.score.bowlingTeam = innings.bowling_team;
-          state.score.target = 0;
+          state.score.target = innings.target || 0;
           state.score.last = balls.slice(-6).map(b => b.is_wicket ? "W" : b.extra_type ? (b.extra_type==="Wide"?"Wd":b.extra_type==="No Ball"?"Nb":b.extra_type==="Bye"?"B":"Lb") : b.runs_bat.toString());
           state.score.history = balls.slice(-10).reverse().map(b => ({
             label: `${b.over_number}.${b.ball_in_over}`,
