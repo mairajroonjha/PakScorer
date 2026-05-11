@@ -473,6 +473,22 @@
       color: var(--muted);
     }
 
+    .form-message {
+      min-height: 22px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 750;
+    }
+
+    .form-message.error {
+      color: #ffc2d0;
+    }
+
+    .form-message.success {
+      color: #b9ffe0;
+    }
+
     .split {
       display: grid;
       grid-template-columns: 1.05fr 0.95fr;
@@ -812,6 +828,7 @@
               <label>Team name <input id="newTeamName" value="Rawalpindi Royals" /></label>
               <label>City <input id="newTeamCity" value="Rawalpindi" /></label>
               <label>Captain <input id="newTeamCaptain" value="Bilal Khan" /></label>
+              <p class="form-message" id="teamFormMessage" aria-live="polite"></p>
               <button class="btn primary" type="submit">Add Team</button>
             </form>
           </section>
@@ -1107,8 +1124,10 @@
           <p class="muted">${request.overs} overs at ${request.venue}</p>
           <div class="actions" style="margin-top: 12px;">
             <span class="tag ${request.status === "Accepted" ? "green" : request.status === "Rejected" ? "red" : "gold"}">${request.status}</span>
-            <button class="btn primary" data-request-action="Accepted" data-id="${request.id}">Accept</button>
-            <button class="btn danger" data-request-action="Rejected" data-id="${request.id}">Reject</button>
+            ${request.status === "Pending" ? `
+              <button class="btn primary" data-request-action="Accepted" data-id="${request.id}">Accept</button>
+              <button class="btn danger" data-request-action="Rejected" data-id="${request.id}">Reject</button>
+            ` : ""}
           </div>
         </article>
       `).join("");
@@ -1187,14 +1206,37 @@
 
     document.querySelector("#teamForm").addEventListener("submit", (event) => {
       event.preventDefault();
+      const message = document.querySelector("#teamFormMessage");
+      const name = document.querySelector("#newTeamName").value.trim();
+      const city = document.querySelector("#newTeamCity").value.trim();
+      const captain = document.querySelector("#newTeamCaptain").value.trim();
+      const normalizedName = name.toLowerCase();
+      const alreadyExists = state.teams.some((team) => team.name.trim().toLowerCase() === normalizedName);
+
+      message.className = "form-message";
+
+      if (!name) {
+        message.textContent = "Please enter a team name.";
+        message.classList.add("error");
+        return;
+      }
+
+      if (alreadyExists) {
+        message.textContent = "This team already exists. Use a different team name.";
+        message.classList.add("error");
+        return;
+      }
+
       state.teams.push({
         id: Date.now(),
-        name: document.querySelector("#newTeamName").value || "New Team",
-        city: document.querySelector("#newTeamCity").value || "Unknown",
-        captain: document.querySelector("#newTeamCaptain").value || "Captain",
+        name,
+        city: city || "Unknown",
+        captain: captain || "Captain",
         record: "0W - 0L",
       });
       renderTeams();
+      message.textContent = `${name} added successfully.`;
+      message.classList.add("success");
     });
 
     document.querySelector("#playerForm").addEventListener("submit", (event) => {
@@ -1226,7 +1268,7 @@
       const button = event.target.closest("[data-request-action]");
       if (!button) return;
       const request = state.requests.find((item) => item.id === Number(button.dataset.id));
-      if (request) request.status = button.dataset.requestAction;
+      if (request && request.status === "Pending") request.status = button.dataset.requestAction;
       renderRequests();
     });
 
