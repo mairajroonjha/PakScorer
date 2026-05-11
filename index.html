@@ -1582,6 +1582,14 @@
       return data;
     }
 
+    async function deleteMatchRequestFromDatabase(id) {
+      const { error } = await supabase
+        .from("match_requests")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    }
+
     async function createMatchInDatabase(request) {
       const { data, error } = await supabase
         .from("matches")
@@ -1788,6 +1796,7 @@
               <button class="btn primary" data-request-action="Accepted" data-id="${request.id}">Accept</button>
               <button class="btn danger" data-request-action="Rejected" data-id="${request.id}">Reject</button>
             ` : ""}
+            <button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem; margin-left: auto;" data-delete-request="${request.id}">Delete</button>
           </div>
         </article>
       `).join("");
@@ -2470,12 +2479,36 @@
     });
 
     document.querySelector("#requestList").addEventListener("click", async (event) => {
-      const button = event.target.closest("[data-request-action]");
-      if (!button) return;
-      const request = state.requests.find((item) => String(item.id) === String(button.dataset.id));
+      // Handle Delete
+      const deleteBtn = event.target.closest("[data-delete-request]");
+      if (deleteBtn) {
+        const requestId = deleteBtn.dataset.deleteRequest;
+        if (!confirm("Are you sure you want to permanently delete this match request?")) return;
+        
+        deleteBtn.textContent = "Deleting...";
+        deleteBtn.disabled = true;
+        
+        try {
+          if (state.usingDatabase) {
+            await deleteMatchRequestFromDatabase(requestId);
+          }
+          state.requests = state.requests.filter(r => String(r.id) !== String(requestId));
+          renderRequests();
+        } catch (error) {
+          alert("Failed to delete request: " + error.message);
+          deleteBtn.textContent = "Delete";
+          deleteBtn.disabled = false;
+        }
+        return;
+      }
+
+      // Handle Accept/Reject
+      const actionBtn = event.target.closest("[data-request-action]");
+      if (!actionBtn) return;
+      const request = state.requests.find((item) => String(item.id) === String(actionBtn.dataset.id));
       if (!request || request.status !== "Pending") return;
 
-      const nextStatus = button.dataset.requestAction;
+      const nextStatus = actionBtn.dataset.requestAction;
 
       if (state.usingDatabase) {
         try {
