@@ -855,14 +855,10 @@
           <section class="panel">
             <div class="panel-head">
               <h2>Next Fixtures</h2>
-              <span>3 scheduled</span>
+              <span id="fixtureCount">0 scheduled</span>
             </div>
             <div class="panel-body">
-              <ul class="feed">
-                <li><strong>Pak Lions vs Lahore Kings</strong><span>Today, 7:30 PM</span></li>
-                <li><strong>Karachi Strikers vs Multan Stars</strong><span>Tomorrow</span></li>
-                <li><strong>Islamabad Hawks vs Pak Lions</strong><span>Friday</span></li>
-              </ul>
+              <ul class="feed" id="dashboardFixtures"></ul>
             </div>
           </section>
 
@@ -912,6 +908,16 @@
               <p class="form-message" id="teamFormMessage" aria-live="polite"></p>
               <button class="btn primary" type="submit">Add Team</button>
             </form>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Scheduled Matches</h2>
+              <span id="scheduledMatchCount">0 matches</span>
+            </div>
+            <div class="panel-body">
+              <ul class="feed" id="scheduledMatchList"></ul>
+            </div>
           </section>
         </div>
       </section>
@@ -1125,6 +1131,9 @@
         { id: 1, from: "Pak Lions", to: "Lahore Kings", venue: "Model Town Ground", overs: 20, status: "Pending" },
         { id: 2, from: "Karachi Strikers", to: "Multan Stars", venue: "National Ground", overs: 16, status: "Pending" },
       ],
+      matches: [
+        { id: 1, teamA: "Pak Lions", teamB: "Lahore Kings", venue: "Model Town Ground", overs: 20, status: "Scheduled", matchDate: null },
+      ],
       tournaments: [
         { name: "Punjab Super Cup", teams: 8, format: "Group + knockout", status: "Applications open" },
         { name: "City Night League", teams: 6, format: "Round robin", status: "Draft fixtures" },
@@ -1255,6 +1264,7 @@
       renderTeams();
       await loadPlayersFromDatabase();
       await loadMatchRequestsFromDatabase();
+      await loadMatchesFromDatabase();
     }
 
     async function loadPlayersFromDatabase() {
@@ -1292,6 +1302,30 @@
       }));
 
       renderRequests();
+    }
+
+    async function loadMatchesFromDatabase() {
+      const { data, error } = await supabase
+        .from("matches")
+        .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      state.matches = data.map((match) => ({
+        id: match.id,
+        matchRequestId: match.match_request_id,
+        teamAId: match.team_a_id,
+        teamBId: match.team_b_id,
+        teamA: match.team_a,
+        teamB: match.team_b,
+        venue: match.venue,
+        overs: match.overs,
+        status: match.status,
+        matchDate: match.match_date,
+      }));
+
+      renderMatches();
     }
 
     async function createTeamInDatabase(team) {
@@ -1351,6 +1385,39 @@
       return data;
     }
 
+    async function createMatchInDatabase(request) {
+      const { data, error } = await supabase
+        .from("matches")
+        .insert({
+          match_request_id: request.id,
+          team_a_id: request.fromTeamId,
+          team_b_id: request.toTeamId,
+          team_a: request.from,
+          team_b: request.to,
+          venue: request.venue,
+          overs: request.overs,
+          status: "Scheduled",
+          match_date: request.matchDate || null,
+        })
+        .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date")
+        .single();
+
+      if (error) throw error;
+
+      return {
+        id: data.id,
+        matchRequestId: data.match_request_id,
+        teamAId: data.team_a_id,
+        teamBId: data.team_b_id,
+        teamA: data.team_a,
+        teamB: data.team_b,
+        venue: data.venue,
+        overs: data.overs,
+        status: data.status,
+        matchDate: data.match_date,
+      };
+    }
+
     function renderBowlerSelect() {
       const select = document.querySelector("#nextBowlerSelect");
       if (!select) return;
@@ -1378,6 +1445,21 @@
           </div>
         </article>
       `).join("");
+    }
+
+    function renderMatches() {
+      const scheduled = state.matches.filter((match) => match.status === "Scheduled" || match.status === "Setup");
+      const rows = scheduled.length ? scheduled.map((match) => `
+        <li>
+          <strong>${match.teamA} vs ${match.teamB}</strong>
+          <span>${match.overs} overs at ${match.venue}</span>
+        </li>
+      `).join("") : `<li><strong>No scheduled matches yet</strong><span>Accept a request to create one</span></li>`;
+
+      document.querySelector("#fixtureCount").textContent = `${scheduled.length} scheduled`;
+      document.querySelector("#scheduledMatchCount").textContent = `${scheduled.length} matches`;
+      document.querySelector("#dashboardFixtures").innerHTML = rows;
+      document.querySelector("#scheduledMatchList").innerHTML = rows;
     }
 
     function renderTournaments() {
@@ -1712,14 +1794,35 @@
       if (state.usingDatabase) {
         try {
           await updateMatchRequestInDatabase(request.id, nextStatus);
+          if (nextStatus === "Accepted") {
+            const matchExists = state.matches.some((match) => String(match.matchRequestId) === String(request.id));
+            if (!matchExists) {
+              state.matches.unshift(await createMatchInDatabase(request));
+            }
+          }
         } catch (error) {
           alert(`Could not update match request in Supabase: ${error.message}`);
           return;
+        }
+      } else if (nextStatus === "Accepted") {
+        const matchExists = state.matches.some((match) => String(match.matchRequestId) === String(request.id));
+        if (!matchExists) {
+          state.matches.unshift({
+            id: Date.now(),
+            matchRequestId: request.id,
+            teamA: request.from,
+            teamB: request.to,
+            venue: request.venue,
+            overs: request.overs,
+            status: "Scheduled",
+            matchDate: request.matchDate || null,
+          });
         }
       }
 
       request.status = nextStatus;
       renderRequests();
+      renderMatches();
     });
 
     document.querySelector(".ball-buttons").addEventListener("click", (event) => {
@@ -1781,6 +1884,7 @@
     });
     renderPlayers();
     renderRequests();
+    renderMatches();
     renderTournaments();
     renderScore();
   </script>
