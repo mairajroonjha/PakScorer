@@ -60,6 +60,7 @@ create table if not exists public.match_requests (
   venue text not null default 'Local Ground',
   overs integer not null default 20 check (overs > 0),
   match_date date,
+  match_time time,
   format text not null default 'T20',
   status text not null default 'Pending' check (status in ('Pending', 'Accepted', 'Rejected', 'Cancelled')),
   created_at timestamptz not null default now(),
@@ -92,6 +93,7 @@ create table if not exists public.matches (
   winner_team_id uuid references public.teams(id) on delete set null,
   result_text text,
   match_date date,
+  match_time time,
   started_at timestamptz,
   completed_at timestamptz,
   created_at timestamptz not null default now()

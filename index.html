@@ -1286,7 +1286,7 @@
     async function loadMatchRequestsFromDatabase() {
       const { data, error } = await supabase
         .from("match_requests")
-        .select("id,from_team_id,to_team_id,from_team,to_team,venue,overs,match_date,format,status")
+        .select("id,from_team_id,to_team_id,from_team,to_team,venue,overs,match_date,match_time,format,status")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -1300,6 +1300,7 @@
         venue: request.venue,
         overs: request.overs,
         matchDate: request.match_date,
+        matchTime: request.match_time,
         format: request.format,
         status: request.status,
       }));
@@ -1310,7 +1311,7 @@
     async function loadMatchesFromDatabase() {
       const { data, error } = await supabase
         .from("matches")
-        .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date")
+        .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date,match_time")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -1326,6 +1327,7 @@
         overs: match.overs,
         status: match.status,
         matchDate: match.match_date,
+        matchTime: match.match_time,
       }));
 
       renderMatches();
@@ -1357,7 +1359,7 @@
       const { data, error } = await supabase
         .from("match_requests")
         .insert(request)
-        .select("id,from_team_id,to_team_id,from_team,to_team,venue,overs,match_date,format,status")
+        .select("id,from_team_id,to_team_id,from_team,to_team,venue,overs,match_date,match_time,format,status")
         .single();
 
       if (error) throw error;
@@ -1371,6 +1373,7 @@
         venue: data.venue,
         overs: data.overs,
         matchDate: data.match_date,
+        matchTime: data.match_time,
         format: data.format,
         status: data.status,
       };
@@ -1401,8 +1404,9 @@
           overs: request.overs,
           status: "Scheduled",
           match_date: request.matchDate || null,
+          match_time: request.matchTime || null,
         })
-        .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date")
+        .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date,match_time")
         .single();
 
       if (error) throw error;
@@ -1418,6 +1422,7 @@
         overs: data.overs,
         status: data.status,
         matchDate: data.match_date,
+        matchTime: data.match_time,
       };
     }
 
@@ -1791,6 +1796,7 @@
             venue: request.venue,
             overs: request.overs,
             match_date: request.matchDate,
+            match_time: request.matchTime || null,
             format: request.format,
             status: request.status,
           }));
