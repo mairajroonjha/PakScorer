@@ -3,25 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PakScorer App Prototype</title>
+  <title>PakScorer Elite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #071116;
-      --surface: #0d1b22;
-      --surface-2: #122832;
-      --line: #24414d;
-      --text: #f7fbff;
-      --muted: #a7bac5;
-      --green: #20c878;
-      --cyan: #55d6ff;
-      --gold: #ffd166;
-      --red: #ef476f;
-      --blue: #5b8cff;
-      --shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
+      --bg: #050a0f;
+      --surface: #0a141d;
+      --surface-2: #111f2c;
+      --glass: rgba(255, 255, 255, 0.04);
+      --glass-edge: rgba(255, 255, 255, 0.08);
+      --line: rgba(255, 255, 255, 0.08);
+      --text: #ffffff;
+      --muted: #8fa3b0;
+      --green: #00ffa3;
+      --cyan: #00f2ff;
+      --gold: #ffd700;
+      --red: #ff3e6d;
+      --blue: #3d8bff;
+      --shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+      --glow: 0 0 15px rgba(0, 242, 255, 0.3);
+      --radius: 12px;
     }
 
     * {
       box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
     }
 
     html,
@@ -30,28 +38,43 @@
       min-height: 100%;
       background: var(--bg);
       color: var(--text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: 'Outfit', sans-serif;
+      scroll-behavior: smooth;
     }
 
     body {
       min-height: 100vh;
       overflow-x: hidden;
+      background: radial-gradient(circle at 50% -20%, #112233 0%, #050a0f 70%);
     }
 
     button,
     input,
-    select {
+    select,
+    textarea {
       font: inherit;
+      color: inherit;
     }
 
     button {
       cursor: pointer;
+      border: none;
+      background: none;
+    }
+
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-edge);
+      box-shadow: var(--shadow);
     }
 
     .app {
       min-height: 100vh;
       display: grid;
       grid-template-columns: 264px minmax(0, 1fr);
+      perspective: 1500px;
     }
 
     .sidebar {
@@ -63,7 +86,8 @@
       gap: 22px;
       padding: 22px 16px;
       border-right: 1px solid var(--line);
-      background: #091820;
+      background: rgba(10, 20, 29, 0.8);
+      backdrop-filter: blur(20px);
     }
 
     .brand {
@@ -71,31 +95,34 @@
       align-items: center;
       gap: 12px;
       padding: 4px 8px 12px;
-      border-bottom: 1px solid var(--line);
     }
 
     .mark {
-      width: 42px;
-      height: 42px;
+      width: 44px;
+      height: 44px;
       display: grid;
       place-items: center;
-      border-radius: 8px;
+      border-radius: 10px;
       background: linear-gradient(135deg, var(--green), var(--cyan));
-      color: #061116;
-      font-weight: 950;
-      box-shadow: 0 14px 30px rgba(32, 200, 120, 0.22);
+      color: #050a0f;
+      font-weight: 900;
+      font-size: 1.2rem;
+      box-shadow: 0 0 20px rgba(0, 255, 163, 0.3);
     }
 
     .brand strong {
       display: block;
-      font-size: 1.05rem;
+      font-size: 1.15rem;
+      letter-spacing: -0.5px;
+      font-weight: 800;
     }
 
     .brand span {
       display: block;
       margin-top: 2px;
       color: var(--muted);
-      font-size: 0.82rem;
+      font-size: 0.85rem;
+      font-weight: 400;
     }
 
     .nav {
@@ -226,9 +253,31 @@
       animation: pageIn 180ms ease;
     }
 
+    [data-admin-only] {
+      display: none !important;
+    }
+    
+    .is-admin [data-admin-only] {
+      display: block !important;
+    }
+    
+    .is-admin .grid[data-admin-only] {
+      display: grid !important;
+    }
+    
+    .is-admin button[data-admin-only],
+    .is-admin .btn[data-admin-only] {
+      display: inline-flex !important;
+    }
+    
+    .is-admin li[data-admin-only],
+    .is-admin .feed li[data-admin-only] {
+      display: flex !important;
+    }
+
     .grid {
       display: grid;
-      gap: 16px;
+      gap: 20px;
     }
 
     .grid.cols-2 {
@@ -239,16 +288,37 @@
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
+    .grid.cols-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
     .panel,
     .card {
       border: 1px solid var(--line);
-      border-radius: 8px;
-      background: rgba(13, 27, 34, 0.88);
+      border-radius: var(--radius);
+      background: var(--surface);
       box-shadow: var(--shadow);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease, border-color 0.4s ease;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .card {
+      padding: 20px;
+    }
+
+    .card:hover {
+      transform: translateY(-8px) scale(1.02) rotateX(2deg);
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 242, 255, 0.1);
+      border-color: rgba(0, 242, 255, 0.3);
+      z-index: 10;
     }
 
     .panel {
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     .panel-head {
@@ -256,21 +326,22 @@
       align-items: center;
       justify-content: space-between;
       gap: 14px;
-      padding: 16px;
+      padding: 18px 20px;
       border-bottom: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.03);
+      background: linear-gradient(to right, rgba(255, 255, 255, 0.03), transparent);
     }
 
     .panel-head h2,
     .card h3 {
       margin: 0;
-      font-size: 1.04rem;
-      letter-spacing: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
     }
 
     .panel-head span {
       color: var(--muted);
-      font-size: 0.88rem;
+      font-size: 0.9rem;
       font-weight: 750;
     }
 
@@ -385,22 +456,34 @@
     }
 
     .btn {
-      min-height: 38px;
+      min-height: 42px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 10px;
       border: 1px solid transparent;
       border-radius: 8px;
-      padding: 8px 12px;
+      padding: 10px 20px;
       background: var(--surface-2);
       color: var(--text);
-      font-weight: 850;
+      font-weight: 700;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.2);
+    }
+
+    .btn:active {
+      transform: translateY(1px) scale(0.97);
     }
 
     .btn.primary {
       background: linear-gradient(135deg, var(--green), var(--cyan));
-      color: #061116;
+      color: #050a0f;
+      box-shadow: 0 10px 30px rgba(0, 255, 163, 0.2);
     }
 
     .btn.ghost {
@@ -410,44 +493,43 @@
     }
 
     .btn.danger {
-      background: rgba(239, 71, 111, 0.16);
-      color: #ffc2d0;
+      background: rgba(255, 62, 109, 0.15);
+      color: #ff9fb4;
     }
 
     .form-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 16px;
     }
 
     label {
       display: grid;
-      gap: 7px;
+      gap: 8px;
       color: var(--muted);
-      font-size: 0.84rem;
-      font-weight: 850;
+      font-size: 0.9rem;
+      font-weight: 600;
     }
 
-    input,
-    select {
-      width: 100%;
-      min-height: 42px;
+    input, select {
+      background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: #091820;
+      padding: 12px;
       color: var(--text);
-      padding: 9px 11px;
-      outline: none;
+      transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+      width: 100%;
     }
 
-    input:focus,
-    select:focus {
+    input:focus, select:focus {
+      outline: none;
       border-color: var(--cyan);
-      box-shadow: 0 0 0 3px rgba(85, 214, 255, 0.12);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 4px rgba(0, 242, 255, 0.1);
     }
 
     select option {
-      background: #091820;
+      background: var(--surface-2);
       color: var(--text);
     }
 
@@ -603,18 +685,38 @@
       font-weight: 900;
     }
 
-    .public-live-flash {
-      animation: liveFlash 720ms ease;
-    }
-
-    .public-score.boundary-flash {
-      border-color: rgba(32, 200, 120, 0.78);
-      box-shadow: 0 0 0 4px rgba(32, 200, 120, 0.13), var(--shadow);
-    }
-
     .public-score.danger-flash {
-      border-color: rgba(239, 71, 111, 0.82);
-      box-shadow: 0 0 0 4px rgba(239, 71, 111, 0.13), var(--shadow);
+      border-color: var(--red);
+      box-shadow: 0 0 30px rgba(255, 62, 109, 0.2), var(--shadow);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 10000;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal-content {
+      width: 100%;
+      max-width: 440px;
+      padding: 40px;
+      animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes modalSlideUp {
+      from { opacity: 0; transform: translateY(40px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .ball-chip.boundary {
@@ -818,10 +920,40 @@
       </nav>
 
       <div class="sidebar-footer">
+        <div id="adminProfile" style="display: none; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line);">
+          <span style="font-size: 0.7rem; color: var(--cyan); text-transform: uppercase; font-weight: 800;">Logged in as</span>
+          <strong id="adminEmail" style="font-size: 0.85rem; word-break: break-all;">admin@pakscorer.com</strong>
+          <button class="btn ghost" id="logoutBtn" style="padding: 4px 0; font-size: 0.75rem; color: var(--red); justify-content: flex-start; min-height: auto;">Logout</button>
+        </div>
+        <button class="btn primary" id="showLoginBtn" style="width: 100%; margin-bottom: 12px;">Admin Login</button>
         <span>Live match</span>
         <strong id="miniScore">87/3</strong>
       </div>
     </aside>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal-overlay" style="display: none;">
+      <div class="modal-content glass">
+        <div class="mark" style="margin: 0 auto 20px;">PS</div>
+        <h2 style="text-align: center; margin-bottom: 8px;">Admin Access</h2>
+        <p class="muted" style="text-align: center; margin-bottom: 24px;">Enter your credentials to unlock management tools.</p>
+        <form id="loginForm" class="form-grid">
+          <label>
+            Email address
+            <input type="email" id="loginEmail" placeholder="admin@example.com" required>
+          </label>
+          <label>
+            Password
+            <input type="password" id="loginPassword" placeholder="••••••••" required>
+          </label>
+          <div style="display: grid; gap: 10px; margin-top: 10px;">
+            <button class="btn primary" type="submit">Unlock Dashboard</button>
+            <button class="btn ghost" type="button" id="closeLogin">Return to Viewer Mode</button>
+          </div>
+        </form>
+        <p id="loginMessage" class="form-message" style="margin-top: 16px; text-align: center;"></p>
+      </div>
+    </div>
 
     <main class="main">
       <header class="topbar">
@@ -1164,7 +1296,7 @@
             <div class="panel-body grid" id="tournamentList"></div>
           </section>
 
-          <div class="grid" style="gap:16px;">
+          <div class="grid" data-admin-only style="gap:16px;">
             <section class="panel">
               <div class="panel-head">
                 <h2>Create Tournament</h2>
@@ -1227,6 +1359,7 @@
     };
 
     const state = {
+      user: null,
       teams: [
         { id: 1, name: "Pak Lions", city: "Lahore", captain: "Ali Raza", record: "8W - 3L" },
         { id: 2, name: "Lahore Kings", city: "Lahore", captain: "Umar Khan", record: "6W - 4L" },
@@ -1293,6 +1426,51 @@
         }
       });
     });
+
+    function updateAuthUI() {
+      const user = state.user;
+      const adminProfile = document.querySelector("#adminProfile");
+      const showLoginBtn = document.querySelector("#showLoginBtn");
+      const adminEmail = document.querySelector("#adminEmail");
+      
+      if (user) {
+        adminProfile.style.display = "block";
+        showLoginBtn.style.display = "none";
+        adminEmail.textContent = user.email;
+        document.body.classList.add("is-admin");
+      } else {
+        adminProfile.style.display = "none";
+        showLoginBtn.style.display = "block";
+        document.body.classList.remove("is-admin");
+      }
+      
+      const restrictedPages = ["teams", "players", "requests", "scoring"];
+      document.querySelectorAll(".nav button").forEach(btn => {
+        if (restrictedPages.includes(btn.dataset.page)) {
+          btn.style.display = user ? "flex" : "none";
+        }
+      });
+      
+      const activePageEl = document.querySelector(".page.active");
+      const activePage = activePageEl ? activePageEl.id : "dashboard";
+      if (!user && restrictedPages.includes(activePage)) {
+        document.querySelector("[data-page='public']").click();
+      }
+    }
+
+    async function handleLogin(email, password) {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      state.user = data.user;
+      updateAuthUI();
+      return data;
+    }
+
+    async function handleLogout() {
+      await supabase.auth.signOut();
+      state.user = null;
+      updateAuthUI();
+    }
 
     function initials(name) {
       return name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
@@ -1855,10 +2033,10 @@
           <div class="actions" style="margin-top: 12px;">
             <span class="tag ${request.status === "Accepted" ? "green" : request.status === "Rejected" ? "red" : "gold"}">${request.status}</span>
             ${request.status === "Pending" ? `
-              <button class="btn primary" data-request-action="Accepted" data-id="${request.id}">Accept</button>
-              <button class="btn danger" data-request-action="Rejected" data-id="${request.id}">Reject</button>
+              <button class="btn primary" data-admin-only data-request-action="Accepted" data-id="${request.id}">Accept</button>
+              <button class="btn danger" data-admin-only data-request-action="Rejected" data-id="${request.id}">Reject</button>
             ` : ""}
-            <button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem; margin-left: auto;" data-delete-request="${request.id}">Delete</button>
+            <button class="btn ghost danger" data-admin-only style="padding: 4px 8px; font-size: 0.75rem; margin-left: auto;" data-delete-request="${request.id}">Delete</button>
           </div>
         </article>
       `).join("");
@@ -1886,7 +2064,7 @@
             <span class="muted" style="font-size:0.75rem;">${match.status} · ${match.overs} overs · ${match.venue}</span>
             ${dateTime ? `<span style="color:var(--cyan);font-size:0.82rem;font-weight:800;">${dateTime}</span>` : ""}
           </div>
-          <button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem;" data-delete-match="${match.id}">Delete</button>
+          <button class="btn ghost danger" data-admin-only style="padding: 4px 8px; font-size: 0.75rem;" data-delete-match="${match.id}">Delete</button>
         </li>
       `;
       }).join("") : `<li><strong>No scheduled matches yet</strong><span>Accept a request to create one</span></li>`;
@@ -1898,7 +2076,7 @@
             <strong>${match.teamA} vs ${match.teamB}</strong>
             <span class="muted" style="font-size:0.75rem;">${match.status} · ${match.venue}</span>
           </div>
-          <button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem;" data-delete-match="${match.id}">Delete</button>
+          <button class="btn ghost danger" data-admin-only style="padding: 4px 8px; font-size: 0.75rem;" data-delete-match="${match.id}">Delete</button>
         </li>
       `).join("") : `<li><strong>No match history</strong></li>`;
 
@@ -2018,7 +2196,7 @@
                   <span><strong>${m.teamA}</strong> vs <strong>${m.teamB}</strong></span>
                   <div style="display:flex; gap: 8px; align-items: center;">
                     <span class="tag ${m.status === 'Live' ? 'green' : m.status === 'Completed' ? 'cyan' : ''}" style="font-size: 0.75rem;">${m.status}</span>
-                    <button class="btn ghost danger" style="padding: 2px 6px; font-size: 0.65rem;" data-delete-match="${m.id}">Delete</button>
+                    <button class="btn ghost danger" data-admin-only style="padding: 2px 6px; font-size: 0.65rem;" data-delete-match="${m.id}">Delete</button>
                   </div>
                 </li>
               `).join("")}
@@ -3075,6 +3253,46 @@
         button.textContent = "Delete";
         button.disabled = false;
       }
+    });
+
+    // Auth Event Listeners
+    document.querySelector("#showLoginBtn").addEventListener("click", () => {
+      document.querySelector("#loginModal").style.display = "grid";
+    });
+
+    document.querySelector("#closeLogin").addEventListener("click", () => {
+      document.querySelector("#loginModal").style.display = "none";
+    });
+
+    document.querySelector("#logoutBtn").addEventListener("click", () => {
+      handleLogout();
+    });
+
+    document.querySelector("#loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.querySelector("#loginEmail").value;
+      const password = document.querySelector("#loginPassword").value;
+      const msg = document.querySelector("#loginMessage");
+      
+      msg.textContent = "Verifying...";
+      msg.className = "form-message";
+
+      try {
+        await handleLogin(email, password);
+        document.querySelector("#loginModal").style.display = "none";
+        msg.textContent = "";
+      } catch (error) {
+        msg.textContent = "Login failed: " + error.message;
+        msg.className = "form-message error";
+      }
+    });
+
+    // Initial Auth Check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        state.user = session.user;
+      }
+      updateAuthUI();
     });
 
     loadTeamsFromDatabase().then(async () => {
