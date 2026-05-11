@@ -1004,6 +1004,16 @@
                 </div>
               </div>
               <p class="form-message" id="overNotice" aria-live="polite"></p>
+              <div class="form-grid" id="bowlerChooser" hidden>
+                <label>
+                  Next bowler from bowling team
+                  <select id="nextBowlerSelect"></select>
+                </label>
+                <label>
+                  Confirm
+                  <button class="btn primary" id="confirmBowler" type="button">Set Bowler</button>
+                </label>
+              </div>
 
               <div class="ball-buttons" style="margin-top: 16px;">
                 <button class="btn" data-ball="0">0</button>
@@ -1117,9 +1127,12 @@
         wickets: 3,
         legalBalls: 64,
         target: 164,
+        battingTeam: "Pak Lions",
+        bowlingTeam: "Lahore Kings",
         currentBowler: "Umar Khan",
         last: ["1", "4", "0", "Wd", "2", "W"],
         lastEventType: "danger",
+        needsBowler: false,
         history: [
           { label: "10.4", text: "Wicket. Hamza Shah caught at long-on." },
           { label: "10.3", text: "Two runs into the leg side." },
@@ -1150,6 +1163,17 @@
 
     function oversText(legalBalls) {
       return `${Math.floor(legalBalls / 6)}.${legalBalls % 6}`;
+    }
+
+    function bowlingTeamPlayers() {
+      const bowlers = state.players.filter((player) => (
+        player.team === state.score.bowlingTeam &&
+        (player.role === "Bowler" || player.role === "All-rounder")
+      ));
+
+      if (bowlers.length) return bowlers;
+
+      return state.players.filter((player) => player.team === state.score.bowlingTeam);
     }
 
     function renderTeams() {
@@ -1193,6 +1217,18 @@
       `).join("");
       document.querySelector("#playerCount").textContent = state.players.length;
       document.querySelector("#playersLabel").textContent = `${state.players.length} players`;
+      renderBowlerSelect();
+    }
+
+    function renderBowlerSelect() {
+      const select = document.querySelector("#nextBowlerSelect");
+      if (!select) return;
+
+      const bowlers = bowlingTeamPlayers();
+      select.innerHTML = bowlers.map((player) => `<option>${player.name}</option>`).join("");
+
+      const currentIndex = bowlers.findIndex((player) => player.name === state.score.currentBowler);
+      select.selectedIndex = currentIndex >= 0 ? currentIndex : 0;
     }
 
     function renderRequests() {
@@ -1257,6 +1293,7 @@
       document.querySelector("#publicScore").textContent = `${score.runs}/${score.wickets}`;
       document.querySelector("#publicDetail").textContent = `${overs} overs. Need ${needed} from ${ballsLeft} balls.`;
       document.querySelector("#winChance").textContent = `${chance}%`;
+      document.querySelector("#bowlerChooser").hidden = !score.needsBowler;
 
       const visibleBalls = score.last.slice(-6);
       const balls = visibleBalls.map((ball, index) => {
@@ -1294,6 +1331,7 @@
         legalBalls: score.legalBalls,
         currentBowler: score.currentBowler,
         lastEventType: score.lastEventType,
+        needsBowler: score.needsBowler,
         last: [...score.last],
         history: score.history.map((item) => ({ ...item })),
       };
@@ -1306,6 +1344,7 @@
       score.legalBalls = snapshot.legalBalls;
       score.currentBowler = snapshot.currentBowler;
       score.lastEventType = snapshot.lastEventType;
+      score.needsBowler = snapshot.needsBowler;
       score.last = [...snapshot.last];
       score.history = snapshot.history.map((item) => ({ ...item }));
     }
@@ -1322,17 +1361,20 @@
       if (score.legalBalls === 0 || score.legalBalls % 6 !== 0) return;
 
       const finishedOver = oversText(score.legalBalls);
-      const nextBowler = window.prompt(`Over ${finishedOver} complete. Enter next bowler name:`, score.currentBowler);
-      const cleanName = nextBowler && nextBowler.trim() ? nextBowler.trim() : score.currentBowler;
-
-      score.currentBowler = cleanName;
-      score.history.unshift({ label: finishedOver, text: `Over complete. ${cleanName} will bowl the next over.` });
+      score.needsBowler = true;
+      renderBowlerSelect();
       const notice = document.querySelector("#overNotice");
-      notice.textContent = `Over ${finishedOver} complete. Next bowler: ${cleanName}.`;
+      notice.textContent = `Over ${finishedOver} complete. Select next bowler from ${score.bowlingTeam}.`;
       notice.className = "form-message success";
     }
 
     function addLegalBall(label, runs, isWicket = false) {
+      if (state.score.needsBowler) {
+        const notice = document.querySelector("#overNotice");
+        notice.textContent = "Select the next bowler before scoring the next ball.";
+        notice.className = "form-message error";
+        return;
+      }
       rememberScore();
       const score = state.score;
       score.runs += runs;
@@ -1347,6 +1389,12 @@
     }
 
     function addExtra(label) {
+      if (state.score.needsBowler) {
+        const notice = document.querySelector("#overNotice");
+        notice.textContent = "Select the next bowler before scoring the next ball.";
+        notice.className = "form-message error";
+        return;
+      }
       rememberScore();
       const score = state.score;
       const isLegalExtra = label === "B" || label === "Lb";
@@ -1475,6 +1523,26 @@
 
       restoreScore(previous);
       notice.textContent = "Last ball undone. Score, over, wicket, bowler, and feed restored.";
+      notice.className = "form-message success";
+      renderScore();
+    });
+
+    document.querySelector("#confirmBowler").addEventListener("click", () => {
+      const score = state.score;
+      const select = document.querySelector("#nextBowlerSelect");
+      const bowler = select.value;
+      const notice = document.querySelector("#overNotice");
+
+      if (!bowler) {
+        notice.textContent = `No bowling option found for ${score.bowlingTeam}. Add a bowler or all-rounder first.`;
+        notice.className = "form-message error";
+        return;
+      }
+
+      score.currentBowler = bowler;
+      score.needsBowler = false;
+      score.history.unshift({ label: oversText(score.legalBalls), text: `${bowler} selected from ${score.bowlingTeam} to bowl the next over.` });
+      notice.textContent = `${bowler} confirmed as next bowler.`;
       notice.className = "form-message success";
       renderScore();
     });
