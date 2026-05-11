@@ -1312,14 +1312,15 @@
     }
 
     function bowlingTeamPlayers() {
+      const bowlingTeam = (state.score.bowlingTeam || "").trim().toLowerCase();
       const bowlers = state.players.filter((player) => (
-        player.team === state.score.bowlingTeam &&
+        (player.team || "").trim().toLowerCase() === bowlingTeam &&
         (player.role === "Bowler" || player.role === "All-rounder")
       ));
 
       if (bowlers.length) return bowlers;
 
-      return state.players.filter((player) => player.team === state.score.bowlingTeam);
+      return state.players.filter((player) => (player.team || "").trim().toLowerCase() === bowlingTeam);
     }
 
     function renderTeams() {
@@ -1877,6 +1878,7 @@
       document.querySelector("#dashOvers").textContent = `${overs} overs`;
       document.querySelector("#winChance").textContent = `${chanceText(score)}`;
       document.querySelector("#bowlerChooser").hidden = !score.needsBowler;
+      if (score.needsBowler) renderBowlerSelect();
 
       const visibleBalls = score.last.slice(-6);
       const balls = visibleBalls.map((ball, index) => {
