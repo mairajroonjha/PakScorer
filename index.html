@@ -1022,7 +1022,24 @@
       </section>
 
       <section class="page" id="scoring">
-        <div class="split">
+        <section class="panel" style="margin-bottom: 16px;">
+          <div class="panel-head">
+            <h2>Match Setup</h2>
+            <span id="activeMatchStatus">No match selected</span>
+          </div>
+          <div class="panel-body form-grid" style="align-items: end;">
+            <label>Select Match
+              <select id="scoringMatchSelect"><option value="">-- Select a match --</option></select>
+            </label>
+            <div style="display:flex; gap:8px;">
+              <button class="btn primary" id="startMatchBtn">Start/Resume Match</button>
+              <button class="btn" id="cancelMatchBtn">Cancel</button>
+              <button class="btn danger" id="endMatchBtn">End Match</button>
+            </div>
+          </div>
+        </section>
+
+        <div class="split" id="scoringControls" style="display: none; opacity: 0.5; pointer-events: none;">
           <section class="panel">
             <div class="panel-head">
               <h2>Live Scoring</h2>
@@ -1543,6 +1560,86 @@
       };
     }
 
+    async function updateMatchStatusInDatabase(id, status) {
+      const { data, error } = await supabase
+        .from("matches")
+        .update({ status })
+        .eq("id", id)
+        .select("id,status")
+        .single();
+      if (error) throw error;
+      return data;
+    }
+
+    async function loadInningsFromDatabase(matchId) {
+      const { data, error } = await supabase
+        .from("innings")
+        .select("*")
+        .eq("match_id", matchId)
+        .order("innings_number", { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      return data.length > 0 ? data[0] : null;
+    }
+
+    async function createInningsInDatabase(matchId, battingTeamId, bowlingTeamId, inningsNumber) {
+      const { data, error } = await supabase
+        .from("innings")
+        .insert({
+          match_id: matchId,
+          innings_number: inningsNumber,
+          batting_team_id: battingTeamId,
+          bowling_team_id: bowlingTeamId,
+          runs: 0,
+          wickets: 0,
+          legal_balls: 0
+        })
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data;
+    }
+
+    async function updateInningsInDatabase(inningsId, updates) {
+      const { data, error } = await supabase
+        .from("innings")
+        .update(updates)
+        .eq("id", inningsId)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data;
+    }
+
+    async function loadBallsFromDatabase(inningsId) {
+      const { data, error } = await supabase
+        .from("balls")
+        .select("*")
+        .eq("innings_id", inningsId)
+        .order("over_number", { ascending: true })
+        .order("ball_in_over", { ascending: true });
+      if (error) throw error;
+      return data;
+    }
+
+    async function addBallToDatabase(ball) {
+      const { data, error } = await supabase
+        .from("balls")
+        .insert(ball)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data;
+    }
+
+    async function deleteLastBallFromDatabase(ballId) {
+      const { error } = await supabase
+        .from("balls")
+        .delete()
+        .eq("id", ballId);
+      if (error) throw error;
+    }
+
     function renderBowlerSelect() {
       const select = document.querySelector("#nextBowlerSelect");
       if (!select) return;
@@ -1614,6 +1711,21 @@
       document.querySelector("#scheduledMatchCount").textContent = `${scheduled.length} matches`;
       document.querySelector("#dashboardFixtures").innerHTML = rows;
       document.querySelector("#scheduledMatchList").innerHTML = rows;
+
+      renderScoringMatchSelect();
+    }
+
+    function renderScoringMatchSelect() {
+      const select = document.querySelector("#scoringMatchSelect");
+      if (!select) return;
+
+      const activeMatch = state.currentMatch;
+      const options = state.matches
+        .filter(m => m.status === "Scheduled" || m.status === "Live" || m.status === "Setup")
+        .map(m => `<option value="${m.id}" ${activeMatch && activeMatch.id === m.id ? "selected" : ""}>${m.teamA} vs ${m.teamB} (${m.status})</option>`)
+        .join("");
+        
+      select.innerHTML = `<option value="">-- Select a match --</option>${options}`;
     }
 
     function renderTournaments() {
@@ -1740,7 +1852,7 @@
       notice.className = "form-message success";
     }
 
-    function addLegalBall(label, runs, isWicket = false) {
+    async function addLegalBall(label, runs, isWicket = false) {
       if (state.score.needsBowler) {
         const notice = document.querySelector("#overNotice");
         notice.textContent = "Select the next bowler before scoring the next ball.";
@@ -1758,9 +1870,36 @@
       askNextBowler();
       renderScore();
       animatePublicScore(score.lastEventType);
+
+      if (state.usingDatabase && state.currentInnings && state.currentMatch) {
+        try {
+          const ball = {
+            match_id: state.currentMatch.id,
+            innings_id: state.currentInnings.id,
+            ball_number: score.legalBalls,
+            over_number: Math.floor((score.legalBalls - 1) / 6),
+            ball_in_over: ((score.legalBalls - 1) % 6) + 1,
+            bowler_name: score.currentBowler,
+            runs_bat: runs,
+            runs_extra: 0,
+            extra_type: null,
+            is_legal: true,
+            is_wicket: isWicket,
+          };
+          const savedBall = await addBallToDatabase(ball);
+          state.score.undoStack[state.score.undoStack.length - 1].dbBallId = savedBall.id;
+          await updateInningsInDatabase(state.currentInnings.id, {
+            runs: score.runs,
+            wickets: score.wickets,
+            legal_balls: score.legalBalls
+          });
+        } catch (error) {
+           console.error("Failed to save ball to DB", error);
+        }
+      }
     }
 
-    function addExtra(label) {
+    async function addExtra(label) {
       if (state.score.needsBowler) {
         const notice = document.querySelector("#overNotice");
         notice.textContent = "Select the next bowler before scoring the next ball.";
@@ -1778,6 +1917,34 @@
       if (isLegalExtra) askNextBowler();
       renderScore();
       animatePublicScore(score.lastEventType);
+
+      if (state.usingDatabase && state.currentInnings && state.currentMatch) {
+        try {
+          const extraType = label === "Wd" ? "Wide" : label === "Nb" ? "No Ball" : label === "B" ? "Bye" : "Leg Bye";
+          const ball = {
+            match_id: state.currentMatch.id,
+            innings_id: state.currentInnings.id,
+            ball_number: isLegalExtra ? score.legalBalls : score.legalBalls + 1,
+            over_number: isLegalExtra ? Math.floor((score.legalBalls - 1) / 6) : Math.floor(score.legalBalls / 6),
+            ball_in_over: isLegalExtra ? ((score.legalBalls - 1) % 6) + 1 : (score.legalBalls % 6) + 1,
+            bowler_name: score.currentBowler,
+            runs_bat: 0,
+            runs_extra: 1,
+            extra_type: extraType,
+            is_legal: isLegalExtra,
+            is_wicket: false,
+          };
+          const savedBall = await addBallToDatabase(ball);
+          state.score.undoStack[state.score.undoStack.length - 1].dbBallId = savedBall.id;
+          await updateInningsInDatabase(state.currentInnings.id, {
+            runs: score.runs,
+            wickets: score.wickets,
+            legal_balls: score.legalBalls
+          });
+        } catch (error) {
+           console.error("Failed to save extra to DB", error);
+        }
+      }
     }
 
     document.querySelector("#teamForm").addEventListener("submit", async (event) => {
@@ -1996,7 +2163,7 @@
       if (button.dataset.wicket) addLegalBall("W", 0, true);
     });
 
-    document.querySelector("#undoBall").addEventListener("click", () => {
+    document.querySelector("#undoBall").addEventListener("click", async () => {
       const previous = state.score.undoStack.pop();
       const notice = document.querySelector("#overNotice");
 
@@ -2004,6 +2171,19 @@
         notice.textContent = "No ball available to undo.";
         notice.className = "form-message error";
         return;
+      }
+
+      if (state.usingDatabase && previous.dbBallId && state.currentInnings) {
+        try {
+          await deleteLastBallFromDatabase(previous.dbBallId);
+          await updateInningsInDatabase(state.currentInnings.id, {
+            runs: previous.runs,
+            wickets: previous.wickets,
+            legal_balls: previous.legalBalls
+          });
+        } catch (error) {
+          console.error("Failed to undo ball in DB", error);
+        }
       }
 
       restoreScore(previous);
@@ -2171,6 +2351,96 @@
       renderTournaments();
       message.textContent = `Application submitted for ${team.name}.`;
       message.classList.add("success");
+    });
+
+    document.querySelector("#startMatchBtn").addEventListener("click", async () => {
+      const select = document.querySelector("#scoringMatchSelect");
+      const matchId = select.value;
+      if (!matchId) return alert("Select a match first.");
+
+      const match = state.matches.find(m => m.id === matchId || m.id === Number(matchId));
+      if (!match) return;
+
+      document.querySelector("#startMatchBtn").textContent = "Loading...";
+
+      if (state.usingDatabase) {
+        try {
+          if (match.status !== "Live") {
+            await updateMatchStatusInDatabase(match.id, "Live");
+            match.status = "Live";
+          }
+          
+          let innings = await loadInningsFromDatabase(match.id);
+          if (!innings) {
+            innings = await createInningsInDatabase(match.id, match.teamAId, match.teamBId, 1);
+          }
+          
+          const balls = await loadBallsFromDatabase(innings.id);
+
+          state.currentMatch = match;
+          state.currentInnings = innings;
+          
+          state.score.runs = innings.runs;
+          state.score.wickets = innings.wickets;
+          state.score.legalBalls = innings.legal_balls;
+          state.score.battingTeam = match.teamA;
+          state.score.bowlingTeam = match.teamB;
+          state.score.target = 0;
+          state.score.last = balls.slice(-6).map(b => b.is_wicket ? "W" : b.extra_type ? (b.extra_type==="Wide"?"Wd":b.extra_type==="No Ball"?"Nb":b.extra_type==="Bye"?"B":"Lb") : b.runs_bat.toString());
+          state.score.history = balls.slice(-10).reverse().map(b => ({
+            label: `${b.over_number}.${b.ball_in_over}`,
+            text: b.is_wicket ? "Wicket." : b.extra_type ? `${b.extra_type} added.` : `${b.runs_bat} runs added.`
+          }));
+          state.score.undoStack = [];
+          state.score.needsBowler = (innings.legal_balls % 6 === 0);
+          
+          document.querySelector("#activeMatchStatus").textContent = `Live: ${match.teamA} vs ${match.teamB}`;
+          document.querySelector("#scoringControls").style.display = "";
+          document.querySelector("#scoringControls").style.opacity = "1";
+          document.querySelector("#scoringControls").style.pointerEvents = "auto";
+          
+          renderScore();
+          renderMatches();
+        } catch (error) {
+          alert("Error starting match: " + error.message);
+        }
+      } else {
+         state.currentMatch = match;
+         document.querySelector("#activeMatchStatus").textContent = `Local: ${match.teamA} vs ${match.teamB}`;
+         document.querySelector("#scoringControls").style.display = "";
+         document.querySelector("#scoringControls").style.opacity = "1";
+         document.querySelector("#scoringControls").style.pointerEvents = "auto";
+         renderScore();
+      }
+      document.querySelector("#startMatchBtn").textContent = "Start/Resume Match";
+    });
+
+    document.querySelector("#endMatchBtn").addEventListener("click", async () => {
+       if (!state.currentMatch) return;
+       if (confirm("Are you sure you want to end this match?")) {
+         if (state.usingDatabase) await updateMatchStatusInDatabase(state.currentMatch.id, "Completed");
+         state.currentMatch.status = "Completed";
+         state.currentMatch = null;
+         state.currentInnings = null;
+         document.querySelector("#scoringControls").style.opacity = "0.5";
+         document.querySelector("#scoringControls").style.pointerEvents = "none";
+         document.querySelector("#activeMatchStatus").textContent = "No match selected";
+         renderMatches();
+       }
+    });
+
+    document.querySelector("#cancelMatchBtn").addEventListener("click", async () => {
+       if (!state.currentMatch) return;
+       if (confirm("Are you sure you want to cancel this match?")) {
+         if (state.usingDatabase) await updateMatchStatusInDatabase(state.currentMatch.id, "Cancelled");
+         state.currentMatch.status = "Cancelled";
+         state.currentMatch = null;
+         state.currentInnings = null;
+         document.querySelector("#scoringControls").style.opacity = "0.5";
+         document.querySelector("#scoringControls").style.pointerEvents = "none";
+         document.querySelector("#activeMatchStatus").textContent = "No match selected";
+         renderMatches();
+       }
     });
 
     loadTeamsFromDatabase().then(async () => {
