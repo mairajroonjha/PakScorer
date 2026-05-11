@@ -1255,6 +1255,22 @@
       state.usingDatabase = true;
       setDatabaseStatus("connected", "Supabase connected");
       renderTeams();
+      await loadPlayersFromDatabase();
+    }
+
+    async function loadPlayersFromDatabase() {
+      const { data, error } = await supabase
+        .from("players")
+        .select("id,team_id,name,team,role,runs,wickets")
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      if (data.length) {
+        state.players = data;
+      }
+
+      renderPlayers();
     }
 
     async function createTeamInDatabase(team) {
@@ -1262,6 +1278,17 @@
         .from("teams")
         .insert(team)
         .select("id,name,city,captain,record")
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+
+    async function createPlayerInDatabase(player) {
+      const { data, error } = await supabase
+        .from("players")
+        .insert(player)
+        .select("id,team_id,name,team,role,runs,wickets")
         .single();
 
       if (error) throw error;
@@ -1505,7 +1532,7 @@
       message.classList.add("success");
     });
 
-    document.querySelector("#playerForm").addEventListener("submit", (event) => {
+    document.querySelector("#playerForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       const message = document.querySelector("#playerFormMessage");
       const name = document.querySelector("#newPlayerName").value.trim();
@@ -1532,13 +1559,30 @@
         return;
       }
 
-      state.players.push({
+      const selectedTeam = state.teams.find((item) => item.name === team);
+      const player = {
         name,
         team,
+        team_id: selectedTeam && typeof selectedTeam.id === "string" && selectedTeam.id.includes("-") ? selectedTeam.id : null,
         role,
         runs: 0,
         wickets: 0,
-      });
+      };
+
+      message.textContent = "Saving player...";
+
+      if (state.usingDatabase) {
+        try {
+          state.players.push(await createPlayerInDatabase(player));
+        } catch (error) {
+          message.textContent = error.code === "23505" ? "This player already exists in this team in the database." : "Could not save player to Supabase.";
+          message.classList.add("error");
+          return;
+        }
+      } else {
+        state.players.push({ id: Date.now(), ...player });
+      }
+
       renderPlayers();
       message.textContent = `${name} added to ${team}.`;
       message.classList.add("success");
