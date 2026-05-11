@@ -1256,6 +1256,7 @@
       setDatabaseStatus("connected", "Supabase connected");
       renderTeams();
       await loadPlayersFromDatabase();
+      await loadMatchRequestsFromDatabase();
     }
 
     async function loadPlayersFromDatabase() {
@@ -1271,6 +1272,32 @@
       }
 
       renderPlayers();
+    }
+
+    async function loadMatchRequestsFromDatabase() {
+      const { data, error } = await supabase
+        .from("match_requests")
+        .select("id,from_team_id,to_team_id,from_team,to_team,venue,overs,match_date,format,status")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      if (data.length) {
+        state.requests = data.map((request) => ({
+          id: request.id,
+          fromTeamId: request.from_team_id,
+          toTeamId: request.to_team_id,
+          from: request.from_team,
+          to: request.to_team,
+          venue: request.venue,
+          overs: request.overs,
+          matchDate: request.match_date,
+          format: request.format,
+          status: request.status,
+        }));
+      }
+
+      renderRequests();
     }
 
     async function createTeamInDatabase(team) {
@@ -1289,6 +1316,41 @@
         .from("players")
         .insert(player)
         .select("id,team_id,name,team,role,runs,wickets")
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+
+    async function createMatchRequestInDatabase(request) {
+      const { data, error } = await supabase
+        .from("match_requests")
+        .insert(request)
+        .select("id,from_team_id,to_team_id,from_team,to_team,venue,overs,match_date,format,status")
+        .single();
+
+      if (error) throw error;
+
+      return {
+        id: data.id,
+        fromTeamId: data.from_team_id,
+        toTeamId: data.to_team_id,
+        from: data.from_team,
+        to: data.to_team,
+        venue: data.venue,
+        overs: data.overs,
+        matchDate: data.match_date,
+        format: data.format,
+        status: data.status,
+      };
+    }
+
+    async function updateMatchRequestInDatabase(id, status) {
+      const { data, error } = await supabase
+        .from("match_requests")
+        .update({ status, decided_at: new Date().toISOString() })
+        .eq("id", id)
+        .select("id,status")
         .single();
 
       if (error) throw error;
@@ -1588,24 +1650,76 @@
       message.classList.add("success");
     });
 
-    document.querySelector("#requestForm").addEventListener("submit", (event) => {
+    document.querySelector("#requestForm").addEventListener("submit", async (event) => {
       event.preventDefault();
-      state.requests.unshift({
-        id: Date.now(),
-        from: document.querySelector("#requestFrom").value,
-        to: document.querySelector("#requestTo").value,
-        venue: document.querySelector("#requestVenue").value || "Local Ground",
-        overs: Number(document.querySelector("#requestOvers").value || 20),
+      const from = document.querySelector("#requestFrom").value;
+      const to = document.querySelector("#requestTo").value;
+      const fromTeam = state.teams.find((team) => team.name === from);
+      const toTeam = state.teams.find((team) => team.name === to);
+      const venue = document.querySelector("#requestVenue").value || "Local Ground";
+      const overs = Number(document.querySelector("#requestOvers").value || 20);
+      const matchDate = document.querySelector("#requestDate").value || null;
+      const isUuid = (value) => typeof value === "string" && value.includes("-");
+
+      if (from === to) {
+        alert("Please select two different teams.");
+        return;
+      }
+
+      const request = {
+        from,
+        to,
+        fromTeamId: fromTeam && isUuid(fromTeam.id) ? fromTeam.id : null,
+        toTeamId: toTeam && isUuid(toTeam.id) ? toTeam.id : null,
+        venue,
+        overs,
+        matchDate,
+        format: "T20",
         status: "Pending",
-      });
+      };
+
+      if (state.usingDatabase) {
+        try {
+          state.requests.unshift(await createMatchRequestInDatabase({
+            from_team_id: request.fromTeamId,
+            to_team_id: request.toTeamId,
+            from_team: request.from,
+            to_team: request.to,
+            venue: request.venue,
+            overs: request.overs,
+            match_date: request.matchDate,
+            format: request.format,
+            status: request.status,
+          }));
+        } catch (error) {
+          alert("Could not save match request to Supabase.");
+          return;
+        }
+      } else {
+        state.requests.unshift({ id: Date.now(), ...request });
+      }
+
       renderRequests();
     });
 
-    document.querySelector("#requestList").addEventListener("click", (event) => {
+    document.querySelector("#requestList").addEventListener("click", async (event) => {
       const button = event.target.closest("[data-request-action]");
       if (!button) return;
-      const request = state.requests.find((item) => item.id === Number(button.dataset.id));
-      if (request && request.status === "Pending") request.status = button.dataset.requestAction;
+      const request = state.requests.find((item) => String(item.id) === String(button.dataset.id));
+      if (!request || request.status !== "Pending") return;
+
+      const nextStatus = button.dataset.requestAction;
+
+      if (state.usingDatabase) {
+        try {
+          await updateMatchRequestInDatabase(request.id, nextStatus);
+        } catch (error) {
+          alert("Could not update match request in Supabase.");
+          return;
+        }
+      }
+
+      request.status = nextStatus;
       renderRequests();
     });
 
