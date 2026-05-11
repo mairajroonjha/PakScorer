@@ -950,8 +950,10 @@
                     <th>Name</th>
                     <th>Team</th>
                     <th>Role</th>
-                    <th>Runs</th>
-                    <th>Wickets</th>
+                    <th>Runs (Ave)</th>
+                    <th>SR</th>
+                    <th>Wkts</th>
+                    <th>Econ</th>
                   </tr>
                 </thead>
                 <tbody id="playerRows"></tbody>
@@ -1355,15 +1357,22 @@
     }
 
     function renderPlayers() {
-      document.querySelector("#playerRows").innerHTML = state.players.map((player) => `
-        <tr>
-          <td><strong>${player.name}</strong></td>
-          <td>${player.team}</td>
-          <td><span class="tag">${player.role}</span></td>
-          <td>${player.runs}</td>
-          <td>${player.wickets}</td>
-        </tr>
-      `).join("");
+      document.querySelector("#playerRows").innerHTML = state.players.map((p) => {
+        const sr = p.balls_faced ? ((p.runs / p.balls_faced) * 100).toFixed(1) : "0.0";
+        const ave = p.innings_played ? (p.runs / p.innings_played).toFixed(1) : p.runs.toFixed(1);
+        const econ = p.balls_bowled ? ((p.runs_conceded / p.balls_bowled) * 6).toFixed(2) : "0.00";
+        return `
+          <tr>
+            <td><strong>${p.name}</strong></td>
+            <td>${p.team}</td>
+            <td><span class="tag">${p.role}</span></td>
+            <td title="Innings: ${p.innings_played || 0}">${p.runs} <small class="muted">(${ave})</small></td>
+            <td>${sr}</td>
+            <td>${p.wickets}</td>
+            <td>${econ}</td>
+          </tr>
+        `;
+      }).join("");
       document.querySelector("#playerCount").textContent = state.players.length;
       document.querySelector("#playersLabel").textContent = `${state.players.length} players`;
       renderBowlerSelect();
@@ -1390,7 +1399,7 @@
     async function loadPlayersFromDatabase() {
       const { data, error } = await supabase
         .from("players")
-        .select("id,team_id,name,team,role,runs,wickets")
+        .select("id,team_id,name,team,role,runs,wickets,balls_faced,innings_played,runs_conceded,balls_bowled")
         .order("created_at", { ascending: true });
 
       if (error) throw error;
@@ -1674,6 +1683,56 @@
         .single();
       if (error) throw error;
       return data;
+    }
+
+    async function updatePlayerCareerStats(matchId) {
+      const { data: balls, error: ballsError } = await supabase
+        .from("balls")
+        .select("*")
+        .eq("match_id", matchId);
+      if (ballsError) throw ballsError;
+
+      const playerStats = {}; 
+
+      balls.forEach(b => {
+        if (!playerStats[b.batter_name]) playerStats[b.batter_name] = { runs:0, balls:0, wickets:0, conceded:0, balls_bowled:0, innings:0 };
+        playerStats[b.batter_name].runs += (b.runs_bat || 0);
+        if (!b.extra_type || b.extra_type !== "Wide") {
+          playerStats[b.batter_name].balls += 1;
+        }
+
+        if (!playerStats[b.bowler_name]) playerStats[b.bowler_name] = { runs:0, balls:0, wickets:0, conceded:0, balls_bowled:0, innings:0 };
+        playerStats[b.bowler_name].conceded += (b.runs_bat || 0) + (b.extra_type === "Wide" || b.extra_type === "No Ball" ? 1 : 0);
+        if (b.is_wicket) playerStats[b.bowler_name].wickets += 1;
+        if (!b.extra_type || (b.extra_type !== "Wide" && b.extra_type !== "No Ball")) {
+           playerStats[b.bowler_name].balls_bowled += 1;
+        }
+      });
+
+      const battersInThisMatch = new Set(balls.map(b => b.batter_name));
+      battersInThisMatch.forEach(name => {
+        if (playerStats[name]) playerStats[name].innings = 1;
+      });
+
+      for (const name in playerStats) {
+        const stats = playerStats[name];
+        const player = state.players.find(p => p.name === name);
+        if (player) {
+          const { error } = await supabase
+            .from("players")
+            .update({
+              runs: (player.runs || 0) + stats.runs,
+              balls_faced: (player.balls_faced || 0) + stats.balls,
+              innings_played: (player.innings_played || 0) + stats.innings,
+              wickets: (player.wickets || 0) + stats.wickets,
+              runs_conceded: (player.runs_conceded || 0) + stats.conceded,
+              balls_bowled: (player.balls_bowled || 0) + stats.balls_bowled
+            })
+            .eq("id", player.id);
+          if (error) console.error("Error updating player stats", name, error);
+        }
+      }
+      await loadPlayersFromDatabase();
     }
 
     async function loadLiveMatchesWithInningsFromDatabase() {
@@ -2367,6 +2426,7 @@
 
       if (state.usingDatabase) {
         try {
+          await updatePlayerCareerStats(match.id);
           await updateMatchResultInDatabase(match.id, winnerId, resultText);
           match.status = "Completed";
         } catch (error) {
