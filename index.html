@@ -854,7 +854,7 @@
         <div class="grid cols-2" style="margin-top: 16px;">
           <section class="panel">
             <div class="panel-head">
-              <h2>Next Fixtures</h2>
+              <h2>Active & Upcoming</h2>
               <span id="fixtureCount">0 scheduled</span>
             </div>
             <div class="panel-body">
@@ -1876,14 +1876,14 @@
     }
 
     function renderMatches() {
-      const scheduled = state.matches.filter((match) => (match.status === "Scheduled" || match.status === "Setup") && !match.tournamentId);
-      const rows = scheduled.length ? scheduled.map((match) => {
+      const activeMatches = state.matches.filter((match) => (match.status === "Scheduled" || match.status === "Setup" || match.status === "Live") && !match.tournamentId);
+      const rows = activeMatches.length ? activeMatches.map((match) => {
         const dateTime = formatMatchDateTime(match.matchDate, match.matchTime);
         return `
         <li style="display: flex; justify-content: space-between; align-items: center;">
           <div style="display:flex; flex-direction:column; gap: 2px;">
             <strong>${match.teamA} vs ${match.teamB}</strong>
-            <span class="muted" style="font-size:0.75rem;">${match.overs} overs · ${match.venue}</span>
+            <span class="muted" style="font-size:0.75rem;">${match.status} · ${match.overs} overs · ${match.venue}</span>
             ${dateTime ? `<span style="color:var(--cyan);font-size:0.82rem;font-weight:800;">${dateTime}</span>` : ""}
           </div>
           <button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem;" data-delete-match="${match.id}">Delete</button>
@@ -1902,8 +1902,8 @@
         </li>
       `).join("") : `<li><strong>No match history</strong></li>`;
 
-      safeSetText("#fixtureCount", `${scheduled.length} scheduled`);
-      safeSetText("#scheduledMatchCount", `${scheduled.length} matches`);
+      safeSetText("#fixtureCount", `${activeMatches.length} active`);
+      safeSetText("#scheduledMatchCount", `${activeMatches.length} matches`);
       safeSetText("#historyCount", `${history.length} past matches`);
       
       const dashFixtures = document.querySelector("#dashboardFixtures");
