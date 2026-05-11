@@ -1427,7 +1427,7 @@
     async function loadMatchesFromDatabase() {
       const { data, error } = await supabase
         .from("matches")
-        .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date,match_time")
+        .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date,match_time,tournament_id")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -1444,6 +1444,7 @@
         status: match.status,
         matchDate: match.match_date,
         matchTime: match.match_time,
+        tournamentId: match.tournament_id,
       }));
 
       renderMatches();
@@ -1795,7 +1796,7 @@
     }
 
     function renderMatches() {
-      const scheduled = state.matches.filter((match) => match.status === "Scheduled" || match.status === "Setup");
+      const scheduled = state.matches.filter((match) => (match.status === "Scheduled" || match.status === "Setup") && !match.tournamentId);
       const rows = scheduled.length ? scheduled.map((match) => {
         const dateTime = formatMatchDateTime(match.matchDate, match.matchTime);
         return `
@@ -1824,7 +1825,12 @@
       const activeMatch = state.currentMatch;
       const options = state.matches
         .filter(m => m.status === "Scheduled" || m.status === "Live" || m.status === "Setup")
-        .map(m => `<option value="${m.id}" ${activeMatch && activeMatch.id === m.id ? "selected" : ""}>${m.teamA} vs ${m.teamB} (${m.status})</option>`)
+        .map(m => {
+          const tId = m.tournamentId;
+          const tournament = tId ? state.tournaments.find(t => t.id === tId) : null;
+          const prefix = tournament ? `[${tournament.name}] ` : "";
+          return `<option value="${m.id}" ${activeMatch && activeMatch.id === m.id ? "selected" : ""}>${prefix}${m.teamA} vs ${m.teamB} (${m.status})</option>`;
+        })
         .join("");
         
       select.innerHTML = `<option value="">-- Select a match --</option>${options}`;
@@ -1833,17 +1839,37 @@
     function renderTournaments() {
       const count = state.tournaments.length;
       document.querySelector("#tournamentCount").textContent = `${count} tournament${count !== 1 ? "s" : ""}`;
-      document.querySelector("#tournamentList").innerHTML = count ? state.tournaments.map((tournament) => `
-        <article class="card">
-          <h3>${tournament.name}</h3>
-          <p class="muted">${tournament.format} · ${tournament.overs || 20} overs</p>
-          ${tournament.venue ? `<p class="muted" style="font-size:0.82rem;">${tournament.venue}</p>` : ""}
-          <div class="actions" style="margin-top: 12px;">
-            <span class="tag green">${tournament.status || "Applications Open"}</span>
-            ${tournament.start_date ? `<span class="tag">${new Date(tournament.start_date).toLocaleDateString("en-PK", { day:"numeric", month:"short", year:"numeric" })}</span>` : ""}
+      document.querySelector("#tournamentList").innerHTML = count ? state.tournaments.map((tournament) => {
+        const tournamentMatches = state.matches.filter(m => m.tournamentId === tournament.id);
+        const matchesList = tournamentMatches.length ? `
+          <div style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px;">
+            <p style="font-size: 0.82rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Matches</p>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px;">
+              ${tournamentMatches.map(m => `
+                <li style="font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px;">
+                  <span><strong>${m.teamA}</strong> vs <strong>${m.teamB}</strong></span>
+                  <span class="tag ${m.status === 'Live' ? 'green' : m.status === 'Completed' ? 'cyan' : ''}" style="font-size: 0.75rem;">${m.status}</span>
+                </li>
+              `).join("")}
+            </ul>
           </div>
-        </article>
-      `).join("") : `<p class="muted">No tournaments yet. Create one →</p>`;
+        ` : "";
+
+        return `
+          <article class="card" style="display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <h3 style="margin: 0;">${tournament.name}</h3>
+                <p class="muted" style="margin: 4px 0;">${tournament.format} · ${tournament.overs || 20} overs</p>
+              </div>
+              <span class="tag green">${tournament.status || "Applications Open"}</span>
+            </div>
+            ${tournament.venue ? `<p class="muted" style="font-size:0.82rem;">${tournament.venue}</p>` : ""}
+            ${tournament.start_date ? `<p class="muted" style="font-size:0.82rem;">Starts: ${new Date(tournament.start_date).toLocaleDateString("en-PK", { day:"numeric", month:"short", year:"numeric" })}</p>` : ""}
+            ${matchesList}
+          </article>
+        `;
+      }).join("") : `<p class="muted">No tournaments yet. Create one →</p>`;
 
       document.querySelector("#applicationCount").textContent = `${state.applications.length} team${state.applications.length !== 1 ? "s" : ""}`;
       document.querySelector("#applicationList").innerHTML = state.applications.length ? state.applications.map((application, index) => `
