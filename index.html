@@ -1417,7 +1417,8 @@
 
       if (error) throw error;
 
-      state.requests = data.map((request) => ({
+      // Clear sample data and replace with DB data
+      state.requests = (data || []).map((request) => ({
         id: request.id,
         fromTeamId: request.from_team_id,
         toTeamId: request.to_team_id,
@@ -1592,11 +1593,12 @@
     }
 
     async function deleteMatchRequestFromDatabase(id) {
-      const { error } = await supabase
+      const { error, count } = await supabase
         .from("match_requests")
-        .delete()
+        .delete({ count: "exact" })
         .eq("id", id);
       if (error) throw error;
+      return count;
     }
 
     async function createMatchInDatabase(request) {
@@ -1646,11 +1648,12 @@
     }
 
     async function deleteMatchFromDatabase(id) {
-      const { error } = await supabase
+      const { error, count } = await supabase
         .from("matches")
-        .delete()
+        .delete({ count: "exact" })
         .eq("id", id);
       if (error) throw error;
+      return count;
     }
 
     async function startMatchInDatabase(id, tossWinnerId, battingFirstId) {
@@ -2013,7 +2016,10 @@
               ${tournamentMatches.map(m => `
                 <li style="font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px;">
                   <span><strong>${m.teamA}</strong> vs <strong>${m.teamB}</strong></span>
-                  <span class="tag ${m.status === 'Live' ? 'green' : m.status === 'Completed' ? 'cyan' : ''}" style="font-size: 0.75rem;">${m.status}</span>
+                  <div style="display:flex; gap: 8px; align-items: center;">
+                    <span class="tag ${m.status === 'Live' ? 'green' : m.status === 'Completed' ? 'cyan' : ''}" style="font-size: 0.75rem;">${m.status}</span>
+                    <button class="btn ghost danger" style="padding: 2px 6px; font-size: 0.65rem;" data-delete-match="${m.id}">Delete</button>
+                  </div>
                 </li>
               `).join("")}
             </ul>
@@ -2620,7 +2626,13 @@
         
         try {
           if (state.usingDatabase) {
-            await deleteMatchRequestFromDatabase(requestId);
+            const count = await deleteMatchRequestFromDatabase(requestId);
+            if (count === 0 && isNaN(requestId)) {
+              alert("Wait! The request was not deleted from the database. This usually happens if you haven't enabled 'Delete' permissions in your Supabase RLS policies.");
+              deleteBtn.textContent = "Delete";
+              deleteBtn.disabled = false;
+              return;
+            }
           }
           state.requests = state.requests.filter(r => String(r.id) !== String(requestId));
           renderRequests();
@@ -3029,7 +3041,7 @@
       renderPublicLiveView();
     });
 
-    document.querySelector("#dashboard").addEventListener("click", async (event) => {
+    document.querySelector(".main").addEventListener("click", async (event) => {
       const button = event.target.closest("[data-delete-match]");
       if (!button) return;
       
@@ -3041,10 +3053,18 @@
 
       try {
         if (state.usingDatabase) {
-          await deleteMatchFromDatabase(matchId);
+          const count = await deleteMatchFromDatabase(matchId);
+          if (count === 0 && isNaN(matchId)) {
+            alert("Wait! The match was not deleted from the database. Check your Supabase RLS policies.");
+            button.textContent = "Delete";
+            button.disabled = false;
+            return;
+          }
         }
         state.matches = state.matches.filter(m => String(m.id) !== String(matchId));
         renderMatches();
+        renderTournaments();
+        renderPublicLiveView();
       } catch (error) {
         alert("Failed to delete match: " + error.message);
         button.textContent = "Delete";
