@@ -1222,7 +1222,7 @@
       ["#newPlayerTeam", "#requestFrom", "#requestTo"].forEach((selector) => {
         document.querySelector(selector).innerHTML = options;
       });
-      document.querySelector("#requestTo").selectedIndex = Math.min(1, state.teams.length - 1);
+      document.querySelector("#requestTo").selectedIndex = state.teams.length > 1 ? 1 : 0;
     }
 
     function renderPlayers() {
@@ -1248,9 +1248,7 @@
 
       if (error) throw error;
 
-      if (data.length) {
-        state.teams = data;
-      }
+      state.teams = data;
 
       state.usingDatabase = true;
       setDatabaseStatus("connected", "Supabase connected");
@@ -1267,9 +1265,7 @@
 
       if (error) throw error;
 
-      if (data.length) {
-        state.players = data;
-      }
+      state.players = data;
 
       renderPlayers();
     }
@@ -1282,20 +1278,18 @@
 
       if (error) throw error;
 
-      if (data.length) {
-        state.requests = data.map((request) => ({
-          id: request.id,
-          fromTeamId: request.from_team_id,
-          toTeamId: request.to_team_id,
-          from: request.from_team,
-          to: request.to_team,
-          venue: request.venue,
-          overs: request.overs,
-          matchDate: request.match_date,
-          format: request.format,
-          status: request.status,
-        }));
-      }
+      state.requests = data.map((request) => ({
+        id: request.id,
+        fromTeamId: request.from_team_id,
+        toTeamId: request.to_team_id,
+        from: request.from_team,
+        to: request.to_team,
+        venue: request.venue,
+        overs: request.overs,
+        matchDate: request.match_date,
+        format: request.format,
+        status: request.status,
+      }));
 
       renderRequests();
     }
@@ -1661,6 +1655,11 @@
       const matchDate = document.querySelector("#requestDate").value || null;
       const isUuid = (value) => typeof value === "string" && value.includes("-");
 
+      if (state.teams.length < 2) {
+        alert("Please add at least two teams before sending a match request.");
+        return;
+      }
+
       if (from === to) {
         alert("Please select two different teams.");
         return;
@@ -1714,7 +1713,7 @@
         try {
           await updateMatchRequestInDatabase(request.id, nextStatus);
         } catch (error) {
-          alert("Could not update match request in Supabase.");
+          alert(`Could not update match request in Supabase: ${error.message}`);
           return;
         }
       }
