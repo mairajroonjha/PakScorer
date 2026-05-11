@@ -864,16 +864,11 @@
 
           <section class="panel">
             <div class="panel-head">
-              <h2>Match Flow</h2>
-              <span>First version</span>
+              <h2>Match History</h2>
+              <span id="historyCount">0 past matches</span>
             </div>
             <div class="panel-body">
-              <ul class="feed">
-                <li><strong>Create team</strong><span>Step 2</span></li>
-                <li><strong>Add players</strong><span>Step 3</span></li>
-                <li><strong>Request match</strong><span>Step 4</span></li>
-                <li><strong>Score live</strong><span>Step 6</span></li>
-              </ul>
+              <ul class="feed" id="matchHistoryList"></ul>
             </div>
           </section>
         </div>
@@ -1633,6 +1628,14 @@
       return data;
     }
 
+    async function deleteMatchFromDatabase(id) {
+      const { error } = await supabase
+        .from("matches")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    }
+
     async function startMatchInDatabase(id, tossWinnerId, battingFirstId) {
       const { data, error } = await supabase
         .from("matches")
@@ -1816,10 +1819,29 @@
       `;
       }).join("") : `<li><strong>No scheduled matches yet</strong><span>Accept a request to create one</span></li>`;
 
-      document.querySelector("#fixtureCount").textContent = `${scheduled.length} scheduled`;
-      document.querySelector("#scheduledMatchCount").textContent = `${scheduled.length} matches`;
-      document.querySelector("#dashboardFixtures").innerHTML = rows;
-      document.querySelector("#scheduledMatchList").innerHTML = rows;
+      const history = state.matches.filter((match) => (match.status === "Completed" || match.status === "Cancelled") && !match.tournamentId);
+      const historyRows = history.length ? history.map((match) => `
+        <li style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display:flex; flex-direction:column; gap: 2px;">
+            <strong>${match.teamA} vs ${match.teamB}</strong>
+            <span class="muted" style="font-size:0.75rem;">${match.status} · ${match.venue}</span>
+          </div>
+          <button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem;" data-delete-match="${match.id}">Delete</button>
+        </li>
+      `).join("") : `<li><strong>No match history</strong></li>`;
+
+      safeSetText("#fixtureCount", `${scheduled.length} scheduled`);
+      safeSetText("#scheduledMatchCount", `${scheduled.length} matches`);
+      safeSetText("#historyCount", `${history.length} past matches`);
+      
+      const dashFixtures = document.querySelector("#dashboardFixtures");
+      if (dashFixtures) dashFixtures.innerHTML = rows;
+      
+      const schedList = document.querySelector("#scheduledMatchList");
+      if (schedList) schedList.innerHTML = rows;
+      
+      const histList = document.querySelector("#matchHistoryList");
+      if (histList) histList.innerHTML = historyRows;
 
       renderScoringMatchSelect();
     }
@@ -2842,6 +2864,29 @@
       document.querySelector("#publicDetailContainer").style.display = "none";
       document.querySelector("#publicGridContainer").style.display = "block";
       renderPublicLiveView();
+    });
+
+    document.querySelector("#matchHistoryList").addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-delete-match]");
+      if (!button) return;
+      
+      const matchId = button.dataset.deleteMatch;
+      if (!confirm("Are you sure you want to permanently delete this match and all its data?")) return;
+      
+      button.textContent = "Deleting...";
+      button.disabled = true;
+
+      try {
+        if (state.usingDatabase) {
+          await deleteMatchFromDatabase(matchId);
+        }
+        state.matches = state.matches.filter(m => String(m.id) !== String(matchId));
+        renderMatches();
+      } catch (error) {
+        alert("Failed to delete match: " + error.message);
+        button.textContent = "Delete";
+        button.disabled = false;
+      }
     });
 
     loadTeamsFromDatabase().then(async () => {
