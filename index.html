@@ -203,6 +203,12 @@
       white-space: nowrap;
     }
 
+    .status-pill.warning {
+      border-color: rgba(255, 209, 102, 0.4);
+      background: rgba(255, 209, 102, 0.12);
+      color: #ffe7a3;
+    }
+
     .dot {
       width: 9px;
       height: 9px;
@@ -1083,7 +1089,13 @@
     </main>
   </div>
 
-  <script>
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const SUPABASE_URL = "https://sbmraxcazwsmcyyavqjv.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_aWDK6-aSBreRPSU5Qp9kRw_A-IuRT3x";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     const pages = {
       dashboard: ["Dashboard", "Foundation prototype for teams, players, requests, scoring, and tournaments."],
       teams: ["Teams", "Create profiles, track captains, and prepare squads for matches."],
@@ -1140,6 +1152,7 @@
         ],
         undoStack: [],
       },
+      usingDatabase: false,
     };
 
     const title = document.querySelector("#pageTitle");
@@ -1163,6 +1176,13 @@
 
     function oversText(legalBalls) {
       return `${Math.floor(legalBalls / 6)}.${legalBalls % 6}`;
+    }
+
+    function setDatabaseStatus(mode, message) {
+      const pill = document.querySelector(".status-pill");
+      const label = document.querySelector("#liveStatus");
+      pill.classList.toggle("warning", mode !== "connected");
+      label.textContent = message;
     }
 
     function bowlingTeamPlayers() {
@@ -1218,6 +1238,34 @@
       document.querySelector("#playerCount").textContent = state.players.length;
       document.querySelector("#playersLabel").textContent = `${state.players.length} players`;
       renderBowlerSelect();
+    }
+
+    async function loadTeamsFromDatabase() {
+      const { data, error } = await supabase
+        .from("teams")
+        .select("id,name,city,captain,record")
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      if (data.length) {
+        state.teams = data;
+      }
+
+      state.usingDatabase = true;
+      setDatabaseStatus("connected", "Supabase connected");
+      renderTeams();
+    }
+
+    async function createTeamInDatabase(team) {
+      const { data, error } = await supabase
+        .from("teams")
+        .insert(team)
+        .select("id,name,city,captain,record")
+        .single();
+
+      if (error) throw error;
+      return data;
     }
 
     function renderBowlerSelect() {
@@ -1408,7 +1456,7 @@
       animatePublicScore(score.lastEventType);
     }
 
-    document.querySelector("#teamForm").addEventListener("submit", (event) => {
+    document.querySelector("#teamForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       const message = document.querySelector("#teamFormMessage");
       const name = document.querySelector("#newTeamName").value.trim();
@@ -1431,13 +1479,27 @@
         return;
       }
 
-      state.teams.push({
-        id: Date.now(),
+      const team = {
         name,
         city: city || "Unknown",
         captain: captain || "Captain",
         record: "0W - 0L",
-      });
+      };
+
+      message.textContent = "Saving team...";
+
+      if (state.usingDatabase) {
+        try {
+          state.teams.push(await createTeamInDatabase(team));
+        } catch (error) {
+          message.textContent = error.code === "23505" ? "This team already exists in the database." : "Could not save team to Supabase.";
+          message.classList.add("error");
+          return;
+        }
+      } else {
+        state.teams.push({ id: Date.now(), ...team });
+      }
+
       renderTeams();
       message.textContent = `${name} added successfully.`;
       message.classList.add("success");
@@ -1554,7 +1616,12 @@
       renderTournaments();
     });
 
-    renderTeams();
+    loadTeamsFromDatabase().catch((error) => {
+      state.usingDatabase = false;
+      setDatabaseStatus("fallback", "Local sample data");
+      renderTeams();
+      console.warn("Supabase teams unavailable:", error.message);
+    });
     renderPlayers();
     renderRequests();
     renderTournaments();
