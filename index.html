@@ -1086,6 +1086,7 @@
                     <th>SR</th>
                     <th>Wkts</th>
                     <th>Econ</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody id="playerRows"></tbody>
@@ -1823,6 +1824,8 @@
         status: data.status,
         matchDate: data.match_date,
         matchTime: data.match_time,
+        tournamentId: data.tournament_id,
+        user_id: data.user_id,
       };
     }
 
@@ -2755,6 +2758,7 @@
         city: city || "Unknown",
         captain: captain || "Captain",
         record: "0W - 0L",
+        user_id: state.user?.id || null,
       };
 
       message.textContent = "Saving team...";
@@ -2804,6 +2808,14 @@
       }
 
       const selectedTeam = state.teams.find((item) => item.name === team);
+      
+      // Enforce ownership: only the team owner can add players
+      if (state.usingDatabase && selectedTeam && !isOwner(selectedTeam)) {
+        message.textContent = "You can only add players to your own team.";
+        message.classList.add("error");
+        return;
+      }
+      
       const player = {
         name,
         team,
@@ -2811,6 +2823,7 @@
         role,
         runs: 0,
         wickets: 0,
+        user_id: state.user?.id || null,
       };
 
       message.textContent = "Saving player...";
@@ -2830,6 +2843,54 @@
       renderPlayers();
       message.textContent = `${name} added to ${team}.`;
       message.classList.add("success");
+    });
+
+    // Player delete handler
+    document.querySelector("#playerRows").addEventListener("click", async (event) => {
+      const btn = event.target.closest("[data-delete-player]");
+      if (!btn) return;
+      if (!confirm("Delete this player permanently?")) return;
+      const playerId = btn.dataset.deletePlayer;
+      btn.textContent = "...";
+      btn.disabled = true;
+      if (state.usingDatabase) {
+        try {
+          const { error } = await supabase.from("players").delete().eq("id", playerId);
+          if (error) throw error;
+          await loadPlayersFromDatabase();
+        } catch (err) {
+          alert("Could not delete player: " + err.message);
+          btn.textContent = "Delete";
+          btn.disabled = false;
+        }
+      } else {
+        state.players = state.players.filter(p => String(p.id) !== String(playerId));
+        renderPlayers();
+      }
+    });
+
+    // Team delete handler
+    document.querySelector("#teamList").addEventListener("click", async (event) => {
+      const btn = event.target.closest("[data-delete-team]");
+      if (!btn) return;
+      if (!confirm("Delete this team and all its players permanently?")) return;
+      const teamId = btn.dataset.deleteTeam;
+      btn.textContent = "...";
+      btn.disabled = true;
+      if (state.usingDatabase) {
+        try {
+          const { error } = await supabase.from("teams").delete().eq("id", teamId);
+          if (error) throw error;
+          await loadTeamsFromDatabase();
+        } catch (err) {
+          alert("Could not delete team: " + err.message);
+          btn.textContent = "Delete";
+          btn.disabled = false;
+        }
+      } else {
+        state.teams = state.teams.filter(t => String(t.id) !== String(teamId));
+        renderTeams();
+      }
     });
 
     document.querySelector("#requestForm").addEventListener("submit", async (event) => {
@@ -2880,6 +2941,7 @@
             match_time: request.matchTime || null,
             format: request.format,
             status: request.status,
+            user_id: state.user?.id || null,
           }));
         } catch (error) {
           alert("Could not save match request to Supabase.");
@@ -3075,6 +3137,7 @@
         start_date: startDate,
         end_date: endDate,
         status: "Applications Open",
+        user_id: state.user?.id || null,
       };
 
       message.textContent = "Saving tournament...";
