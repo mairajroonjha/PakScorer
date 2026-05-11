@@ -1873,11 +1873,79 @@
       select.innerHTML = `<option value="">-- Select a match --</option>${options}`;
     }
 
+    function calculateStandings(tournamentId) {
+      const teams = state.applications
+        .filter((app) => app.tournamentId === tournamentId && app.status === "Approved")
+        .map((app) => ({
+          id: app.teamId,
+          name: app.team,
+          played: 0,
+          won: 0,
+          lost: 0,
+          tied: 0,
+          points: 0
+        }));
+
+      const matches = state.matches.filter((m) => m.tournamentId === tournamentId && m.status === "Completed");
+
+      matches.forEach((m) => {
+        const teamA = teams.find((t) => String(t.id) === String(m.teamAId));
+        const teamB = teams.find((t) => String(t.id) === String(m.teamBId));
+
+        if (teamA) teamA.played++;
+        if (teamB) teamB.played++;
+
+        if (m.result_text && m.result_text.toLowerCase().includes("tie")) {
+          if (teamA) { teamA.tied++; teamA.points += 1; }
+          if (teamB) { teamB.tied++; teamB.points += 1; }
+        } else if (m.winner_team_id) {
+          const winner = teams.find((t) => String(t.id) === String(m.winner_team_id));
+          const loser = teams.find((t) => String(t.id) === String(m.winner_team_id === m.teamAId ? m.teamBId : m.teamAId));
+          if (winner) { winner.won++; winner.points += 2; }
+          if (loser) { loser.lost++; }
+        }
+      });
+
+      return teams.sort((a, b) => b.points - a.points || b.won - a.won);
+    }
+
     function renderTournaments() {
       const count = state.tournaments.length;
       document.querySelector("#tournamentCount").textContent = `${count} tournament${count !== 1 ? "s" : ""}`;
       document.querySelector("#tournamentList").innerHTML = count ? state.tournaments.map((tournament) => {
         const tournamentMatches = state.matches.filter(m => m.tournamentId === tournament.id);
+        const standings = calculateStandings(tournament.id);
+
+        const standingsHtml = standings.length ? `
+          <div style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px;">
+            <p style="font-size: 0.82rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Standings</p>
+            <div class="table-container" style="background: rgba(255,255,255,0.02); border-radius: 8px; overflow: hidden;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                <thead>
+                  <tr style="background: rgba(255,255,255,0.05); text-align: left;">
+                    <th style="padding: 8px 12px;">Team</th>
+                    <th style="padding: 8px; text-align: center;">P</th>
+                    <th style="padding: 8px; text-align: center;">W</th>
+                    <th style="padding: 8px; text-align: center;">L</th>
+                    <th style="padding: 8px; text-align: center;">Pts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${standings.map(s => `
+                    <tr style="border-top: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 8px 12px;"><strong>${s.name}</strong></td>
+                      <td style="padding: 8px; text-align: center;">${s.played}</td>
+                      <td style="padding: 8px; text-align: center;">${s.won}</td>
+                      <td style="padding: 8px; text-align: center;">${s.lost}</td>
+                      <td style="padding: 8px; text-align: center;"><span class="tag gold" style="font-weight: 800;">${s.points}</span></td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ` : "";
+
         const matchesList = tournamentMatches.length ? `
           <div style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px;">
             <p style="font-size: 0.82rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Matches</p>
@@ -1903,6 +1971,7 @@
             </div>
             ${tournament.venue ? `<p class="muted" style="font-size:0.82rem;">${tournament.venue}</p>` : ""}
             ${tournament.start_date ? `<p class="muted" style="font-size:0.82rem;">Starts: ${new Date(tournament.start_date).toLocaleDateString("en-PK", { day:"numeric", month:"short", year:"numeric" })}</p>` : ""}
+            ${standingsHtml}
             ${matchesList}
           </article>
         `;
