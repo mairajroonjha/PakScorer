@@ -896,29 +896,48 @@
             </div>
           </section>
 
-          <section class="panel">
-            <div class="panel-head">
-              <h2>Create Team</h2>
-              <span>Prototype form</span>
-            </div>
-            <form class="panel-body grid" id="teamForm">
-              <label>Team name <input id="newTeamName" value="Rawalpindi Royals" /></label>
-              <label>City <input id="newTeamCity" value="Rawalpindi" /></label>
-              <label>Captain <input id="newTeamCaptain" value="Bilal Khan" /></label>
-              <p class="form-message" id="teamFormMessage" aria-live="polite"></p>
-              <button class="btn primary" type="submit">Add Team</button>
-            </form>
-          </section>
+          <div class="grid" style="gap:16px;">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Create Team</h2>
+                <span>Prototype form</span>
+              </div>
+              <form class="panel-body grid" id="teamForm">
+                <label>Team name <input id="newTeamName" value="Rawalpindi Royals" /></label>
+                <label>City <input id="newTeamCity" value="Rawalpindi" /></label>
+                <label>Captain <input id="newTeamCaptain" value="Bilal Khan" /></label>
+                <p class="form-message" id="teamFormMessage" aria-live="polite"></p>
+                <button class="btn primary" type="submit">Add Team</button>
+              </form>
+            </section>
 
-          <section class="panel">
-            <div class="panel-head">
-              <h2>Scheduled Matches</h2>
-              <span id="scheduledMatchCount">0 matches</span>
-            </div>
-            <div class="panel-body">
-              <ul class="feed" id="scheduledMatchList"></ul>
-            </div>
-          </section>
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Apply to Tournament</h2>
+                <span>Team registration</span>
+              </div>
+              <form class="panel-body grid" id="applyForm">
+                <label>Tournament
+                  <select id="applyTournament"><option value="">-- Select tournament --</option></select>
+                </label>
+                <label>Team
+                  <select id="applyTeam"></select>
+                </label>
+                <p class="form-message" id="applyFormMessage" aria-live="polite"></p>
+                <button class="btn primary" type="submit">Apply Now</button>
+              </form>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Scheduled Matches</h2>
+                <span id="scheduledMatchCount">0 matches</span>
+              </div>
+              <div class="panel-body">
+                <ul class="feed" id="scheduledMatchList"></ul>
+              </div>
+            </section>
+          </div>
         </div>
       </section>
 
@@ -1113,22 +1132,6 @@
               </form>
             </section>
 
-            <section class="panel">
-              <div class="panel-head">
-                <h2>Apply to Tournament</h2>
-                <span>Team registration</span>
-              </div>
-              <form class="panel-body grid" id="applyForm">
-                <label>Tournament
-                  <select id="applyTournament"><option value="">-- Select tournament --</option></select>
-                </label>
-                <label>Team
-                  <select id="applyTeam"></select>
-                </label>
-                <p class="form-message" id="applyFormMessage" aria-live="polite"></p>
-                <button class="btn primary" type="submit">Apply Now</button>
-              </form>
-            </section>
 
             <section class="panel">
               <div class="panel-head">
