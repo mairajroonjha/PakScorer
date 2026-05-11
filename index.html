@@ -1064,10 +1064,11 @@
             <div class="panel-body scorecard">
               <div class="scoreboard">
                 <div class="score-main"><strong id="scoreRuns">87</strong><span>/<span id="scoreWickets">3</span></span></div>
-                <div class="grid cols-3">
+                <div class="grid cols-4">
                   <div class="card"><span class="muted">Overs</span><h3 id="scoreOvers">10.4</h3></div>
                   <div class="card"><span class="muted">Run rate</span><h3 id="runRate">8.16</h3></div>
                   <div class="card"><span class="muted">Bowler</span><h3 id="currentBowler">Umar Khan</h3></div>
+                  <div class="card"><span class="muted">Win chance</span><h3 id="winChance">50%</h3></div>
                 </div>
               </div>
               <p class="form-message" id="overNotice" aria-live="polite"></p>
@@ -1307,8 +1308,13 @@
     function setDatabaseStatus(mode, message) {
       const pill = document.querySelector(".status-pill");
       const label = document.querySelector("#liveStatus");
-      pill.classList.toggle("warning", mode !== "connected");
-      label.textContent = message;
+      if (pill) pill.classList.toggle("warning", mode !== "connected");
+      if (label) label.textContent = message;
+    }
+
+    function safeSetText(id, text) {
+      const el = document.querySelector(id);
+      if (el) el.textContent = text;
     }
 
     function bowlingTeamPlayers() {
@@ -1893,17 +1899,19 @@
       const targetText = score.target > 0 ? `Target: ${score.target}` : "";
       const inningsTextLabel = state.currentInnings ? `Innings ${state.currentInnings.innings_number}` : "Scoring";
       
-      document.querySelector("#inningsStatus").textContent = `${score.battingTeam} batting (${inningsTextLabel}) ${targetText}`;
-      document.querySelector("#scoreRuns").textContent = score.runs;
-      document.querySelector("#scoreWickets").textContent = score.wickets;
-      document.querySelector("#scoreOvers").textContent = overs;
-      document.querySelector("#runRate").textContent = runRate;
-      document.querySelector("#currentBowler").textContent = score.currentBowler;
-      document.querySelector("#dashScore").textContent = `${score.runs}/${score.wickets}`;
-      document.querySelector("#miniScore").textContent = `${score.runs}/${score.wickets}`;
-      document.querySelector("#dashOvers").textContent = `${overs} overs`;
-      document.querySelector("#winChance").textContent = `${chanceText(score)}`;
-      document.querySelector("#bowlerChooser").hidden = !score.needsBowler;
+      safeSetText("#inningsStatus", `${score.battingTeam} batting (${inningsTextLabel}) ${targetText}`);
+      safeSetText("#scoreRuns", score.runs);
+      safeSetText("#scoreWickets", score.wickets);
+      safeSetText("#scoreOvers", overs);
+      safeSetText("#runRate", runRate);
+      safeSetText("#currentBowler", score.currentBowler);
+      safeSetText("#dashScore", `${score.runs}/${score.wickets}`);
+      safeSetText("#miniScore", `${score.runs}/${score.wickets}`);
+      safeSetText("#dashOvers", `${overs} overs`);
+      safeSetText("#winChance", chanceText(score));
+
+      const bowlerChooser = document.querySelector("#bowlerChooser");
+      if (bowlerChooser) bowlerChooser.hidden = !score.needsBowler;
       if (score.needsBowler) renderBowlerSelect();
 
       const visibleBalls = score.last.slice(-6);
@@ -2734,7 +2742,7 @@
         }
       }
 
-      document.querySelector("#startMatchBtn").textContent = "Loading...";
+      safeSetText("#startMatchBtn", "Loading...");
 
       if (state.usingDatabase) {
         try {
@@ -2770,7 +2778,7 @@
           state.score.undoStack = [];
           state.score.needsBowler = (innings.legal_balls % 6 === 0);
           
-          document.querySelector("#activeMatchStatus").textContent = `Live: ${match.teamA} vs ${match.teamB}`;
+          safeSetText("#activeMatchStatus", `Live: ${match.teamA} vs ${match.teamB}`);
           document.querySelector("#scoringControls").style.display = "";
           document.querySelector("#scoringControls").style.opacity = "1";
           document.querySelector("#scoringControls").style.pointerEvents = "auto";
@@ -2782,13 +2790,13 @@
         }
       } else {
          state.currentMatch = match;
-         document.querySelector("#activeMatchStatus").textContent = `Local: ${match.teamA} vs ${match.teamB}`;
+          safeSetText("#activeMatchStatus", `Local: ${match.teamA} vs ${match.teamB}`);
          document.querySelector("#scoringControls").style.display = "";
          document.querySelector("#scoringControls").style.opacity = "1";
          document.querySelector("#scoringControls").style.pointerEvents = "auto";
          renderScore();
       }
-      document.querySelector("#startMatchBtn").textContent = "Start/Resume Match";
+      safeSetText("#startMatchBtn", "Start/Resume Match");
     });
 
     document.querySelector("#endMatchBtn").addEventListener("click", async () => {
