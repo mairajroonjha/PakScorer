@@ -1582,7 +1582,7 @@
       return data.length > 0 ? data[0] : null;
     }
 
-    async function createInningsInDatabase(matchId, battingTeamId, bowlingTeamId, inningsNumber) {
+    async function createInningsInDatabase(matchId, battingTeamId, bowlingTeamId, battingTeamName, bowlingTeamName, inningsNumber) {
       const { data, error } = await supabase
         .from("innings")
         .insert({
@@ -1590,6 +1590,8 @@
           innings_number: inningsNumber,
           batting_team_id: battingTeamId,
           bowling_team_id: bowlingTeamId,
+          batting_team: battingTeamName,
+          bowling_team: bowlingTeamName,
           runs: 0,
           wickets: 0,
           legal_balls: 0
@@ -2372,7 +2374,7 @@
           
           let innings = await loadInningsFromDatabase(match.id);
           if (!innings) {
-            innings = await createInningsInDatabase(match.id, match.teamAId, match.teamBId, 1);
+            innings = await createInningsInDatabase(match.id, match.teamAId, match.teamBId, match.teamA, match.teamB, 1);
           }
           
           const balls = await loadBallsFromDatabase(innings.id);
