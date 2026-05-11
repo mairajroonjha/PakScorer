@@ -3060,10 +3060,15 @@
             button.disabled = false;
             return;
           }
+          // Force a full reload from the database to ensure all views are synced
+          await loadMatchesFromDatabase();
+          await loadMatchRequestsFromDatabase();
+          await loadTournamentsFromDatabase();
+        } else {
+          state.matches = state.matches.filter(m => String(m.id) !== String(matchId));
+          renderMatches();
+          renderTournaments();
         }
-        state.matches = state.matches.filter(m => String(m.id) !== String(matchId));
-        renderMatches();
-        renderTournaments();
         renderPublicLiveView();
       } catch (error) {
         alert("Failed to delete match: " + error.message);
