@@ -1079,20 +1079,50 @@
           <section class="panel">
             <div class="panel-head">
               <h2>Tournaments</h2>
-              <span>Applications open</span>
+              <span id="tournamentCount">0 tournaments</span>
             </div>
             <div class="panel-body grid" id="tournamentList"></div>
           </section>
 
-          <section class="panel">
-            <div class="panel-head">
-              <h2>Applications</h2>
-              <span id="applicationCount">3 teams</span>
-            </div>
-            <div class="panel-body">
-              <ul class="feed" id="applicationList"></ul>
-            </div>
-          </section>
+          <div class="grid" style="gap:16px;">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Create Tournament</h2>
+                <span>New competition</span>
+              </div>
+              <form class="panel-body grid" id="tournamentForm">
+                <label>Tournament Name <input id="newTournamentName" value="Punjab Super Cup" /></label>
+                <div class="form-grid">
+                  <label>Format
+                    <select id="newTournamentFormat">
+                      <option>Group + knockout</option>
+                      <option>Round robin</option>
+                      <option>Knockout</option>
+                      <option>League</option>
+                    </select>
+                  </label>
+                  <label>Overs <input id="newTournamentOvers" type="number" min="5" max="50" value="20" /></label>
+                </div>
+                <div class="form-grid">
+                  <label>Start Date <input id="newTournamentStart" type="date" /></label>
+                  <label>End Date <input id="newTournamentEnd" type="date" /></label>
+                </div>
+                <label>Venue <input id="newTournamentVenue" value="Multiple venues" /></label>
+                <p class="form-message" id="tournamentFormMessage" aria-live="polite"></p>
+                <button class="btn primary" type="submit">Create Tournament</button>
+              </form>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Applications</h2>
+                <span id="applicationCount">0 teams</span>
+              </div>
+              <div class="panel-body">
+                <ul class="feed" id="applicationList"></ul>
+              </div>
+            </section>
+          </div>
         </div>
       </section>
     </main>
@@ -1137,15 +1167,8 @@
       matches: [
         { id: 1, teamA: "Pak Lions", teamB: "Lahore Kings", venue: "Model Town Ground", overs: 20, status: "Scheduled", matchDate: null },
       ],
-      tournaments: [
-        { name: "Punjab Super Cup", teams: 8, format: "Group + knockout", status: "Applications open" },
-        { name: "City Night League", teams: 6, format: "Round robin", status: "Draft fixtures" },
-      ],
-      applications: [
-        { team: "Pak Lions", status: "Pending" },
-        { team: "Lahore Kings", status: "Pending" },
-        { team: "Karachi Strikers", status: "Approved" },
-      ],
+      tournaments: [],
+      applications: [],
       score: {
         runs: 87,
         wickets: 3,
@@ -1333,6 +1356,60 @@
       renderMatches();
     }
 
+    async function loadTournamentsFromDatabase() {
+      const { data, error } = await supabase
+        .from("tournaments")
+        .select("id,name,venue,start_date,end_date,overs,format,status")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      state.tournaments = data;
+      await loadApplicationsFromDatabase();
+      renderTournaments();
+    }
+
+    async function loadApplicationsFromDatabase() {
+      const { data, error } = await supabase
+        .from("tournament_applications")
+        .select("id,tournament_id,team_id,team,status,tournaments(name)")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      state.applications = data.map((app) => ({
+        id: app.id,
+        tournamentId: app.tournament_id,
+        teamId: app.team_id,
+        team: app.team,
+        status: app.status,
+        tournamentName: app.tournaments?.name || null,
+      }));
+    }
+
+    async function createTournamentInDatabase(tournament) {
+      const { data, error } = await supabase
+        .from("tournaments")
+        .insert(tournament)
+        .select("id,name,venue,start_date,end_date,overs,format,status")
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+
+    async function approveApplicationInDatabase(id) {
+      const { data, error } = await supabase
+        .from("tournament_applications")
+        .update({ status: "Approved", decided_at: new Date().toISOString() })
+        .eq("id", id)
+        .select("id,status")
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+
     async function createTeamInDatabase(team) {
       const { data, error } = await supabase
         .from("teams")
@@ -1488,27 +1565,30 @@
     }
 
     function renderTournaments() {
-      document.querySelector("#tournamentList").innerHTML = state.tournaments.map((tournament) => `
+      const count = state.tournaments.length;
+      document.querySelector("#tournamentCount").textContent = `${count} tournament${count !== 1 ? "s" : ""}`;
+      document.querySelector("#tournamentList").innerHTML = count ? state.tournaments.map((tournament) => `
         <article class="card">
           <h3>${tournament.name}</h3>
-          <p class="muted">${tournament.format}</p>
+          <p class="muted">${tournament.format} · ${tournament.overs || 20} overs</p>
+          ${tournament.venue ? `<p class="muted" style="font-size:0.82rem;">${tournament.venue}</p>` : ""}
           <div class="actions" style="margin-top: 12px;">
-            <span class="tag green">${tournament.status}</span>
-            <span class="tag">${tournament.teams} teams</span>
+            <span class="tag green">${tournament.status || "Applications Open"}</span>
+            ${tournament.start_date ? `<span class="tag">${new Date(tournament.start_date).toLocaleDateString("en-PK", { day:"numeric", month:"short", year:"numeric" })}</span>` : ""}
           </div>
         </article>
-      `).join("");
+      `).join("") : `<p class="muted">No tournaments yet. Create one →</p>`;
 
-      document.querySelector("#applicationCount").textContent = `${state.applications.length} teams`;
-      document.querySelector("#applicationList").innerHTML = state.applications.map((application, index) => `
+      document.querySelector("#applicationCount").textContent = `${state.applications.length} team${state.applications.length !== 1 ? "s" : ""}`;
+      document.querySelector("#applicationList").innerHTML = state.applications.length ? state.applications.map((application, index) => `
         <li>
-          <strong>${application.team}</strong>
+          <strong>${application.team}${application.tournamentName ? ` <span style="color:var(--muted);font-size:0.82rem;font-weight:600;">· ${application.tournamentName}</span>` : ""}</strong>
           <span>
-            <span class="tag ${application.status === "Approved" ? "green" : "gold"}">${application.status}</span>
-            <button class="btn ghost" data-application="${index}" style="margin-left: 8px;">Approve</button>
+            <span class="tag ${application.status === "Approved" ? "green" : application.status === "Rejected" ? "red" : "gold"}">${application.status}</span>
+            ${application.status === "Pending" ? `<button class="btn ghost" data-application="${index}" data-app-id="${application.id || ""}" style="margin-left: 8px;">Approve</button>` : ""}
           </span>
         </li>
-      `).join("");
+      `).join("") : `<li><strong>No applications yet</strong><span>Teams apply after tournaments are created</span></li>`;
     }
 
     function renderScore() {
@@ -1898,18 +1978,93 @@
       renderScore();
     });
 
-    document.querySelector("#applicationList").addEventListener("click", (event) => {
+    document.querySelector("#applicationList").addEventListener("click", async (event) => {
       const button = event.target.closest("[data-application]");
       if (!button) return;
-      state.applications[Number(button.dataset.application)].status = "Approved";
+      const index = Number(button.dataset.application);
+      const application = state.applications[index];
+      if (!application || application.status !== "Pending") return;
+
+      if (state.usingDatabase && application.id) {
+        try {
+          await approveApplicationInDatabase(application.id);
+        } catch (error) {
+          alert("Could not approve application in Supabase.");
+          return;
+        }
+      }
+
+      application.status = "Approved";
       renderTournaments();
     });
 
-    loadTeamsFromDatabase().catch((error) => {
+    document.querySelector("#tournamentForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = document.querySelector("#tournamentFormMessage");
+      const name = document.querySelector("#newTournamentName").value.trim();
+      const format = document.querySelector("#newTournamentFormat").value;
+      const overs = Number(document.querySelector("#newTournamentOvers").value || 20);
+      const venue = document.querySelector("#newTournamentVenue").value.trim() || "Multiple venues";
+      const startDate = document.querySelector("#newTournamentStart").value || null;
+      const endDate = document.querySelector("#newTournamentEnd").value || null;
+
+      message.className = "form-message";
+
+      if (!name) {
+        message.textContent = "Please enter a tournament name.";
+        message.classList.add("error");
+        return;
+      }
+
+      const alreadyExists = state.tournaments.some((t) => t.name.trim().toLowerCase() === name.toLowerCase());
+      if (alreadyExists) {
+        message.textContent = "A tournament with this name already exists.";
+        message.classList.add("error");
+        return;
+      }
+
+      const tournament = {
+        name,
+        format,
+        overs,
+        venue,
+        start_date: startDate,
+        end_date: endDate,
+        status: "Applications Open",
+      };
+
+      message.textContent = "Saving tournament...";
+
+      if (state.usingDatabase) {
+        try {
+          state.tournaments.unshift(await createTournamentInDatabase(tournament));
+        } catch (error) {
+          message.textContent = error.code === "23505" ? "This tournament already exists in the database." : "Could not save tournament to Supabase.";
+          message.classList.add("error");
+          return;
+        }
+      } else {
+        state.tournaments.unshift({ id: Date.now(), ...tournament });
+      }
+
+      renderTournaments();
+      message.textContent = `${name} created successfully.`;
+      message.classList.add("success");
+    });
+
+    loadTeamsFromDatabase().then(async () => {
+      if (state.usingDatabase) {
+        loadTournamentsFromDatabase().catch((error) => {
+          console.warn("Supabase tournaments unavailable:", error.message);
+          renderTournaments();
+        });
+      }
+    }).catch((error) => {
       state.usingDatabase = false;
       setDatabaseStatus("fallback", "Local sample data");
       renderTeams();
       console.warn("Supabase teams unavailable:", error.message);
+      renderTournaments();
     });
     renderPlayers();
     renderRequests();
