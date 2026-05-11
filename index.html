@@ -924,9 +924,10 @@
                 <div class="grid cols-3">
                   <div class="card"><span class="muted">Overs</span><h3 id="scoreOvers">10.4</h3></div>
                   <div class="card"><span class="muted">Run rate</span><h3 id="runRate">8.16</h3></div>
-                  <div class="card"><span class="muted">Target</span><h3>164</h3></div>
+                  <div class="card"><span class="muted">Bowler</span><h3 id="currentBowler">Umar Khan</h3></div>
                 </div>
               </div>
+              <p class="form-message" id="overNotice" aria-live="polite"></p>
 
               <div class="ball-buttons" style="margin-top: 16px;">
                 <button class="btn" data-ball="0">0</button>
@@ -966,7 +967,7 @@
           <div class="last-balls" id="publicLastBalls"></div>
           <div class="grid cols-3">
             <div class="card"><span class="muted">Batter</span><h3>Ali Raza 42*</h3></div>
-            <div class="card"><span class="muted">Bowler</span><h3>Umar Khan</h3></div>
+            <div class="card"><span class="muted">Bowler</span><h3 id="publicBowler">Umar Khan</h3></div>
             <div class="card"><span class="muted">Win chance</span><h3 id="winChance">58%</h3></div>
           </div>
         </div>
@@ -1040,12 +1041,14 @@
         wickets: 3,
         legalBalls: 64,
         target: 164,
+        currentBowler: "Umar Khan",
         last: ["1", "4", "0", "Wd", "2", "W"],
         history: [
           { label: "10.4", text: "Wicket. Hamza Shah caught at long-on." },
           { label: "10.3", text: "Two runs into the leg side." },
           { label: "10.3", text: "Wide outside off stump." },
         ],
+        undoStack: [],
       },
     };
 
@@ -1169,6 +1172,8 @@
       document.querySelector("#scoreWickets").textContent = score.wickets;
       document.querySelector("#scoreOvers").textContent = overs;
       document.querySelector("#runRate").textContent = runRate;
+      document.querySelector("#currentBowler").textContent = score.currentBowler;
+      document.querySelector("#publicBowler").textContent = score.currentBowler;
       document.querySelector("#dashScore").textContent = `${score.runs}/${score.wickets}`;
       document.querySelector("#miniScore").textContent = `${score.runs}/${score.wickets}`;
       document.querySelector("#dashOvers").textContent = `${overs} overs`;
@@ -1184,23 +1189,71 @@
       `).join("");
     }
 
+    function scoreSnapshot() {
+      const score = state.score;
+      return {
+        runs: score.runs,
+        wickets: score.wickets,
+        legalBalls: score.legalBalls,
+        currentBowler: score.currentBowler,
+        last: [...score.last],
+        history: score.history.map((item) => ({ ...item })),
+      };
+    }
+
+    function restoreScore(snapshot) {
+      const score = state.score;
+      score.runs = snapshot.runs;
+      score.wickets = snapshot.wickets;
+      score.legalBalls = snapshot.legalBalls;
+      score.currentBowler = snapshot.currentBowler;
+      score.last = [...snapshot.last];
+      score.history = snapshot.history.map((item) => ({ ...item }));
+    }
+
+    function rememberScore() {
+      state.score.undoStack.push(scoreSnapshot());
+      if (state.score.undoStack.length > 24) state.score.undoStack.shift();
+      document.querySelector("#overNotice").textContent = "";
+      document.querySelector("#overNotice").className = "form-message";
+    }
+
+    function askNextBowler() {
+      const score = state.score;
+      if (score.legalBalls === 0 || score.legalBalls % 6 !== 0) return;
+
+      const finishedOver = oversText(score.legalBalls);
+      const nextBowler = window.prompt(`Over ${finishedOver} complete. Enter next bowler name:`, score.currentBowler);
+      const cleanName = nextBowler && nextBowler.trim() ? nextBowler.trim() : score.currentBowler;
+
+      score.currentBowler = cleanName;
+      score.history.unshift({ label: finishedOver, text: `Over complete. ${cleanName} will bowl the next over.` });
+      const notice = document.querySelector("#overNotice");
+      notice.textContent = `Over ${finishedOver} complete. Next bowler: ${cleanName}.`;
+      notice.className = "form-message success";
+    }
+
     function addLegalBall(label, runs, isWicket = false) {
+      rememberScore();
       const score = state.score;
       score.runs += runs;
       score.legalBalls += 1;
       if (isWicket) score.wickets = Math.min(10, score.wickets + 1);
       score.last.push(label);
       score.history.unshift({ label: oversText(score.legalBalls), text: isWicket ? "Wicket. New batter comes in." : `${label} run${runs === 1 ? "" : "s"} added.` });
+      askNextBowler();
       renderScore();
     }
 
     function addExtra(label) {
+      rememberScore();
       const score = state.score;
       const isLegalExtra = label === "B" || label === "Lb";
       score.runs += 1;
       if (isLegalExtra) score.legalBalls += 1;
       score.last.push(label);
       score.history.unshift({ label: oversText(score.legalBalls), text: `${label} extra added.` });
+      if (isLegalExtra) askNextBowler();
       renderScore();
     }
 
@@ -1281,7 +1334,18 @@
     });
 
     document.querySelector("#undoBall").addEventListener("click", () => {
-      state.score.history.unshift({ label: oversText(state.score.legalBalls), text: "Undo placeholder ready for database history." });
+      const previous = state.score.undoStack.pop();
+      const notice = document.querySelector("#overNotice");
+
+      if (!previous) {
+        notice.textContent = "No ball available to undo.";
+        notice.className = "form-message error";
+        return;
+      }
+
+      restoreScore(previous);
+      notice.textContent = "Last ball undone. Score, over, wicket, bowler, and feed restored.";
+      notice.className = "form-message success";
       renderScore();
     });
 
