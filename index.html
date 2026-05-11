@@ -2150,76 +2150,155 @@
       return teams.sort((a, b) => b.points - a.points || b.won - a.won);
     }
 
-    function renderTournaments() {
+    async function calculateTournamentStats(tournamentId) {
+      const { data: matches, error } = await supabase
+        .from("matches")
+        .select("id")
+        .eq("tournamentId", tournamentId)
+        .eq("status", "Completed");
+      
+      if (error || !matches.length) return { batsmen: [], bowlers: [] };
+
+      const matchIds = matches.map(m => m.id);
+      const { data: balls, error: ballsError } = await supabase
+        .from("balls")
+        .select("*")
+        .in("match_id", matchIds);
+      
+      if (ballsError) return { batsmen: [], bowlers: [] };
+
+      const batsmen = {};
+      const bowlers = {};
+
+      balls.forEach(ball => {
+        // Batting
+        if (!batsmen[ball.batter_name]) {
+          batsmen[ball.batter_name] = { name: ball.batter_name, runs: 0, balls: 0 };
+        }
+        batsmen[ball.batter_name].runs += ball.runs_batter;
+        if (!ball.is_wide) batsmen[ball.batter_name].balls += 1;
+
+        // Bowling
+        if (!bowlers[ball.bowler_name]) {
+          bowlers[ball.bowler_name] = { name: ball.bowler_name, wickets: 0, runs: 0, overs: 0, legal_balls: 0 };
+        }
+        if (ball.is_wicket && ball.wicket_type !== "run_out") bowlers[ball.bowler_name].wickets += 1;
+        bowlers[ball.bowler_name].runs += ball.runs_total;
+        if (!ball.is_wide && !ball.is_no_ball) bowlers[ball.bowler_name].legal_balls += 1;
+      });
+
+      const topBatsmen = Object.values(batsmen)
+        .sort((a, b) => b.runs - a.runs)
+        .slice(0, 5);
+
+      const topBowlers = Object.values(bowlers)
+        .sort((a, b) => b.wickets - a.wickets || a.runs - b.runs)
+        .slice(0, 5);
+
+      return { batsmen: topBatsmen, bowlers: topBowlers };
+    }
+
+    async function renderTournaments() {
       const count = state.tournaments.length;
-      document.querySelector("#tournamentCount").textContent = `${count} tournament${count !== 1 ? "s" : ""}`;
-      document.querySelector("#tournamentList").innerHTML = count ? state.tournaments.map((tournament) => {
-        const tournamentMatches = state.matches.filter(m => m.tournamentId === tournament.id);
-        const standings = calculateStandings(tournament.id);
+      const tournamentCountEl = document.querySelector("#tournamentCount");
+      const tournamentListEl = document.querySelector("#tournamentList");
+      if (!tournamentCountEl || !tournamentListEl) return;
 
-        const standingsHtml = standings.length ? `
-          <div style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px;">
-            <p style="font-size: 0.82rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Standings</p>
-            <div class="table-container" style="background: rgba(255,255,255,0.02); border-radius: 8px; overflow: hidden;">
-              <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
-                <thead>
-                  <tr style="background: rgba(255,255,255,0.05); text-align: left;">
-                    <th style="padding: 8px 12px;">Team</th>
-                    <th style="padding: 8px; text-align: center;">P</th>
-                    <th style="padding: 8px; text-align: center;">W</th>
-                    <th style="padding: 8px; text-align: center;">L</th>
-                    <th style="padding: 8px; text-align: center;">Pts</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${standings.map(s => `
-                    <tr style="border-top: 1px solid rgba(255,255,255,0.05);">
-                      <td style="padding: 8px 12px;"><strong>${s.name}</strong></td>
-                      <td style="padding: 8px; text-align: center;">${s.played}</td>
-                      <td style="padding: 8px; text-align: center;">${s.won}</td>
-                      <td style="padding: 8px; text-align: center;">${s.lost}</td>
-                      <td style="padding: 8px; text-align: center;"><span class="tag gold" style="font-weight: 800;">${s.points}</span></td>
+      tournamentCountEl.textContent = `${count} tournament${count !== 1 ? "s" : ""}`;
+      
+      if (!count) {
+        tournamentListEl.innerHTML = `<div class="card">No tournaments created yet.</div>`;
+      } else {
+        const cards = await Promise.all(state.tournaments.map(async (tournament) => {
+          const tournamentMatches = state.matches.filter(m => m.tournamentId === tournament.id);
+          const standings = calculateStandings(tournament.id);
+
+          const standingsHtml = standings.length ? `
+            <div style="margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px;">
+              <p style="font-size: 0.82rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Standings</p>
+              <div class="table-container" style="background: rgba(255,255,255,0.02); border-radius: 8px; overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                  <thead>
+                    <tr style="background: rgba(255,255,255,0.05); text-align: left;">
+                      <th style="padding: 8px 12px;">Team</th>
+                      <th style="padding: 8px; text-align: center;">P</th>
+                      <th style="padding: 8px; text-align: center;">W</th>
+                      <th style="padding: 8px; text-align: center;">L</th>
+                      <th style="padding: 8px; text-align: center;">Pts</th>
                     </tr>
-                  `).join("")}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ` : "";
-
-        const matchesList = tournamentMatches.length ? `
-          <div style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px;">
-            <p style="font-size: 0.82rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Matches</p>
-            <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px;">
-              ${tournamentMatches.map(m => `
-                <li style="font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px;">
-                  <span><strong>${m.teamA}</strong> vs <strong>${m.teamB}</strong></span>
-                  <div style="display:flex; gap: 8px; align-items: center;">
-                    <span class="tag ${m.status === 'Live' ? 'green' : m.status === 'Completed' ? 'cyan' : ''}" style="font-size: 0.75rem;">${m.status}</span>
-                    <button class="btn ghost danger" data-admin-only style="padding: 2px 6px; font-size: 0.65rem;" data-delete-match="${m.id}">Delete</button>
-                  </div>
-                </li>
-              `).join("")}
-            </ul>
-          </div>
-        ` : "";
-
-        return `
-          <article class="card" style="display: flex; flex-direction: column; gap: 4px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <h3 style="margin: 0;">${tournament.name}</h3>
-                <p class="muted" style="margin: 4px 0;">${tournament.format} · ${tournament.overs || 20} overs</p>
+                  </thead>
+                  <tbody>
+                    ${standings.map(s => `
+                      <tr style="border-bottom: 1px solid var(--line);">
+                        <td style="padding: 8px 12px; font-weight: 700;">${s.name}</td>
+                        <td style="padding: 8px; text-align: center;">${s.played}</td>
+                        <td style="padding: 8px; text-align: center;">${s.won}</td>
+                        <td style="padding: 8px; text-align: center;">${s.lost}</td>
+                        <td style="padding: 8px; text-align: center; color: var(--cyan); font-weight: 900;">${s.points}</td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
               </div>
-              <span class="tag green">${tournament.status || "Applications Open"}</span>
             </div>
-            ${tournament.venue ? `<p class="muted" style="font-size:0.82rem;">${tournament.venue}</p>` : ""}
-            ${tournament.start_date ? `<p class="muted" style="font-size:0.82rem;">Starts: ${new Date(tournament.start_date).toLocaleDateString("en-PK", { day:"numeric", month:"short", year:"numeric" })}</p>` : ""}
-            ${standingsHtml}
-            ${matchesList}
-          </article>
-        `;
-      }).join("") : `<p class="muted">No tournaments yet. Create one →</p>`;
+          ` : "";
+
+          const matchesList = tournamentMatches.length ? `
+            <div style="margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px;">
+              <p style="font-size: 0.82rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Matches</p>
+              <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px;">
+                ${tournamentMatches.map(m => `
+                  <li style="font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px;">
+                    <span><strong>${m.teamA}</strong> vs <strong>${m.teamB}</strong></span>
+                    <div style="display:flex; gap: 8px; align-items: center;">
+                      <span class="tag ${m.status === 'Live' ? 'green' : m.status === 'Completed' ? 'cyan' : ''}" style="font-size: 0.75rem;">${m.status}</span>
+                      <button class="btn ghost danger" data-admin-only style="padding: 2px 6px; font-size: 0.65rem;" data-delete-match="${m.id}">Delete</button>
+                    </div>
+                  </li>
+                `).join("")}
+              </ul>
+            </div>
+          ` : "";
+
+          const stats = await calculateTournamentStats(tournament.id);
+          const statsHtml = stats.batsmen.length ? `
+            <div style="margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px;">
+              <div class="grid cols-2">
+                <div>
+                  <p style="font-size: 0.75rem; color: var(--gold); font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">Top Batsmen</p>
+                  <ul style="list-style:none; font-size: 0.8rem;">
+                    ${stats.batsmen.map(b => `<li style="display:flex; justify-content:space-between; padding: 2px 0;"><span>${b.name}</span><strong style="color:var(--gold);">${b.runs}</strong></li>`).join("")}
+                  </ul>
+                </div>
+                <div>
+                  <p style="font-size: 0.75rem; color: var(--cyan); font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">Top Bowlers</p>
+                  <ul style="list-style:none; font-size: 0.8rem;">
+                    ${stats.bowlers.map(b => `<li style="display:flex; justify-content:space-between; padding: 2px 0;"><span>${b.name}</span><strong style="color:var(--cyan);">${b.wickets}</strong></li>`).join("")}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          ` : "";
+
+          return `
+            <article class="card" style="display: flex; flex-direction: column; gap: 4px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <h3 style="margin: 0;">${tournament.name}</h3>
+                  <p class="muted" style="margin: 4px 0;">${tournament.format} · ${tournament.overs || 20} overs</p>
+                </div>
+                <span class="tag green">${tournament.status || "Applications Open"}</span>
+              </div>
+              ${tournament.venue ? `<p class="muted" style="font-size:0.82rem;">${tournament.venue}</p>` : ""}
+              ${tournament.start_date ? `<p class="muted" style="font-size:0.82rem;">Starts: ${new Date(tournament.start_date).toLocaleDateString("en-PK", { day:"numeric", month:"short", year:"numeric" })}</p>` : ""}
+              ${standingsHtml}
+              ${statsHtml}
+              ${matchesList}
+            </article>
+          `;
+        }));
+        tournamentListEl.innerHTML = cards.join("");
+      }
 
       document.querySelector("#applicationCount").textContent = `${state.applications.length} team${state.applications.length !== 1 ? "s" : ""}`;
       document.querySelector("#applicationList").innerHTML = state.applications.length ? state.applications.map((application, index) => `
