@@ -3,18 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PakScorer Future Cricket</title>
+  <title>PakScorer App Prototype</title>
   <style>
     :root {
-      --ink: #f8fbff;
-      --muted: #b7c7d4;
-      --panel: rgba(7, 17, 22, 0.74);
-      --line: rgba(255, 255, 255, 0.15);
-      --grass: #17c978;
+      --bg: #071116;
+      --surface: #0d1b22;
+      --surface-2: #122832;
+      --line: #24414d;
+      --text: #f7fbff;
+      --muted: #a7bac5;
+      --green: #20c878;
+      --cyan: #55d6ff;
       --gold: #ffd166;
       --red: #ef476f;
-      --cyan: #58d6ff;
-      --navy: #071116;
+      --blue: #5b8cff;
+      --shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
     }
 
     * {
@@ -25,710 +28,1233 @@
     body {
       margin: 0;
       min-height: 100%;
-      background: var(--navy);
-      color: var(--ink);
+      background: var(--bg);
+      color: var(--text);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     body {
+      min-height: 100vh;
       overflow-x: hidden;
     }
 
-    #field3d {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-      background: radial-gradient(circle at 50% 45%, #104a34 0%, #071116 68%);
+    button,
+    input,
+    select {
+      font: inherit;
     }
 
-    .fallback-scene {
-      position: fixed;
-      inset: 0;
-      overflow: hidden;
-      background:
-        radial-gradient(circle at 50% 45%, rgba(23, 201, 120, 0.34), transparent 31%),
-        radial-gradient(circle at 20% 20%, rgba(88, 214, 255, 0.18), transparent 25%),
-        radial-gradient(circle at 80% 18%, rgba(255, 209, 102, 0.15), transparent 24%),
-        #071116;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 300ms ease;
+    button {
+      cursor: pointer;
     }
 
-    .fallback-scene.is-visible {
-      opacity: 1;
-    }
-
-    .fallback-scene::before {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: 52%;
-      width: min(78vw, 740px);
-      aspect-ratio: 1;
-      border: 3px solid rgba(248, 251, 255, 0.48);
-      border-radius: 50%;
-      transform: translate(-50%, -50%) rotateX(64deg);
-      box-shadow: 0 0 80px rgba(23, 201, 120, 0.28);
-    }
-
-    .shell {
-      position: relative;
-      z-index: 2;
+    .app {
       min-height: 100vh;
       display: grid;
-      grid-template-columns: minmax(0, 1.02fr) minmax(320px, 0.72fr);
-      gap: clamp(22px, 4vw, 56px);
+      grid-template-columns: 264px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      padding: 22px 16px;
+      border-right: 1px solid var(--line);
+      background: #091820;
+    }
+
+    .brand {
+      display: flex;
       align-items: center;
-      padding: clamp(18px, 4vw, 56px);
+      gap: 12px;
+      padding: 4px 8px 12px;
+      border-bottom: 1px solid var(--line);
     }
 
-    .hero {
-      max-width: 820px;
-      padding-top: min(8vh, 70px);
+    .mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      color: #061116;
+      font-weight: 950;
+      box-shadow: 0 14px 30px rgba(32, 200, 120, 0.22);
     }
 
-    .kicker {
-      display: inline-flex;
+    .brand strong {
+      display: block;
+      font-size: 1.05rem;
+    }
+
+    .brand span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav button {
+      min-height: 44px;
+      display: flex;
       align-items: center;
       gap: 10px;
-      margin: 0 0 18px;
-      color: var(--gold);
-      font-size: 0.83rem;
-      font-weight: 800;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-    }
-
-    .pulse {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: var(--grass);
-      box-shadow: 0 0 0 0 rgba(23, 201, 120, 0.68);
-      animation: pulse 1.8s ease-out infinite;
-    }
-
-    h1 {
-      max-width: 780px;
-      margin: 0;
-      font-size: clamp(3rem, 8vw, 7.4rem);
-      line-height: 0.93;
-      letter-spacing: 0;
-      text-wrap: balance;
-    }
-
-    .shine {
-      color: transparent;
-      background: linear-gradient(90deg, #f8fbff, var(--cyan), var(--gold), #f8fbff);
-      background-size: 230% 100%;
-      -webkit-background-clip: text;
-      background-clip: text;
-      animation: shine 4s ease-in-out infinite;
-    }
-
-    .hero-copy {
-      max-width: 650px;
-      margin: 24px 0 0;
+      width: 100%;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: transparent;
       color: var(--muted);
-      font-size: clamp(1.05rem, 2vw, 1.24rem);
-      line-height: 1.7;
+      text-align: left;
+      font-weight: 800;
     }
 
-    .stats-row {
+    .nav button:hover,
+    .nav button.active {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+
+    .nav-icon {
+      width: 24px;
+      height: 24px;
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      max-width: 640px;
-      margin-top: 34px;
+      place-items: center;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--cyan);
+      font-size: 0.8rem;
+      font-weight: 950;
     }
 
-    .stat {
-      min-height: 86px;
+    .sidebar-footer {
+      margin-top: auto;
       padding: 14px;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: rgba(7, 17, 22, 0.5);
-      backdrop-filter: blur(16px);
+      background: rgba(255, 255, 255, 0.04);
     }
 
-    .stat strong {
+    .sidebar-footer span {
       display: block;
-      font-size: clamp(1.45rem, 3.2vw, 2rem);
-      color: var(--ink);
-    }
-
-    .stat span {
-      display: block;
-      margin-top: 3px;
       color: var(--muted);
-      font-size: 0.88rem;
-      line-height: 1.35;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
     }
 
-    .predictor {
-      width: min(100%, 440px);
-      justify-self: end;
+    .sidebar-footer strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 1.35rem;
+    }
+
+    .main {
+      min-width: 0;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 78% 8%, rgba(85, 214, 255, 0.16), transparent 28%),
+        radial-gradient(circle at 28% 0%, rgba(32, 200, 120, 0.12), transparent 25%),
+        var(--bg);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .title-block h1 {
+      margin: 0;
+      font-size: clamp(1.7rem, 3.2vw, 2.6rem);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .title-block p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 8px 12px;
+      border: 1px solid rgba(32, 200, 120, 0.36);
+      border-radius: 999px;
+      background: rgba(32, 200, 120, 0.12);
+      color: #b9ffe0;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: var(--green);
+      box-shadow: 0 0 0 6px rgba(32, 200, 120, 0.13);
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+      animation: pageIn 180ms ease;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid.cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid.cols-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .panel,
+    .card {
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: var(--panel);
-      box-shadow: 0 28px 90px rgba(0, 0, 0, 0.48);
-      backdrop-filter: blur(22px);
+      background: rgba(13, 27, 34, 0.88);
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
       overflow: hidden;
     }
 
     .panel-head {
-      padding: 20px 20px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px;
       border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
     }
 
-    .panel-head h2 {
+    .panel-head h2,
+    .card h3 {
       margin: 0;
-      font-size: 1.25rem;
+      font-size: 1.04rem;
       letter-spacing: 0;
     }
 
-    .panel-head p {
-      margin: 8px 0 0;
+    .panel-head span {
       color: var(--muted);
-      line-height: 1.5;
-      font-size: 0.96rem;
+      font-size: 0.88rem;
+      font-weight: 750;
     }
 
-    .form {
+    .panel-body {
+      padding: 16px;
+    }
+
+    .card {
+      padding: 16px;
+    }
+
+    .metric {
+      min-height: 120px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric::after {
+      content: "";
+      position: absolute;
+      right: -32px;
+      top: -28px;
+      width: 110px;
+      height: 110px;
+      border: 18px solid rgba(85, 214, 255, 0.12);
+      border-radius: 50%;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 0.84rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 12px;
+      font-size: clamp(2rem, 5vw, 3.1rem);
+      line-height: 1;
+    }
+
+    .metric small {
+      display: block;
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
+    }
+
+    th,
+    td {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    td {
+      color: #e9f4fa;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(85, 214, 255, 0.12);
+      color: #bdeeff;
+      font-size: 0.8rem;
+      font-weight: 850;
+    }
+
+    .tag.green {
+      background: rgba(32, 200, 120, 0.14);
+      color: #b9ffe0;
+    }
+
+    .tag.gold {
+      background: rgba(255, 209, 102, 0.14);
+      color: #ffe7a3;
+    }
+
+    .tag.red {
+      background: rgba(239, 71, 111, 0.14);
+      color: #ffc2d0;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .btn {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 8px 12px;
+      background: var(--surface-2);
+      color: var(--text);
+      font-weight: 850;
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      color: #061116;
+    }
+
+    .btn.ghost {
+      border-color: var(--line);
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .btn.danger {
+      background: rgba(239, 71, 111, 0.16);
+      color: #ffc2d0;
+    }
+
+    .form-grid {
       display: grid;
-      gap: 14px;
-      padding: 20px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
     }
 
     label {
       display: grid;
       gap: 7px;
       color: var(--muted);
-      font-size: 0.86rem;
-      font-weight: 700;
+      font-size: 0.84rem;
+      font-weight: 850;
     }
 
     input,
     select {
       width: 100%;
-      min-height: 44px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      min-height: 42px;
+      border: 1px solid var(--line);
       border-radius: 8px;
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--ink);
-      font: inherit;
-      padding: 10px 12px;
+      background: #091820;
+      color: var(--text);
+      padding: 9px 11px;
       outline: none;
-    }
-
-    select option {
-      background: #0d1d25;
-      color: var(--ink);
     }
 
     input:focus,
     select:focus {
       border-color: var(--cyan);
-      box-shadow: 0 0 0 3px rgba(88, 214, 255, 0.14);
+      box-shadow: 0 0 0 3px rgba(85, 214, 255, 0.12);
     }
 
-    .grid-2 {
+    select option {
+      background: #091820;
+      color: var(--text);
+    }
+
+    .team-card {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .predict-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 48px;
-      border: 0;
-      border-radius: 8px;
-      background: linear-gradient(120deg, var(--grass), var(--cyan));
-      color: #031016;
-      font: inherit;
-      font-weight: 900;
-      cursor: pointer;
-      box-shadow: 0 14px 34px rgba(23, 201, 120, 0.26);
-      transition: transform 180ms ease, box-shadow 180ms ease;
-    }
-
-    .predict-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 18px 42px rgba(88, 214, 255, 0.3);
-    }
-
-    .result {
-      margin-top: 2px;
-      padding: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.07);
-    }
-
-    .result-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
       gap: 14px;
     }
 
-    .winner {
-      min-width: 0;
+    .team-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
-    .winner small {
-      display: block;
-      color: var(--muted);
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    .winner strong {
-      display: block;
-      margin-top: 4px;
-      font-size: clamp(1.4rem, 5vw, 2.2rem);
-      overflow-wrap: anywhere;
-    }
-
-    .chance {
-      width: 86px;
-      height: 86px;
-      flex: 0 0 auto;
+    .avatar {
+      width: 48px;
+      height: 48px;
       display: grid;
       place-items: center;
-      border-radius: 50%;
-      background:
-        radial-gradient(circle at center, #10262d 58%, transparent 59%),
-        conic-gradient(var(--gold) var(--angle), rgba(255, 255, 255, 0.12) 0);
-      color: var(--gold);
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(32, 200, 120, 0.9), rgba(91, 140, 255, 0.9));
+      color: #061116;
       font-weight: 950;
-      font-size: 1.25rem;
     }
 
-    .insights {
+    .team-top p,
+    .muted {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .scoreboard {
+      display: grid;
+      gap: 14px;
+      text-align: center;
+    }
+
+    .score-main {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 10px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(32, 200, 120, 0.12), rgba(85, 214, 255, 0.09)),
+        #091820;
+    }
+
+    .score-main strong {
+      font-size: clamp(3rem, 10vw, 5.8rem);
+      line-height: 0.9;
+    }
+
+    .score-main span {
+      color: var(--muted);
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+      font-weight: 900;
+    }
+
+    .ball-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .ball-buttons .btn {
+      min-height: 50px;
+      font-size: 1.05rem;
+    }
+
+    .feed {
       display: grid;
       gap: 10px;
-      margin: 16px 0 0;
       padding: 0;
+      margin: 0;
       list-style: none;
     }
 
-    .insights li {
-      display: grid;
-      gap: 4px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(255, 255, 255, 0.12);
-      color: var(--ink);
-      line-height: 1.4;
-    }
-
-    .insights span {
+    .feed li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       color: var(--muted);
-      font-size: 0.78rem;
-      font-weight: 850;
-      letter-spacing: 0.11em;
-      text-transform: uppercase;
     }
 
-    @keyframes shine {
-      0%,
-      100% {
-        background-position: 0% 50%;
-      }
-
-      50% {
-        background-position: 100% 50%;
-      }
+    .feed strong {
+      color: var(--text);
     }
 
-    @keyframes pulse {
+    .public-score {
+      min-height: 360px;
+      display: grid;
+      align-content: center;
+      gap: 18px;
+      padding: clamp(18px, 4vw, 34px);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 75% 20%, rgba(255, 209, 102, 0.16), transparent 24%),
+        radial-gradient(circle at 25% 12%, rgba(32, 200, 120, 0.18), transparent 26%),
+        #091820;
+      box-shadow: var(--shadow);
+    }
+
+    .public-score h2 {
+      margin: 0;
+      font-size: clamp(2rem, 6vw, 4.5rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .last-balls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .ball-chip {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      font-weight: 900;
+    }
+
+    .field-orbit {
+      height: 240px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at center, rgba(32, 200, 120, 0.42), rgba(14, 87, 58, 0.46) 34%, rgba(9, 24, 32, 0.92) 70%),
+        #091820;
+    }
+
+    .field-orbit::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 54%;
+      width: min(74%, 420px);
+      aspect-ratio: 1;
+      border: 3px solid rgba(247, 251, 255, 0.36);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) rotateX(58deg);
+    }
+
+    .pitch {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 60px;
+      height: 150px;
+      border-radius: 8px;
+      background: #d2a061;
+      transform: translate(-50%, -50%) rotate(10deg);
+    }
+
+    .orbit-ball {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 26px rgba(239, 71, 111, 0.8);
+      animation: orbit 4.2s linear infinite;
+    }
+
+    @keyframes orbit {
+      from {
+        transform: rotate(0deg) translateX(115px) rotate(0deg);
+      }
+
       to {
-        box-shadow: 0 0 0 14px rgba(23, 201, 120, 0);
+        transform: rotate(360deg) translateX(115px) rotate(-360deg);
       }
     }
 
-    @media (max-width: 920px) {
-      .shell {
-        grid-template-columns: 1fr;
-        align-items: start;
+    @keyframes pageIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
       }
 
-      .predictor {
-        justify-self: stretch;
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 1040px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+      }
+
+      .nav {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .sidebar-footer {
+        display: none;
+      }
+
+      .split,
+      .grid.cols-2,
+      .grid.cols-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .main,
+      .sidebar {
+        padding: 16px;
+      }
+
+      .topbar,
+      .panel-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .nav,
+      .form-grid,
+      .ball-buttons {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .status-pill {
         width: 100%;
-      }
-    }
-
-    @media (max-width: 620px) {
-      .shell {
-        padding: 18px;
-      }
-
-      .stats-row,
-      .grid-2 {
-        grid-template-columns: 1fr;
-      }
-
-      .hero {
-        padding-top: 36px;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        animation-duration: 1ms !important;
-        animation-iteration-count: 1 !important;
-        scroll-behavior: auto !important;
+        justify-content: center;
       }
     }
   </style>
 </head>
 <body>
-  <canvas id="field3d" aria-hidden="true"></canvas>
-  <div class="fallback-scene" id="fallbackScene" aria-hidden="true"></div>
-
-  <main class="shell">
-    <section class="hero" aria-labelledby="pageTitle">
-      <p class="kicker"><span class="pulse"></span> PakScorer future engine</p>
-      <h1 id="pageTitle">Tell the <span class="shine">future</span> of cricket.</h1>
-      <p class="hero-copy">
-        Build a match forecast in seconds with form, conditions, pressure moments, and a live 3D cricket scene that reacts to every prediction.
-      </p>
-
-      <div class="stats-row" aria-label="Prediction highlights">
-        <div class="stat">
-          <strong id="momentumStat">64%</strong>
-          <span>momentum signal</span>
-        </div>
-        <div class="stat">
-          <strong id="impactStat">Death</strong>
-          <span>deciding phase</span>
-        </div>
-        <div class="stat">
-          <strong id="riskStat">Medium</strong>
-          <span>upset risk</span>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="mark">PS</div>
+        <div>
+          <strong>PakScorer</strong>
+          <span>Club cricket manager</span>
         </div>
       </div>
-    </section>
 
-    <section class="predictor" aria-label="Cricket future predictor">
-      <div class="panel-head">
-        <h2>Match Oracle</h2>
-        <p>Enter the match situation and let PakScorer project the next big swing.</p>
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active" data-page="dashboard"><span class="nav-icon">D</span>Dashboard</button>
+        <button data-page="teams"><span class="nav-icon">T</span>Teams</button>
+        <button data-page="players"><span class="nav-icon">P</span>Players</button>
+        <button data-page="requests"><span class="nav-icon">R</span>Requests</button>
+        <button data-page="scoring"><span class="nav-icon">S</span>Scoring</button>
+        <button data-page="public"><span class="nav-icon">L</span>Live View</button>
+        <button data-page="tournaments"><span class="nav-icon">C</span>Tournaments</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <span>Live match</span>
+        <strong id="miniScore">87/3</strong>
       </div>
+    </aside>
 
-      <form class="form" id="oracleForm">
-        <div class="grid-2">
-          <label>
-            Team A
-            <input id="teamA" value="Pakistan" autocomplete="off" />
-          </label>
-          <label>
-            Team B
-            <input id="teamB" value="India" autocomplete="off" />
-          </label>
+    <main class="main">
+      <header class="topbar">
+        <div class="title-block">
+          <h1 id="pageTitle">Dashboard</h1>
+          <p id="pageSubtitle">Foundation prototype for teams, players, requests, scoring, and tournaments.</p>
         </div>
+        <div class="status-pill"><span class="dot"></span><span id="liveStatus">Live prototype</span></div>
+      </header>
 
-        <div class="grid-2">
-          <label>
-            Pitch
-            <select id="pitch">
-              <option value="balanced">Balanced</option>
-              <option value="batting">Batting friendly</option>
-              <option value="spin">Spin turning</option>
-              <option value="pace">Pace and bounce</option>
-              <option value="slow">Slow and tricky</option>
-            </select>
-          </label>
-          <label>
-            Weather
-            <select id="weather">
-              <option value="clear">Clear</option>
-              <option value="dew">Dew later</option>
-              <option value="cloudy">Cloudy</option>
-              <option value="hot">Hot afternoon</option>
-            </select>
-          </label>
-        </div>
-
-        <div class="grid-2">
-          <label>
-            Overs left
-            <input id="overs" type="number" min="1" max="50" value="12" />
-          </label>
-          <label>
-            Runs needed
-            <input id="runs" type="number" min="1" max="400" value="96" />
-          </label>
-        </div>
-
-        <button class="predict-button" type="submit">Predict Future</button>
-
-        <div class="result" aria-live="polite">
-          <div class="result-top">
-            <div class="winner">
-              <small>Projected winner</small>
-              <strong id="winnerName">Pakistan</strong>
-            </div>
-            <div class="chance" id="chanceDial" style="--angle: 230deg;">64%</div>
+      <section class="page active" id="dashboard">
+        <div class="grid cols-3">
+          <div class="card metric">
+            <span>Teams</span>
+            <strong id="teamCount">4</strong>
+            <small>2 match-ready squads</small>
           </div>
-
-          <ul class="insights">
-            <li><span>Key moment</span><strong id="keyMoment">One clean over against spin changes the chase.</strong></li>
-            <li><span>Score future</span><strong id="scoreFuture">Projected finish: 178-6 with 4 balls left.</strong></li>
-            <li><span>Pressure read</span><strong id="pressureRead">Set field deep, attack the stumps, save the yorkers for the 18th.</strong></li>
-          </ul>
+          <div class="card metric">
+            <span>Players</span>
+            <strong id="playerCount">18</strong>
+            <small>12 active this week</small>
+          </div>
+          <div class="card metric">
+            <span>Live Score</span>
+            <strong id="dashScore">87/3</strong>
+            <small id="dashOvers">10.4 overs</small>
+          </div>
         </div>
-      </form>
-    </section>
-  </main>
 
-  <script type="module">
-    const teamA = document.querySelector("#teamA");
-    const teamB = document.querySelector("#teamB");
-    const pitch = document.querySelector("#pitch");
-    const weather = document.querySelector("#weather");
-    const overs = document.querySelector("#overs");
-    const runs = document.querySelector("#runs");
-    const form = document.querySelector("#oracleForm");
-    const winnerName = document.querySelector("#winnerName");
-    const chanceDial = document.querySelector("#chanceDial");
-    const keyMoment = document.querySelector("#keyMoment");
-    const scoreFuture = document.querySelector("#scoreFuture");
-    const pressureRead = document.querySelector("#pressureRead");
-    const momentumStat = document.querySelector("#momentumStat");
-    const impactStat = document.querySelector("#impactStat");
-    const riskStat = document.querySelector("#riskStat");
-    const fallbackScene = document.querySelector("#fallbackScene");
+        <div class="grid cols-2" style="margin-top: 16px;">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Next Fixtures</h2>
+              <span>3 scheduled</span>
+            </div>
+            <div class="panel-body">
+              <ul class="feed">
+                <li><strong>Pak Lions vs Lahore Kings</strong><span>Today, 7:30 PM</span></li>
+                <li><strong>Karachi Strikers vs Multan Stars</strong><span>Tomorrow</span></li>
+                <li><strong>Islamabad Hawks vs Pak Lions</strong><span>Friday</span></li>
+              </ul>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Match Flow</h2>
+              <span>First version</span>
+            </div>
+            <div class="panel-body">
+              <ul class="feed">
+                <li><strong>Create team</strong><span>Step 2</span></li>
+                <li><strong>Add players</strong><span>Step 3</span></li>
+                <li><strong>Request match</strong><span>Step 4</span></li>
+                <li><strong>Score live</strong><span>Step 6</span></li>
+              </ul>
+            </div>
+          </section>
+        </div>
+
+        <div class="field-orbit" style="margin-top: 16px;" aria-hidden="true">
+          <div class="pitch"></div>
+          <div class="orbit-ball"></div>
+        </div>
+      </section>
+
+      <section class="page" id="teams">
+        <div class="split">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Team Profiles</h2>
+              <span id="teamsLabel">4 teams</span>
+            </div>
+            <div class="panel-body">
+              <div class="grid cols-2" id="teamList"></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Create Team</h2>
+              <span>Prototype form</span>
+            </div>
+            <form class="panel-body grid" id="teamForm">
+              <label>Team name <input id="newTeamName" value="Rawalpindi Royals" /></label>
+              <label>City <input id="newTeamCity" value="Rawalpindi" /></label>
+              <label>Captain <input id="newTeamCaptain" value="Bilal Khan" /></label>
+              <button class="btn primary" type="submit">Add Team</button>
+            </form>
+          </section>
+        </div>
+      </section>
+
+      <section class="page" id="players">
+        <div class="split">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Players</h2>
+              <span id="playersLabel">18 players</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Team</th>
+                    <th>Role</th>
+                    <th>Runs</th>
+                    <th>Wickets</th>
+                  </tr>
+                </thead>
+                <tbody id="playerRows"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Add Player</h2>
+              <span>Team roster</span>
+            </div>
+            <form class="panel-body grid" id="playerForm">
+              <label>Player name <input id="newPlayerName" value="Hassan Ali" /></label>
+              <label>Team <select id="newPlayerTeam"></select></label>
+              <label>Role
+                <select id="newPlayerRole">
+                  <option>All-rounder</option>
+                  <option>Batter</option>
+                  <option>Bowler</option>
+                  <option>Wicketkeeper</option>
+                </select>
+              </label>
+              <button class="btn primary" type="submit">Add Player</button>
+            </form>
+          </section>
+        </div>
+      </section>
+
+      <section class="page" id="requests">
+        <div class="split">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Match Requests</h2>
+              <span id="requestCount">2 pending</span>
+            </div>
+            <div class="panel-body grid" id="requestList"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Send Request</h2>
+              <span>Team challenge</span>
+            </div>
+            <form class="panel-body grid" id="requestForm">
+              <div class="form-grid">
+                <label>From <select id="requestFrom"></select></label>
+                <label>To <select id="requestTo"></select></label>
+              </div>
+              <div class="form-grid">
+                <label>Overs <input id="requestOvers" type="number" min="5" max="50" value="20" /></label>
+                <label>Date <input id="requestDate" type="date" /></label>
+              </div>
+              <label>Venue <input id="requestVenue" value="Model Town Ground" /></label>
+              <button class="btn primary" type="submit">Send Match Request</button>
+            </form>
+          </section>
+        </div>
+      </section>
+
+      <section class="page" id="scoring">
+        <div class="split">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Live Scoring</h2>
+              <span id="inningsStatus">Pak Lions batting</span>
+            </div>
+            <div class="panel-body scorecard">
+              <div class="scoreboard">
+                <div class="score-main"><strong id="scoreRuns">87</strong><span>/<span id="scoreWickets">3</span></span></div>
+                <div class="grid cols-3">
+                  <div class="card"><span class="muted">Overs</span><h3 id="scoreOvers">10.4</h3></div>
+                  <div class="card"><span class="muted">Run rate</span><h3 id="runRate">8.16</h3></div>
+                  <div class="card"><span class="muted">Target</span><h3>164</h3></div>
+                </div>
+              </div>
+
+              <div class="ball-buttons" style="margin-top: 16px;">
+                <button class="btn" data-ball="0">0</button>
+                <button class="btn" data-ball="1">1</button>
+                <button class="btn" data-ball="2">2</button>
+                <button class="btn" data-ball="3">3</button>
+                <button class="btn primary" data-ball="4">4</button>
+                <button class="btn primary" data-ball="6">6</button>
+                <button class="btn" data-extra="Wd">Wide</button>
+                <button class="btn" data-extra="Nb">No Ball</button>
+                <button class="btn" data-extra="B">Bye</button>
+                <button class="btn" data-extra="Lb">Leg Bye</button>
+                <button class="btn danger" data-wicket="true">Wicket</button>
+                <button class="btn ghost" id="undoBall">Undo</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Ball Feed</h2>
+              <span>Realtime source</span>
+            </div>
+            <div class="panel-body">
+              <div class="last-balls" id="lastBalls"></div>
+              <ul class="feed" id="commentary" style="margin-top: 16px;"></ul>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="page" id="public">
+        <div class="public-score">
+          <span class="tag green">Public live match</span>
+          <h2>Pak Lions <span id="publicScore">87/3</span></h2>
+          <p class="muted" id="publicDetail">10.4 overs. Need 77 from 56 balls.</p>
+          <div class="last-balls" id="publicLastBalls"></div>
+          <div class="grid cols-3">
+            <div class="card"><span class="muted">Batter</span><h3>Ali Raza 42*</h3></div>
+            <div class="card"><span class="muted">Bowler</span><h3>Umar Khan</h3></div>
+            <div class="card"><span class="muted">Win chance</span><h3 id="winChance">58%</h3></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="tournaments">
+        <div class="split">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Tournaments</h2>
+              <span>Applications open</span>
+            </div>
+            <div class="panel-body grid" id="tournamentList"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Applications</h2>
+              <span id="applicationCount">3 teams</span>
+            </div>
+            <div class="panel-body">
+              <ul class="feed" id="applicationList"></ul>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const pages = {
+      dashboard: ["Dashboard", "Foundation prototype for teams, players, requests, scoring, and tournaments."],
+      teams: ["Teams", "Create profiles, track captains, and prepare squads for matches."],
+      players: ["Players", "Manage roster roles and early player statistics."],
+      requests: ["Match Requests", "Send, accept, and reject team challenges."],
+      scoring: ["Live Scoring", "Record every ball and update the public score instantly."],
+      public: ["Public Live View", "A clean score page for common viewers."],
+      tournaments: ["Tournaments", "Create competitions and review team applications."],
+    };
 
     const state = {
-      confidence: 64,
-      energy: 0.64,
-      spin: 0,
+      teams: [
+        { id: 1, name: "Pak Lions", city: "Lahore", captain: "Ali Raza", record: "8W - 3L" },
+        { id: 2, name: "Lahore Kings", city: "Lahore", captain: "Umar Khan", record: "6W - 4L" },
+        { id: 3, name: "Karachi Strikers", city: "Karachi", captain: "Danish Amir", record: "7W - 5L" },
+        { id: 4, name: "Multan Stars", city: "Multan", captain: "Saad Malik", record: "5W - 5L" },
+      ],
+      players: [
+        { name: "Ali Raza", team: "Pak Lions", role: "Batter", runs: 420, wickets: 2 },
+        { name: "Hamza Shah", team: "Pak Lions", role: "All-rounder", runs: 260, wickets: 14 },
+        { name: "Usman Javed", team: "Pak Lions", role: "Bowler", runs: 78, wickets: 21 },
+        { name: "Umar Khan", team: "Lahore Kings", role: "Bowler", runs: 102, wickets: 24 },
+        { name: "Sameer Noor", team: "Lahore Kings", role: "Wicketkeeper", runs: 315, wickets: 0 },
+        { name: "Danish Amir", team: "Karachi Strikers", role: "Batter", runs: 388, wickets: 1 },
+      ],
+      requests: [
+        { id: 1, from: "Pak Lions", to: "Lahore Kings", venue: "Model Town Ground", overs: 20, status: "Pending" },
+        { id: 2, from: "Karachi Strikers", to: "Multan Stars", venue: "National Ground", overs: 16, status: "Pending" },
+      ],
+      tournaments: [
+        { name: "Punjab Super Cup", teams: 8, format: "Group + knockout", status: "Applications open" },
+        { name: "City Night League", teams: 6, format: "Round robin", status: "Draft fixtures" },
+      ],
+      applications: [
+        { team: "Pak Lions", status: "Pending" },
+        { team: "Lahore Kings", status: "Pending" },
+        { team: "Karachi Strikers", status: "Approved" },
+      ],
+      score: {
+        runs: 87,
+        wickets: 3,
+        legalBalls: 64,
+        target: 164,
+        last: ["1", "4", "0", "Wd", "2", "W"],
+        history: [
+          { label: "10.4", text: "Wicket. Hamza Shah caught at long-on." },
+          { label: "10.3", text: "Two runs into the leg side." },
+          { label: "10.3", text: "Wide outside off stump." },
+        ],
+      },
     };
 
-    const phases = {
-      balanced: ["Middle overs", "Rotate strike and force a missed length."],
-      batting: ["Powerplay", "The next boundary opens the match wide."],
-      spin: ["Spin spell", "A sweep option will decide the next two overs."],
-      pace: ["New ball", "Back-foot shots become the pressure release."],
-      slow: ["Death", "Slower balls and hard running shape the finish."],
-    };
+    const title = document.querySelector("#pageTitle");
+    const subtitle = document.querySelector("#pageSubtitle");
 
-    const weatherNotes = {
-      clear: "Clean hitting conditions reward the calmer chase.",
-      dew: "Dew makes defending harder and boosts the chasing side.",
-      cloudy: "Cloud cover keeps seamers alive for one more twist.",
-      hot: "Tired fielders leak twos if the batters stay busy.",
-    };
+    document.querySelectorAll(".nav button").forEach((button) => {
+      button.addEventListener("click", () => {
+        const page = button.dataset.page;
+        document.querySelectorAll(".nav button").forEach((item) => item.classList.remove("active"));
+        document.querySelectorAll(".page").forEach((item) => item.classList.remove("active"));
+        button.classList.add("active");
+        document.querySelector(`#${page}`).classList.add("active");
+        title.textContent = pages[page][0];
+        subtitle.textContent = pages[page][1];
+      });
+    });
 
-    function clamp(value, min, max) {
-      return Math.min(max, Math.max(min, value));
+    function initials(name) {
+      return name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
     }
 
-    function hashTeam(name) {
-      return [...name.trim().toLowerCase()].reduce((total, char) => total + char.charCodeAt(0), 0);
+    function oversText(legalBalls) {
+      return `${Math.floor(legalBalls / 6)}.${legalBalls % 6}`;
     }
 
-    function predict() {
-      const a = teamA.value.trim() || "Team A";
-      const b = teamB.value.trim() || "Team B";
-      const ballsLeft = clamp(Number(overs.value || 1), 1, 50) * 6;
-      const required = clamp(Number(runs.value || 1), 1, 400);
-      const rate = required / Math.max(1, ballsLeft / 6);
-      const pitchSwing = { balanced: 2, batting: 9, spin: -4, pace: 3, slow: -8 }[pitch.value];
-      const weatherSwing = { clear: 2, dew: 8, cloudy: -5, hot: 1 }[weather.value];
-      const teamPulse = (hashTeam(a) - hashTeam(b)) % 17;
-      const chasePressure = 18 - rate * 2.1;
-      const raw = 55 + pitchSwing + weatherSwing + teamPulse + chasePressure;
-      const confidence = Math.round(clamp(raw, 38, 82));
-      const winner = confidence >= 55 ? a : b;
-      const chance = confidence >= 55 ? confidence : 100 - confidence;
-      const wickets = clamp(Math.round(10 - ballsLeft / 24 + rate / 2), 3, 9);
-      const projectedRuns = Math.round(required + 80 + chance / 3);
-      const ballsSpare = clamp(Math.round((chance - 50) / 2), 1, 18);
-      const [phase, phaseNote] = phases[pitch.value];
-      const risk = chance > 72 ? "Low" : chance < 58 ? "High" : "Medium";
-
-      winnerName.textContent = winner;
-      chanceDial.textContent = `${chance}%`;
-      chanceDial.style.setProperty("--angle", `${chance * 3.6}deg`);
-      keyMoment.textContent = `${phase}: ${phaseNote}`;
-      scoreFuture.textContent = `Projected finish: ${projectedRuns}-${wickets} with ${ballsSpare} balls left.`;
-      pressureRead.textContent = weatherNotes[weather.value];
-      momentumStat.textContent = `${chance}%`;
-      impactStat.textContent = phase.split(" ")[0];
-      riskStat.textContent = risk;
-
-      state.confidence = chance;
-      state.energy = chance / 100;
-      state.spin += 0.85;
+    function renderTeams() {
+      document.querySelector("#teamList").innerHTML = state.teams.map((team) => `
+        <article class="card team-card">
+          <div class="team-top">
+            <div class="avatar">${initials(team.name)}</div>
+            <div>
+              <h3>${team.name}</h3>
+              <p>${team.city}</p>
+            </div>
+          </div>
+          <div class="actions">
+            <span class="tag green">${team.record}</span>
+            <span class="tag">Captain: ${team.captain}</span>
+          </div>
+        </article>
+      `).join("");
+      document.querySelector("#teamCount").textContent = state.teams.length;
+      document.querySelector("#teamsLabel").textContent = `${state.teams.length} teams`;
+      renderTeamSelects();
     }
 
-    form.addEventListener("submit", (event) => {
+    function renderTeamSelects() {
+      const options = state.teams.map((team) => `<option>${team.name}</option>`).join("");
+      ["#newPlayerTeam", "#requestFrom", "#requestTo"].forEach((selector) => {
+        document.querySelector(selector).innerHTML = options;
+      });
+      document.querySelector("#requestTo").selectedIndex = Math.min(1, state.teams.length - 1);
+    }
+
+    function renderPlayers() {
+      document.querySelector("#playerRows").innerHTML = state.players.map((player) => `
+        <tr>
+          <td><strong>${player.name}</strong></td>
+          <td>${player.team}</td>
+          <td><span class="tag">${player.role}</span></td>
+          <td>${player.runs}</td>
+          <td>${player.wickets}</td>
+        </tr>
+      `).join("");
+      document.querySelector("#playerCount").textContent = state.players.length;
+      document.querySelector("#playersLabel").textContent = `${state.players.length} players`;
+    }
+
+    function renderRequests() {
+      const pending = state.requests.filter((request) => request.status === "Pending").length;
+      document.querySelector("#requestCount").textContent = `${pending} pending`;
+      document.querySelector("#requestList").innerHTML = state.requests.map((request) => `
+        <article class="card">
+          <h3>${request.from} vs ${request.to}</h3>
+          <p class="muted">${request.overs} overs at ${request.venue}</p>
+          <div class="actions" style="margin-top: 12px;">
+            <span class="tag ${request.status === "Accepted" ? "green" : request.status === "Rejected" ? "red" : "gold"}">${request.status}</span>
+            <button class="btn primary" data-request-action="Accepted" data-id="${request.id}">Accept</button>
+            <button class="btn danger" data-request-action="Rejected" data-id="${request.id}">Reject</button>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function renderTournaments() {
+      document.querySelector("#tournamentList").innerHTML = state.tournaments.map((tournament) => `
+        <article class="card">
+          <h3>${tournament.name}</h3>
+          <p class="muted">${tournament.format}</p>
+          <div class="actions" style="margin-top: 12px;">
+            <span class="tag green">${tournament.status}</span>
+            <span class="tag">${tournament.teams} teams</span>
+          </div>
+        </article>
+      `).join("");
+
+      document.querySelector("#applicationCount").textContent = `${state.applications.length} teams`;
+      document.querySelector("#applicationList").innerHTML = state.applications.map((application, index) => `
+        <li>
+          <strong>${application.team}</strong>
+          <span>
+            <span class="tag ${application.status === "Approved" ? "green" : "gold"}">${application.status}</span>
+            <button class="btn ghost" data-application="${index}" style="margin-left: 8px;">Approve</button>
+          </span>
+        </li>
+      `).join("");
+    }
+
+    function renderScore() {
+      const score = state.score;
+      const overs = oversText(score.legalBalls);
+      const runRate = score.legalBalls ? (score.runs / (score.legalBalls / 6)).toFixed(2) : "0.00";
+      const ballsLeft = 120 - score.legalBalls;
+      const needed = Math.max(0, score.target - score.runs);
+      const chance = Math.max(18, Math.min(88, Math.round(44 + (score.runs / score.target) * 42 - score.wickets * 2)));
+
+      document.querySelector("#scoreRuns").textContent = score.runs;
+      document.querySelector("#scoreWickets").textContent = score.wickets;
+      document.querySelector("#scoreOvers").textContent = overs;
+      document.querySelector("#runRate").textContent = runRate;
+      document.querySelector("#dashScore").textContent = `${score.runs}/${score.wickets}`;
+      document.querySelector("#miniScore").textContent = `${score.runs}/${score.wickets}`;
+      document.querySelector("#dashOvers").textContent = `${overs} overs`;
+      document.querySelector("#publicScore").textContent = `${score.runs}/${score.wickets}`;
+      document.querySelector("#publicDetail").textContent = `${overs} overs. Need ${needed} from ${ballsLeft} balls.`;
+      document.querySelector("#winChance").textContent = `${chance}%`;
+
+      const balls = score.last.slice(-6).map((ball) => `<span class="ball-chip">${ball}</span>`).join("");
+      document.querySelector("#lastBalls").innerHTML = balls;
+      document.querySelector("#publicLastBalls").innerHTML = balls;
+      document.querySelector("#commentary").innerHTML = score.history.slice(0, 6).map((item) => `
+        <li><strong>${item.label}</strong><span>${item.text}</span></li>
+      `).join("");
+    }
+
+    function addLegalBall(label, runs, isWicket = false) {
+      const score = state.score;
+      score.runs += runs;
+      score.legalBalls += 1;
+      if (isWicket) score.wickets = Math.min(10, score.wickets + 1);
+      score.last.push(label);
+      score.history.unshift({ label: oversText(score.legalBalls), text: isWicket ? "Wicket. New batter comes in." : `${label} run${runs === 1 ? "" : "s"} added.` });
+      renderScore();
+    }
+
+    function addExtra(label) {
+      const score = state.score;
+      const isLegalExtra = label === "B" || label === "Lb";
+      score.runs += 1;
+      if (isLegalExtra) score.legalBalls += 1;
+      score.last.push(label);
+      score.history.unshift({ label: oversText(score.legalBalls), text: `${label} extra added.` });
+      renderScore();
+    }
+
+    document.querySelector("#teamForm").addEventListener("submit", (event) => {
       event.preventDefault();
-      predict();
+      state.teams.push({
+        id: Date.now(),
+        name: document.querySelector("#newTeamName").value || "New Team",
+        city: document.querySelector("#newTeamCity").value || "Unknown",
+        captain: document.querySelector("#newTeamCaptain").value || "Captain",
+        record: "0W - 0L",
+      });
+      renderTeams();
     });
 
-    [teamA, teamB, pitch, weather, overs, runs].forEach((control) => {
-      control.addEventListener("change", predict);
-      control.addEventListener("input", predict);
+    document.querySelector("#playerForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      state.players.push({
+        name: document.querySelector("#newPlayerName").value || "New Player",
+        team: document.querySelector("#newPlayerTeam").value,
+        role: document.querySelector("#newPlayerRole").value,
+        runs: 0,
+        wickets: 0,
+      });
+      renderPlayers();
     });
 
-    async function startScene() {
-      try {
-        const three = await import("https://unpkg.com/three@0.164.1/build/three.module.js");
-        const {
-          AmbientLight,
-          BoxGeometry,
-          CanvasTexture,
-          Color,
-          CylinderGeometry,
-          DirectionalLight,
-          Group,
-          Mesh,
-          MeshBasicMaterial,
-          MeshStandardMaterial,
-          PerspectiveCamera,
-          PlaneGeometry,
-          RingGeometry,
-          Scene,
-          SphereGeometry,
-          TorusGeometry,
-          WebGLRenderer,
-        } = three;
+    document.querySelector("#requestForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      state.requests.unshift({
+        id: Date.now(),
+        from: document.querySelector("#requestFrom").value,
+        to: document.querySelector("#requestTo").value,
+        venue: document.querySelector("#requestVenue").value || "Local Ground",
+        overs: Number(document.querySelector("#requestOvers").value || 20),
+        status: "Pending",
+      });
+      renderRequests();
+    });
 
-        const canvas = document.querySelector("#field3d");
-        const scene = new Scene();
-        scene.background = new Color("#071116");
+    document.querySelector("#requestList").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-request-action]");
+      if (!button) return;
+      const request = state.requests.find((item) => item.id === Number(button.dataset.id));
+      if (request) request.status = button.dataset.requestAction;
+      renderRequests();
+    });
 
-        const camera = new PerspectiveCamera(44, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.set(0, 8.8, 12);
-        camera.lookAt(0, 0, 0);
+    document.querySelector(".ball-buttons").addEventListener("click", (event) => {
+      const button = event.target.closest("button");
+      if (!button || button.id === "undoBall") return;
+      if (button.dataset.ball) addLegalBall(button.dataset.ball, Number(button.dataset.ball));
+      if (button.dataset.extra) addExtra(button.dataset.extra);
+      if (button.dataset.wicket) addLegalBall("W", 0, true);
+    });
 
-        const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.setSize(window.innerWidth, window.innerHeight);
+    document.querySelector("#undoBall").addEventListener("click", () => {
+      state.score.history.unshift({ label: oversText(state.score.legalBalls), text: "Undo placeholder ready for database history." });
+      renderScore();
+    });
 
-        const ambient = new AmbientLight("#b9fff1", 1.35);
-        scene.add(ambient);
+    document.querySelector("#applicationList").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-application]");
+      if (!button) return;
+      state.applications[Number(button.dataset.application)].status = "Approved";
+      renderTournaments();
+    });
 
-        const sun = new DirectionalLight("#ffffff", 3.3);
-        sun.position.set(3, 8, 5);
-        scene.add(sun);
-
-        const field = new Mesh(
-          new CylinderGeometry(7.4, 7.4, 0.16, 96),
-          new MeshStandardMaterial({ color: "#129e5f", roughness: 0.78, metalness: 0.03 })
-        );
-        field.position.y = -0.08;
-        scene.add(field);
-
-        const boundary = new Mesh(
-          new TorusGeometry(7.44, 0.035, 10, 160),
-          new MeshBasicMaterial({ color: "#f8fbff" })
-        );
-        boundary.rotation.x = Math.PI / 2;
-        boundary.position.y = 0.04;
-        scene.add(boundary);
-
-        const pitchMat = new MeshStandardMaterial({ color: "#d8a867", roughness: 0.88 });
-        const pitchBlock = new Mesh(new BoxGeometry(1.4, 0.05, 5.8), pitchMat);
-        pitchBlock.position.y = 0.06;
-        scene.add(pitchBlock);
-
-        const creaseMat = new MeshBasicMaterial({ color: "#ffffff" });
-        [-2.25, 2.25].forEach((z) => {
-          const crease = new Mesh(new BoxGeometry(1.9, 0.012, 0.04), creaseMat);
-          crease.position.set(0, 0.11, z);
-          scene.add(crease);
-        });
-
-        const wicketGroup = new Group();
-        const stumpMat = new MeshStandardMaterial({ color: "#ffd166", roughness: 0.55 });
-        [-0.22, 0, 0.22].forEach((x) => {
-          [-2.65, 2.65].forEach((z) => {
-            const stump = new Mesh(new CylinderGeometry(0.025, 0.025, 0.82, 16), stumpMat);
-            stump.position.set(x, 0.5, z);
-            wicketGroup.add(stump);
-          });
-        });
-        scene.add(wicketGroup);
-
-        const ball = new Mesh(
-          new SphereGeometry(0.19, 32, 32),
-          new MeshStandardMaterial({ color: "#ef476f", roughness: 0.35, metalness: 0.08 })
-        );
-        scene.add(ball);
-
-        const ringGroup = new Group();
-        const ringColors = ["#58d6ff", "#ffd166", "#17c978"];
-        ringColors.forEach((color, index) => {
-          const ring = new Mesh(
-            new RingGeometry(2.1 + index * 0.68, 2.12 + index * 0.68, 96),
-            new MeshBasicMaterial({ color, transparent: true, opacity: 0.38 })
-          );
-          ring.rotation.x = Math.PI / 2;
-          ring.position.y = 0.16 + index * 0.03;
-          ringGroup.add(ring);
-        });
-        scene.add(ringGroup);
-
-        const markerCanvas = document.createElement("canvas");
-        markerCanvas.width = 512;
-        markerCanvas.height = 128;
-        const context = markerCanvas.getContext("2d");
-        context.fillStyle = "rgba(7,17,22,0.1)";
-        context.fillRect(0, 0, markerCanvas.width, markerCanvas.height);
-        context.font = "800 44px Arial";
-        context.fillStyle = "#f8fbff";
-        context.textAlign = "center";
-        context.fillText("PakScorer Live Forecast", 256, 78);
-        const board = new Mesh(
-          new PlaneGeometry(3.9, 0.95),
-          new MeshBasicMaterial({ map: new CanvasTexture(markerCanvas), transparent: true })
-        );
-        board.position.set(0, 3.6, -5.8);
-        scene.add(board);
-
-        function resize() {
-          camera.aspect = window.innerWidth / window.innerHeight;
-          camera.updateProjectionMatrix();
-          renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        window.addEventListener("resize", resize);
-
-        function animate(time) {
-          const t = time * 0.001;
-          const radius = 2.1 + state.energy * 3.1;
-          ball.position.set(Math.sin(t * 1.8 + state.spin) * radius, 0.7 + Math.sin(t * 4.4) * 0.35, Math.cos(t * 1.8 + state.spin) * 2.1);
-          ball.rotation.set(t * 2.1, t * 3.8, 0);
-          field.rotation.y = t * 0.05;
-          wicketGroup.rotation.y = Math.sin(t * 0.8) * 0.04;
-          ringGroup.rotation.y = t * (0.17 + state.energy * 0.18);
-          ringGroup.scale.setScalar(1 + Math.sin(t * 2.3) * 0.025);
-          board.position.y = 3.6 + Math.sin(t * 1.7) * 0.09;
-          renderer.render(scene, camera);
-          requestAnimationFrame(animate);
-        }
-
-        requestAnimationFrame(animate);
-      } catch (error) {
-        fallbackScene.classList.add("is-visible");
-      }
-    }
-
-    predict();
-    startScene();
+    renderTeams();
+    renderPlayers();
+    renderRequests();
+    renderTournaments();
+    renderScore();
   </script>
 </body>
 </html>
