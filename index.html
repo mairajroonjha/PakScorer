@@ -992,6 +992,9 @@
                 <label>Overs <input id="requestOvers" type="number" min="5" max="50" value="20" /></label>
                 <label>Date <input id="requestDate" type="date" /></label>
               </div>
+              <div class="form-grid">
+                <label>Match Time <input id="requestTime" type="time" /></label>
+              </div>
               <label>Venue <input id="requestVenue" value="Model Town Ground" /></label>
               <button class="btn primary" type="submit">Send Match Request</button>
             </form>
@@ -1447,14 +1450,31 @@
       `).join("");
     }
 
+    function formatMatchDateTime(matchDate, matchTime) {
+      if (!matchDate) return null;
+      const dateStr = new Date(matchDate).toLocaleDateString("en-PK", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+      if (!matchTime) return dateStr;
+      const [hours, minutes] = matchTime.split(":");
+      const h = Number(hours);
+      const period = h >= 12 ? "PM" : "AM";
+      const display = `${h % 12 || 12}:${minutes} ${period}`;
+      return `${dateStr} · ${display}`;
+    }
+
     function renderMatches() {
       const scheduled = state.matches.filter((match) => match.status === "Scheduled" || match.status === "Setup");
-      const rows = scheduled.length ? scheduled.map((match) => `
+      const rows = scheduled.length ? scheduled.map((match) => {
+        const dateTime = formatMatchDateTime(match.matchDate, match.matchTime);
+        return `
         <li>
           <strong>${match.teamA} vs ${match.teamB}</strong>
-          <span>${match.overs} overs at ${match.venue}</span>
+          <span style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+            <span>${match.overs} overs · ${match.venue}</span>
+            ${dateTime ? `<span style="color:var(--cyan);font-size:0.82rem;font-weight:800;">${dateTime}</span>` : ""}
+          </span>
         </li>
-      `).join("") : `<li><strong>No scheduled matches yet</strong><span>Accept a request to create one</span></li>`;
+      `;
+      }).join("") : `<li><strong>No scheduled matches yet</strong><span>Accept a request to create one</span></li>`;
 
       document.querySelector("#fixtureCount").textContent = `${scheduled.length} scheduled`;
       document.querySelector("#scheduledMatchCount").textContent = `${scheduled.length} matches`;
@@ -1735,6 +1755,7 @@
       const venue = document.querySelector("#requestVenue").value || "Local Ground";
       const overs = Number(document.querySelector("#requestOvers").value || 20);
       const matchDate = document.querySelector("#requestDate").value || null;
+      const matchTime = document.querySelector("#requestTime").value || null;
       const isUuid = (value) => typeof value === "string" && value.includes("-");
 
       if (state.teams.length < 2) {
@@ -1755,6 +1776,7 @@
         venue,
         overs,
         matchDate,
+        matchTime,
         format: "T20",
         status: "Pending",
       };
@@ -1816,6 +1838,7 @@
             overs: request.overs,
             status: "Scheduled",
             matchDate: request.matchDate || null,
+            matchTime: request.matchTime || null,
           });
         }
       }
