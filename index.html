@@ -1115,6 +1115,23 @@
 
             <section class="panel">
               <div class="panel-head">
+                <h2>Apply to Tournament</h2>
+                <span>Team registration</span>
+              </div>
+              <form class="panel-body grid" id="applyForm">
+                <label>Tournament
+                  <select id="applyTournament"><option value="">-- Select tournament --</option></select>
+                </label>
+                <label>Team
+                  <select id="applyTeam"></select>
+                </label>
+                <p class="form-message" id="applyFormMessage" aria-live="polite"></p>
+                <button class="btn primary" type="submit">Apply Now</button>
+              </form>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
                 <h2>Applications</h2>
                 <span id="applicationCount">0 teams</span>
               </div>
@@ -1258,6 +1275,7 @@
         document.querySelector(selector).innerHTML = options;
       });
       document.querySelector("#requestTo").selectedIndex = state.teams.length > 1 ? 1 : 0;
+      renderTournamentSelects();
     }
 
     function renderPlayers() {
@@ -1410,6 +1428,25 @@
       return data;
     }
 
+    async function createApplicationInDatabase(application) {
+      const { data, error } = await supabase
+        .from("tournament_applications")
+        .insert(application)
+        .select("id,tournament_id,team_id,team,status,tournaments(name)")
+        .single();
+
+      if (error) throw error;
+
+      return {
+        id: data.id,
+        tournamentId: data.tournament_id,
+        teamId: data.team_id,
+        team: data.team,
+        status: data.status,
+        tournamentName: data.tournaments?.name || null,
+      };
+    }
+
     async function createTeamInDatabase(team) {
       const { data, error } = await supabase
         .from("teams")
@@ -1514,6 +1551,18 @@
       select.selectedIndex = currentIndex >= 0 ? currentIndex : 0;
     }
 
+    function renderTournamentSelects() {
+      const tournamentSelect = document.querySelector("#applyTournament");
+      const teamSelect = document.querySelector("#applyTeam");
+      if (!tournamentSelect || !teamSelect) return;
+
+      tournamentSelect.innerHTML = state.tournaments.length
+        ? `<option value="">-- Select tournament --</option>` + state.tournaments.map((t) => `<option value="${t.id}">${t.name}</option>`).join("")
+        : `<option value="">No tournaments yet</option>`;
+
+      teamSelect.innerHTML = state.teams.map((t) => `<option value="${t.id || ""}">${t.name}</option>`).join("");
+    }
+
     function renderRequests() {
       const pending = state.requests.filter((request) => request.status === "Pending").length;
       document.querySelector("#requestCount").textContent = `${pending} pending`;
@@ -1589,6 +1638,8 @@
           </span>
         </li>
       `).join("") : `<li><strong>No applications yet</strong><span>Teams apply after tournaments are created</span></li>`;
+      
+      renderTournamentSelects();
     }
 
     function renderScore() {
@@ -2049,6 +2100,73 @@
 
       renderTournaments();
       message.textContent = `${name} created successfully.`;
+      message.classList.add("success");
+    });
+
+    document.querySelector("#applyForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = document.querySelector("#applyFormMessage");
+      const tournamentId = document.querySelector("#applyTournament").value;
+      const teamId = document.querySelector("#applyTeam").value;
+
+      message.className = "form-message";
+
+      if (!tournamentId || !teamId) {
+        message.textContent = "Please select a tournament and a team.";
+        message.classList.add("error");
+        return;
+      }
+
+      const tournament = state.tournaments.find((t) => t.id === tournamentId);
+      const team = state.teams.find((t) => t.id === teamId);
+
+      if (!tournament || !team) {
+        message.textContent = "Invalid tournament or team selection.";
+        message.classList.add("error");
+        return;
+      }
+
+      const alreadyApplied = state.applications.some(
+        (app) => app.tournamentId === tournamentId && app.teamId === teamId
+      );
+
+      if (alreadyApplied) {
+        message.textContent = "This team has already applied to this tournament.";
+        message.classList.add("error");
+        return;
+      }
+
+      const application = {
+        tournament_id: tournamentId,
+        team_id: teamId,
+        team: team.name,
+        status: "Pending"
+      };
+
+      message.textContent = "Submitting application...";
+
+      if (state.usingDatabase) {
+        try {
+          const newApp = await createApplicationInDatabase(application);
+          state.applications.unshift(newApp);
+        } catch (error) {
+          message.textContent = error.code === "23505" ? "This application already exists." : "Could not save application to Supabase.";
+          message.classList.add("error");
+          return;
+        }
+      } else {
+        state.applications.unshift({
+          id: Date.now(),
+          tournamentId,
+          teamId,
+          team: team.name,
+          status: "Pending",
+          tournamentName: tournament.name
+        });
+      }
+
+      renderTournaments();
+      message.textContent = `Application submitted for ${team.name}.`;
       message.classList.add("success");
     });
 
