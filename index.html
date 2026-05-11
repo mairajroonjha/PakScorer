@@ -1113,15 +1113,13 @@
       </section>
 
       <section class="page" id="public">
-        <div class="public-score" id="publicScorePanel">
-          <span class="tag green">Public live match</span>
-          <h2>Pak Lions <span id="publicScore">87/3</span></h2>
-          <p class="muted" id="publicDetail">10.4 overs. Need 77 from 56 balls.</p>
-          <div class="last-balls" id="publicLastBalls"></div>
-          <div class="grid cols-3">
-            <div class="card"><span class="muted">Batter</span><h3>Ali Raza 42*</h3></div>
-            <div class="card"><span class="muted">Bowler</span><h3 id="publicBowler">Umar Khan</h3></div>
-            <div class="card"><span class="muted">Win chance</span><h3 id="winChance">58%</h3></div>
+        <div class="panel" style="background: transparent; border: none;">
+          <div class="panel-head" style="margin-bottom: 24px;">
+            <h2>Live Matches Dashboard</h2>
+            <span id="publicLiveCount">Loading...</span>
+          </div>
+          <div class="grid" id="publicDashboardGrid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+            <!-- Matches will be injected here -->
           </div>
         </div>
       </section>
@@ -1246,6 +1244,8 @@
     const title = document.querySelector("#pageTitle");
     const subtitle = document.querySelector("#pageSubtitle");
 
+    let publicViewInterval = null;
+
     document.querySelectorAll(".nav button").forEach((button) => {
       button.addEventListener("click", () => {
         const page = button.dataset.page;
@@ -1255,6 +1255,12 @@
         document.querySelector(`#${page}`).classList.add("active");
         title.textContent = pages[page][0];
         subtitle.textContent = pages[page][1];
+
+        if (publicViewInterval) clearInterval(publicViewInterval);
+        if (page === "public") {
+          renderPublicLiveView();
+          publicViewInterval = setInterval(renderPublicLiveView, 5000);
+        }
       });
     });
 
@@ -1602,6 +1608,18 @@
       return data;
     }
 
+    async function loadLiveMatchesWithInningsFromDatabase() {
+      const { data, error } = await supabase
+        .from("matches")
+        .select(`
+          id, team_a, team_b, overs, venue,
+          innings ( id, innings_number, runs, wickets, legal_balls, batting_team )
+        `)
+        .eq("status", "Live");
+      if (error) throw error;
+      return data;
+    }
+
     async function loadInningsFromDatabase(matchId) {
       const { data, error } = await supabase
         .from("innings")
@@ -1803,12 +1821,9 @@
       document.querySelector("#scoreOvers").textContent = overs;
       document.querySelector("#runRate").textContent = runRate;
       document.querySelector("#currentBowler").textContent = score.currentBowler;
-      document.querySelector("#publicBowler").textContent = score.currentBowler;
       document.querySelector("#dashScore").textContent = `${score.runs}/${score.wickets}`;
       document.querySelector("#miniScore").textContent = `${score.runs}/${score.wickets}`;
       document.querySelector("#dashOvers").textContent = `${overs} overs`;
-      document.querySelector("#publicScore").textContent = `${score.runs}/${score.wickets}`;
-      document.querySelector("#publicDetail").textContent = `${overs} overs. Need ${needed} from ${ballsLeft} balls.`;
       document.querySelector("#winChance").textContent = `${chance}%`;
       document.querySelector("#bowlerChooser").hidden = !score.needsBowler;
 
@@ -1819,25 +1834,60 @@
         return `<span class="ball-chip ${isLatest ? eventClass : ""}">${ball}</span>`;
       }).join("");
       document.querySelector("#lastBalls").innerHTML = balls;
-      document.querySelector("#publicLastBalls").innerHTML = balls;
       document.querySelector("#commentary").innerHTML = score.history.slice(0, 6).map((item) => `
         <li><strong>${item.label}</strong><span>${item.text}</span></li>
       `).join("");
     }
 
     function animatePublicScore(type) {
-      const panel = document.querySelector("#publicScorePanel");
-      if (!panel || !type) return;
+      // Stubbed out for multi-match public view. We could add animations to specific cards later.
+    }
 
-      const className = type === "boundary" ? "boundary-flash" : type === "danger" ? "danger-flash" : "";
-      if (!className) return;
+    async function renderPublicLiveView() {
+      if (!state.usingDatabase) {
+        document.querySelector("#publicLiveCount").textContent = "Local mode (Supabase unavailable)";
+        document.querySelector("#publicDashboardGrid").innerHTML = `<div class="card"><p class="muted">Live view requires database connection.</p></div>`;
+        return;
+      }
 
-      panel.classList.remove("boundary-flash", "danger-flash", "public-live-flash");
-      void panel.offsetWidth;
-      panel.classList.add(className, "public-live-flash");
-      window.setTimeout(() => {
-        panel.classList.remove(className, "public-live-flash");
-      }, 760);
+      try {
+        const matches = await loadLiveMatchesWithInningsFromDatabase();
+        document.querySelector("#publicLiveCount").textContent = `${matches.length} active match${matches.length !== 1 ? 'es' : ''}`;
+        
+        if (matches.length === 0) {
+          document.querySelector("#publicDashboardGrid").innerHTML = `
+            <div class="card" style="text-align:center; padding: 48px 24px; border-style: dashed;">
+              <h3 style="margin-bottom: 8px;">No live matches right now</h3>
+              <p class="muted">Check back later when a match starts.</p>
+            </div>
+          `;
+          return;
+        }
+
+        document.querySelector("#publicDashboardGrid").innerHTML = matches.map(match => {
+          let currentInnings = null;
+          if (match.innings && match.innings.length > 0) {
+            currentInnings = match.innings.reduce((prev, current) => (prev.innings_number > current.innings_number) ? prev : current);
+          }
+
+          const runs = currentInnings ? currentInnings.runs : 0;
+          const wickets = currentInnings ? currentInnings.wickets : 0;
+          const legalBalls = currentInnings ? currentInnings.legal_balls : 0;
+          const battingTeam = currentInnings ? currentInnings.batting_team : match.team_a;
+          
+          return `
+            <div class="public-score" style="margin: 0; padding: 24px;">
+              <span class="tag green" style="animation: pulse 2s infinite;">LIVE</span>
+              <h3 style="margin: 12px 0 4px; font-size: 1.1rem; color: var(--muted);">${match.team_a} vs ${match.team_b}</h3>
+              <h2 style="font-size: 2.5rem; margin-bottom: 4px;">${battingTeam} <span style="color: var(--cyan);">${runs}/${wickets}</span></h2>
+              <p class="muted">${oversText(legalBalls)} overs · ${match.overs} over match</p>
+            </div>
+          `;
+        }).join("");
+      } catch (error) {
+        console.error("Failed to fetch live matches", error);
+        document.querySelector("#publicLiveCount").textContent = "Error loading matches";
+      }
     }
 
     function scoreSnapshot() {
