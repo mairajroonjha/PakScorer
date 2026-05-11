@@ -1113,13 +1113,45 @@
       </section>
 
       <section class="page" id="public">
-        <div class="panel" style="background: transparent; border: none;">
+        <div id="publicGridContainer" class="panel" style="background: transparent; border: none;">
           <div class="panel-head" style="margin-bottom: 24px;">
             <h2>Live Matches Dashboard</h2>
             <span id="publicLiveCount">Loading...</span>
           </div>
           <div class="grid" id="publicDashboardGrid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
             <!-- Matches will be injected here -->
+          </div>
+        </div>
+
+        <div id="publicDetailContainer" style="display: none;">
+          <button class="btn ghost" id="backToPublicGridBtn" style="margin-bottom: 16px;">&larr; Back to Dashboard</button>
+          <div class="split">
+            <section class="panel">
+              <div class="panel-head">
+                <h2 id="publicDetailTeams">Team A vs Team B</h2>
+                <span id="publicDetailStatus">Live</span>
+              </div>
+              <div class="panel-body scorecard">
+                <div class="scoreboard">
+                  <div class="score-main"><strong id="publicDetailRuns">0</strong><span>/<span id="publicDetailWickets">0</span></span></div>
+                  <div class="grid cols-3">
+                    <div class="card"><span class="muted">Overs</span><h3 id="publicDetailOvers">0.0</h3></div>
+                    <div class="card"><span class="muted">Run rate</span><h3 id="publicDetailRunRate">0.00</h3></div>
+                    <div class="card"><span class="muted">Batting</span><h3 id="publicDetailBattingTeam">Team</h3></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Ball Feed</h2>
+                <span>Realtime source</span>
+              </div>
+              <div class="panel-body">
+                <div class="last-balls" id="publicDetailLastBalls"></div>
+                <ul class="feed" id="publicDetailCommentary" style="margin-top: 16px;"></ul>
+              </div>
+            </section>
           </div>
         </div>
       </section>
@@ -1843,6 +1875,8 @@
       // Stubbed out for multi-match public view. We could add animations to specific cards later.
     }
 
+    let publicActiveMatchId = null;
+
     async function renderPublicLiveView() {
       if (!state.usingDatabase) {
         document.querySelector("#publicLiveCount").textContent = "Local mode (Supabase unavailable)";
@@ -1851,6 +1885,11 @@
       }
 
       try {
+        if (publicActiveMatchId) {
+          await renderPublicMatchDetail(publicActiveMatchId);
+          return;
+        }
+
         const matches = await loadLiveMatchesWithInningsFromDatabase();
         document.querySelector("#publicLiveCount").textContent = `${matches.length} active match${matches.length !== 1 ? 'es' : ''}`;
         
@@ -1876,7 +1915,7 @@
           const battingTeam = currentInnings ? currentInnings.batting_team : match.team_a;
           
           return `
-            <div class="public-score" style="margin: 0; padding: 24px;">
+            <div class="public-score public-match-card" data-match-id="${match.id}" style="margin: 0; padding: 24px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
               <span class="tag green" style="animation: pulse 2s infinite;">LIVE</span>
               <h3 style="margin: 12px 0 4px; font-size: 1.1rem; color: var(--muted);">${match.team_a} vs ${match.team_b}</h3>
               <h2 style="font-size: 2.5rem; margin-bottom: 4px;">${battingTeam} <span style="color: var(--cyan);">${runs}/${wickets}</span></h2>
@@ -1887,6 +1926,53 @@
       } catch (error) {
         console.error("Failed to fetch live matches", error);
         document.querySelector("#publicLiveCount").textContent = "Error loading matches";
+      }
+    }
+
+    async function renderPublicMatchDetail(matchId) {
+      try {
+        const { data: match, error: matchError } = await supabase
+          .from("matches")
+          .select("team_a, team_b, status")
+          .eq("id", matchId)
+          .single();
+        
+        if (matchError) throw matchError;
+
+        const innings = await loadInningsFromDatabase(matchId);
+        if (!innings) return;
+
+        const balls = await loadBallsFromDatabase(innings.id);
+        const legalBalls = innings.legal_balls;
+        const runs = innings.runs;
+        const wickets = innings.wickets;
+
+        document.querySelector("#publicDetailTeams").textContent = `${match.team_a} vs ${match.team_b}`;
+        document.querySelector("#publicDetailStatus").className = match.status === "Live" ? "tag green" : "tag";
+        document.querySelector("#publicDetailStatus").textContent = match.status;
+        
+        document.querySelector("#publicDetailRuns").textContent = runs;
+        document.querySelector("#publicDetailWickets").textContent = wickets;
+        document.querySelector("#publicDetailOvers").textContent = oversText(legalBalls);
+        document.querySelector("#publicDetailRunRate").textContent = legalBalls ? (runs / (legalBalls / 6)).toFixed(2) : "0.00";
+        document.querySelector("#publicDetailBattingTeam").textContent = innings.batting_team;
+
+        const visibleBalls = balls.slice(-6).map(b => b.is_wicket ? "W" : b.extra_type ? (b.extra_type==="Wide"?"Wd":b.extra_type==="No Ball"?"Nb":b.extra_type==="Bye"?"B":"Lb") : b.runs_bat.toString());
+        const lastBallsHtml = visibleBalls.map((ball, index) => {
+          const isLatest = index === visibleBalls.length - 1;
+          const eventClass = ball === "4" || ball === "6" ? "boundary" : ball === "W" || ball === "Nb" ? "danger" : "";
+          return `<span class="ball-chip ${isLatest ? eventClass : ""}">${ball}</span>`;
+        }).join("");
+        document.querySelector("#publicDetailLastBalls").innerHTML = lastBallsHtml;
+
+        const commentaryHtml = balls.slice(-10).reverse().map(b => {
+          const text = b.is_wicket ? "Wicket." : b.extra_type ? `${b.extra_type} added.` : `${b.runs_bat} runs added.`;
+          return `<li><strong>${b.over_number}.${b.ball_in_over}</strong><span>${text}</span></li>`;
+        }).join("");
+        document.querySelector("#publicDetailCommentary").innerHTML = commentaryHtml;
+
+      } catch (error) {
+        console.error("Failed to render match detail", error);
       }
     }
 
@@ -2570,6 +2656,23 @@
          document.querySelector("#activeMatchStatus").textContent = "No match selected";
          renderMatches();
        }
+    });
+
+    document.querySelector("#publicDashboardGrid").addEventListener("click", (event) => {
+      const card = event.target.closest(".public-match-card");
+      if (!card) return;
+      
+      publicActiveMatchId = card.dataset.matchId;
+      document.querySelector("#publicGridContainer").style.display = "none";
+      document.querySelector("#publicDetailContainer").style.display = "block";
+      renderPublicMatchDetail(publicActiveMatchId);
+    });
+
+    document.querySelector("#backToPublicGridBtn").addEventListener("click", () => {
+      publicActiveMatchId = null;
+      document.querySelector("#publicDetailContainer").style.display = "none";
+      document.querySelector("#publicGridContainer").style.display = "block";
+      renderPublicLiveView();
     });
 
     loadTeamsFromDatabase().then(async () => {
