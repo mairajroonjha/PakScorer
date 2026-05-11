@@ -1631,8 +1631,8 @@
         .from("matches")
         .update({ 
           status: "Live",
-          toss_winner_team_id: tossWinnerId || null,
-          batting_first_team_id: battingFirstId || null,
+          toss_winner_team_id: (tossWinnerId && tossWinnerId !== "null") ? tossWinnerId : null,
+          batting_first_team_id: (battingFirstId && battingFirstId !== "null") ? battingFirstId : null,
           started_at: new Date().toISOString()
         })
         .eq("id", id)
@@ -1647,7 +1647,7 @@
         .from("matches")
         .update({ 
           status: "Completed",
-          winner_team_id: winnerId,
+          winner_team_id: (winnerId && winnerId !== "null") ? winnerId : null,
           result_text: resultText,
           completed_at: new Date().toISOString()
         })
@@ -1687,8 +1687,8 @@
         .insert({
           match_id: matchId,
           innings_number: inningsNumber,
-          batting_team_id: battingTeamId,
-          bowling_team_id: bowlingTeamId,
+          batting_team_id: (battingTeamId && battingTeamId !== "null") ? battingTeamId : null,
+          bowling_team_id: (bowlingTeamId && bowlingTeamId !== "null") ? bowlingTeamId : null,
           batting_team: battingTeamName,
           bowling_team: bowlingTeamName,
           runs: 0,
@@ -2719,6 +2719,9 @@
           
           let innings = await loadInningsFromDatabase(match.id);
           if (!innings) {
+            if (!battingTeamId || battingTeamId === "null" || !bowlingTeamId || bowlingTeamId === "null") {
+              throw new Error("Cannot start innings: Missing team IDs. Please ensure teams are properly registered.");
+            }
             innings = await createInningsInDatabase(match.id, battingTeamId, bowlingTeamId, battingTeamName, bowlingTeamName, 1);
           }
           
