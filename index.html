@@ -1058,7 +1058,7 @@
       </div>
 
       <nav class="nav" aria-label="Main navigation">
-        <button class="active" data-page="dashboard"><span class="nav-icon">D</span>Dashboard</button>
+        <button class="active" data-page="home"><span class="nav-icon">H</span>Home</button>
         <button data-page="teams"><span class="nav-icon">T</span>Teams</button>
         <button data-page="players"><span class="nav-icon">P</span>Players</button>
         <button data-page="requests"><span class="nav-icon">R</span>Requests</button>
@@ -1124,36 +1124,48 @@
         <div class="status-pill"><span class="dot"></span><span id="liveStatus">Live prototype</span></div>
       </header>
 
-      <section class="page active" id="dashboard">
+      <section class="page active" id="home">
         <div class="grid cols-3">
           <div class="card metric">
             <span>Teams</span>
-            <strong id="teamCount">4</strong>
-            <small>2 match-ready squads</small>
+            <strong id="teamCount">0</strong>
+            <small>Registered squads</small>
           </div>
           <div class="card metric">
             <span>Players</span>
-            <strong id="playerCount">18</strong>
-            <small>12 active this week</small>
+            <strong id="playerCount">0</strong>
+            <small>Active cricketers</small>
           </div>
           <div class="card metric">
             <span>Live Score</span>
-            <strong id="dashScore">87/3</strong>
-            <small id="dashOvers">10.4 overs</small>
+            <strong id="dashScore">0/0</strong>
+            <small id="dashOvers">0.0 overs</small>
           </div>
         </div>
 
         <div class="grid cols-2" style="margin-top: 16px;">
           <section class="panel">
             <div class="panel-head">
-              <h2>Active & Upcoming</h2>
-              <span id="fixtureCount">0 scheduled</span>
+              <h2>Matches & Fixtures</h2>
+              <span id="fixtureCount">0 active</span>
             </div>
             <div class="panel-body">
-              <ul class="feed" id="dashboardFixtures"></ul>
+              <ul class="feed" id="homeFixtures"></ul>
             </div>
           </section>
 
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Active Tournaments</h2>
+              <span id="activeTournamentCount">0 running</span>
+            </div>
+            <div class="panel-body">
+              <ul class="feed" id="homeTournaments"></ul>
+            </div>
+          </section>
+        </div>
+
+        <div class="grid cols-1" style="margin-top: 16px;">
           <section class="panel">
             <div class="panel-head">
               <h2>Match History</h2>
@@ -1510,13 +1522,13 @@
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const pages = {
-      dashboard: ["Dashboard", "Foundation prototype for teams, players, requests, scoring, and tournaments."],
-      teams: ["Teams", "Create profiles, track captains, and prepare squads for matches."],
-      players: ["Players", "Manage roster roles and early player statistics."],
-      requests: ["Match Requests", "Send, accept, and reject team challenges."],
-      scoring: ["Live Scoring", "Record every ball and update the public score instantly."],
-      public: ["Public Live View", "A clean score page for common viewers."],
-      tournaments: ["Tournaments", "Create competitions and review team applications."],
+      home: ["Home", "Your central hub for local cricket activity."],
+      teams: ["Teams", "Manage your squads and track their performance."],
+      players: ["Players", "The talent roster for your teams."],
+      requests: ["Requests", "Challenges and match invitations."],
+      scoring: ["Scoring", "Professional ball-by-ball match management."],
+      public: ["Live View", "Detailed ball-by-ball spectator experience."],
+      tournaments: ["Tournaments", "Active competitions and standings."],
     };
 
     const state = {
@@ -1580,6 +1592,12 @@
         title.textContent = pages[page][0];
         subtitle.textContent = pages[page][1];
 
+        // Custom logic for Home page refresh when clicking
+        if (page === "home") {
+          renderMatches();
+          renderTournaments();
+        }
+
         if (publicViewInterval) clearInterval(publicViewInterval);
         if (page === "public") {
           renderPublicLiveView();
@@ -1627,7 +1645,7 @@
       const activePageEl = document.querySelector(".page.active");
       const activePage = activePageEl ? activePageEl.id : "dashboard";
       if (!user && restrictedPages.includes(activePage)) {
-        document.querySelector("[data-page='public']").click();
+        document.querySelector("[data-page='home']").click();
       }
 
       // Hide/Show admin-only elements (like create forms on public pages)
@@ -2304,8 +2322,18 @@
       safeSetText("#scheduledMatchCount", `${activeMatches.length} matches`);
       safeSetText("#historyCount", `${history.length} past matches`);
       
-      const dashFixtures = document.querySelector("#dashboardFixtures");
-      if (dashFixtures) dashFixtures.innerHTML = rows;
+      const dashFixtures = document.querySelector("#homeFixtures");
+      if (dashFixtures) {
+        dashFixtures.innerHTML = activeMatches.length ? activeMatches.map(match => `
+          <li class="match-card-compact" data-view-match="${match.id}" style="cursor:pointer; display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px; transition: 0.2s;">
+            <div style="display:flex; flex-direction:column; gap: 2px;">
+              <strong>${match.teamA} vs ${match.teamB}</strong>
+              <span class="muted" style="font-size:0.75rem;">${match.status} · ${match.overs} overs</span>
+            </div>
+            <span class="tag ${match.status === 'Live' ? 'green' : 'gold'}" style="font-size: 0.65rem;">${match.status === 'Live' ? 'LIVE' : 'UPCOMING'}</span>
+          </li>
+        `).join("") : `<li><strong>No active matches</strong></li>`;
+      }
       
       const schedList = document.querySelector("#scheduledMatchList");
       if (schedList) schedList.innerHTML = rows;
@@ -2501,7 +2529,7 @@
           ` : "";
 
           return `
-            <article class="card" style="display: flex; flex-direction: column; gap: 4px;">
+            <article class="card" data-tournament-card-id="${tournament.id}" style="display: flex; flex-direction: column; gap: 4px;">
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
                   <h3 style="margin: 0;">${tournament.name}</h3>
@@ -2533,6 +2561,22 @@
       `).join("") : `<li><strong>No applications yet</strong><span>Teams apply after tournaments are created</span></li>`;
       
       renderTournamentSelects();
+
+      // Home Page Tournaments
+      const runningTournaments = state.tournaments.filter(t => t.status !== "Completed");
+      safeSetText("#activeTournamentCount", `${runningTournaments.length} active`);
+      const homeTourneyEl = document.querySelector("#homeTournaments");
+      if (homeTourneyEl) {
+        homeTourneyEl.innerHTML = runningTournaments.length ? runningTournaments.map(t => `
+          <li class="match-card-compact" data-view-tournament="${t.id}" style="cursor:pointer; display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px; transition: 0.2s;">
+            <div style="display:flex; flex-direction:column; gap: 2px;">
+              <strong>${t.name}</strong>
+              <span class="muted" style="font-size:0.75rem;">${t.format} · ${t.overs} overs</span>
+            </div>
+            <span class="tag green" style="font-size: 0.65rem;">RUNNING</span>
+          </li>
+        `).join("") : `<li><strong>No running tournaments</strong></li>`;
+      }
     }
 
     function renderScore() {
@@ -3580,6 +3624,28 @@
     });
 
     document.querySelector(".main").addEventListener("click", async (event) => {
+      // VIEW MATCH FROM HOME
+      const matchViewBtn = event.target.closest("[data-view-match]");
+      if (matchViewBtn) {
+        const id = matchViewBtn.dataset.viewMatch;
+        document.querySelector("[data-page='public']").click();
+        publicActiveMatchId = id;
+        renderPublicMatchDetail(id);
+        return;
+      }
+
+      // VIEW TOURNAMENT FROM HOME
+      const tourneyViewBtn = event.target.closest("[data-view-tournament]");
+      if (tourneyViewBtn) {
+        const id = tourneyViewBtn.dataset.viewTournament;
+        document.querySelector("[data-page='tournaments']").click();
+        setTimeout(() => {
+          const el = document.querySelector(`[data-tournament-card-id="${id}"]`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+        return;
+      }
+
       // DELETE MATCH
       let button = event.target.closest("[data-delete-match]");
       if (button) {
