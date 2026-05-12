@@ -863,27 +863,29 @@
         display: block; /* single column, sidebar goes fixed */
       }
 
-      /* Hide the top sidebar entirely – we'll show a bottom bar */
+      /* Floating 3D bottom bar */
       .sidebar {
         position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
+        bottom: 12px;
+        left: 12px;
+        right: 12px;
         top: auto;
         height: auto;
-        width: 100%;
+        width: auto;
         z-index: 9000;
         display: flex;
         flex-direction: row;
         align-items: stretch;
         gap: 0;
-        padding: 0;
-        border-right: none;
-        border-top: 1px solid var(--line);
-        background: rgba(5, 10, 15, 0.96);
+        padding: 4px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(5, 10, 15, 0.85);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
-        box-shadow: 0 -4px 30px rgba(0,0,0,0.5);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.1), 0 20px 40px -10px rgba(0, 242, 255, 0.15);
+        transform: translateZ(0);
+        perspective: 1000px;
       }
 
       /* Hide brand & footer in the bottom bar */
@@ -904,7 +906,9 @@
       .nav::-webkit-scrollbar { display: none; }
 
       /* Each nav button: stacked icon + label */
-      .nav button {
+      .nav button,
+      #mobileLoginBtn,
+      #mobileSignupBtn {
         flex: 1;
         min-width: 52px;
         min-height: 60px;
@@ -914,14 +918,21 @@
         justify-content: center;
         gap: 4px;
         padding: 6px 4px 8px;
-        border-radius: 0;
-        font-size: 0.6rem;
-        font-weight: 700;
-        letter-spacing: 0.04em;
+        border-radius: 16px;
+        font-size: 0.55rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
         text-transform: uppercase;
         color: var(--muted);
         background: transparent;
-        transition: color 0.2s, background 0.2s;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, color 0.2s, box-shadow 0.2s;
+        transform-style: preserve-3d;
+      }
+
+      .nav button:active,
+      #mobileLoginBtn:active,
+      #mobileSignupBtn:active {
+        transform: scale(0.9) translateZ(-10px);
       }
 
       .nav button:hover,
@@ -942,32 +953,29 @@
         border-radius: 8px;
       }
 
-      /* Login button pinned at the right of the bottom bar */
-      #mobileLoginBtn {
+      /* Auth buttons pinned at the right of the bottom bar */
+      #mobileLoginBtn, #mobileSignupBtn {
         display: flex !important;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 4px;
-        min-width: 52px;
-        min-height: 60px;
-        padding: 6px 8px 8px;
         border: none;
-        border-left: 1px solid var(--line);
-        border-radius: 0;
+        border-left: 1px solid rgba(255,255,255,0.05);
+        border-radius: 16px;
         background: transparent;
         color: var(--green);
-        font-size: 0.6rem;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
         cursor: pointer;
-        transition: background 0.2s;
+      }
+      
+      #mobileSignupBtn {
+        color: var(--cyan);
       }
       #mobileLoginBtn:hover { background: rgba(0,255,163,0.08); }
+      #mobileSignupBtn:hover { background: rgba(0,242,255,0.08); }
       #mobileLoginBtn .nav-icon {
         background: rgba(0,255,163,0.15);
         color: var(--green);
+      }
+      #mobileSignupBtn .nav-icon {
+        background: rgba(0,242,255,0.15);
+        color: var(--cyan);
       }
 
       /* When logged in, show a different colour for mobile login icon */
@@ -1032,10 +1040,14 @@
         <button data-page="tournaments"><span class="nav-icon">C</span>Tournaments</button>
       </nav>
 
-      <!-- Mobile-only Login / Logout tab in the bottom bar -->
+      <!-- Mobile-only Login / Sign Up tabs in the bottom bar -->
       <button id="mobileLoginBtn" aria-label="Login / Logout" style="display:none;">
         <span class="nav-icon" id="mobileLoginIcon">&#128274;</span>
         <span id="mobileLoginLabel">Login</span>
+      </button>
+      <button id="mobileSignupBtn" aria-label="Sign Up" style="display:none;">
+        <span class="nav-icon" id="mobileSignupIcon">&#10010;</span>
+        <span id="mobileSignupLabel">Sign Up</span>
       </button>
 
       <div class="sidebar-footer">
@@ -1050,12 +1062,12 @@
       </div>
     </aside>
 
-    <!-- Login Modal -->
+    <!-- Login/Sign Up Modal -->
     <div id="loginModal" class="modal-overlay" style="display: none;">
       <div class="modal-content glass">
         <div class="mark" style="margin: 0 auto 20px;">PS</div>
-        <h2 style="text-align: center; margin-bottom: 8px;">Admin Access</h2>
-        <p class="muted" style="text-align: center; margin-bottom: 24px;">Enter your credentials to unlock management tools.</p>
+        <h2 id="authModalTitle" style="text-align: center; margin-bottom: 8px;">Admin Access</h2>
+        <p id="authModalSubtitle" class="muted" style="text-align: center; margin-bottom: 24px;">Enter your credentials to unlock management tools.</p>
         <form id="loginForm" class="form-grid">
           <label>
             Email address
@@ -1066,7 +1078,7 @@
             <input type="password" id="loginPassword" placeholder="••••••••" required>
           </label>
           <div style="display: grid; gap: 10px; margin-top: 10px;">
-            <button class="btn primary" type="submit">Unlock Dashboard</button>
+            <button class="btn primary" type="submit" id="authSubmitBtn">Unlock Dashboard</button>
             <button class="btn ghost" type="button" id="closeLogin">Return to Viewer Mode</button>
           </div>
         </form>
@@ -1553,26 +1565,33 @@
       const showLoginBtn = document.querySelector("#showLoginBtn");
       const adminEmail = document.querySelector("#adminEmail");
       
+      const mobileLoginBtn = document.querySelector("#mobileLoginBtn");
+      const mobileSignupBtn = document.querySelector("#mobileSignupBtn");
+
       if (user) {
         adminProfile.style.display = "block";
         showLoginBtn.style.display = "none";
         adminEmail.textContent = user.email;
         document.body.classList.add("is-admin");
-        const mobileBtn = document.querySelector("#mobileLoginBtn");
-        if (mobileBtn) {
-          mobileBtn.classList.add("logged-in");
+        if (mobileLoginBtn) {
+          mobileLoginBtn.classList.add("logged-in");
           document.querySelector("#mobileLoginLabel").textContent = "Logout";
           document.querySelector("#mobileLoginIcon").innerHTML = "&#10006;"; /* X icon */
+        }
+        if (mobileSignupBtn) {
+          mobileSignupBtn.style.setProperty("display", "none", "important");
         }
       } else {
         adminProfile.style.display = "none";
         showLoginBtn.style.display = "block";
         document.body.classList.remove("is-admin");
-        const mobileBtn = document.querySelector("#mobileLoginBtn");
-        if (mobileBtn) {
-          mobileBtn.classList.remove("logged-in");
+        if (mobileLoginBtn) {
+          mobileLoginBtn.classList.remove("logged-in");
           document.querySelector("#mobileLoginLabel").textContent = "Login";
           document.querySelector("#mobileLoginIcon").innerHTML = "&#128274;"; /* Lock icon */
+        }
+        if (mobileSignupBtn) {
+          mobileSignupBtn.style.setProperty("display", "flex", "important");
         }
       }
       
@@ -3550,7 +3569,33 @@
     });
 
     // Auth Event Listeners
+    let authMode = 'login'; // 'login' or 'signup'
+    
+    function setAuthMode(mode) {
+      authMode = mode;
+      const title = document.querySelector("#authModalTitle");
+      const subtitle = document.querySelector("#authModalSubtitle");
+      const submitBtn = document.querySelector("#authSubmitBtn");
+      const msg = document.querySelector("#loginMessage");
+      
+      if (msg) {
+        msg.textContent = "";
+        msg.className = "form-message";
+      }
+
+      if (mode === 'signup') {
+        if(title) title.textContent = "Create Account";
+        if(subtitle) subtitle.textContent = "Sign up to manage your own tournaments and teams.";
+        if(submitBtn) submitBtn.textContent = "Create Account";
+      } else {
+        if(title) title.textContent = "Admin Access";
+        if(subtitle) subtitle.textContent = "Enter your credentials to unlock management tools.";
+        if(submitBtn) submitBtn.textContent = "Unlock Dashboard";
+      }
+    }
+
     document.querySelector("#showLoginBtn").addEventListener("click", () => {
+      setAuthMode('login');
       document.querySelector("#loginModal").style.display = "grid";
     });
 
@@ -3560,8 +3605,14 @@
           handleLogout();
         }
       } else {
+        setAuthMode('login');
         document.querySelector("#loginModal").style.display = "grid";
       }
+    });
+
+    document.querySelector("#mobileSignupBtn").addEventListener("click", () => {
+      setAuthMode('signup');
+      document.querySelector("#loginModal").style.display = "grid";
     });
 
     document.querySelector("#closeLogin").addEventListener("click", () => {
@@ -3578,16 +3629,38 @@
       const password = document.querySelector("#loginPassword").value;
       const msg = document.querySelector("#loginMessage");
       
-      msg.textContent = "Verifying...";
+      msg.textContent = authMode === 'signup' ? "Creating account..." : "Verifying...";
       msg.className = "form-message";
 
-      try {
-        await handleLogin(email, password);
-        document.querySelector("#loginModal").style.display = "none";
-        msg.textContent = "";
-      } catch (error) {
-        msg.textContent = "Login failed: " + error.message;
-        msg.className = "form-message error";
+      if (authMode === 'signup') {
+        try {
+          const { data, error } = await supabase.auth.signUp({ email, password });
+          if (error) throw error;
+          
+          if (data.session) {
+            state.user = data.user;
+            updateAuthUI();
+            document.querySelector("#loginModal").style.display = "none";
+          } else {
+            msg.textContent = "Account created! You can now log in.";
+            msg.className = "form-message success";
+            setTimeout(() => {
+              setAuthMode('login');
+            }, 2000);
+          }
+        } catch (error) {
+          msg.textContent = "Sign up failed: " + error.message;
+          msg.className = "form-message error";
+        }
+      } else {
+        try {
+          await handleLogin(email, password);
+          document.querySelector("#loginModal").style.display = "none";
+          msg.textContent = "";
+        } catch (error) {
+          msg.textContent = "Login failed: " + error.message;
+          msg.className = "form-message error";
+        }
       }
     });
 
