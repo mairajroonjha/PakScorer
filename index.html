@@ -1695,7 +1695,8 @@
     }
 
     function renderTeams() {
-      document.querySelector("#teamList").innerHTML = state.teams.map((team) => `
+      const myTeams = state.teams.filter(t => isOwner(t));
+      document.querySelector("#teamList").innerHTML = myTeams.map((team) => `
         <article class="card team-card">
           <div class="team-top">
             <div class="avatar">${initials(team.name)}</div>
@@ -1707,26 +1708,37 @@
           <div class="actions">
             <span class="tag green">${team.record}</span>
             <span class="tag">Captain: ${team.captain}</span>
-            ${isOwner(team) ? `<button class="btn ghost danger" style="padding: 2px 6px; font-size: 0.65rem;" data-delete-team="${team.id}">Delete</button>` : ""}
+            <button class="btn ghost danger" style="padding: 2px 6px; font-size: 0.65rem;" data-delete-team="${team.id}">Delete</button>
           </div>
         </article>
       `).join("");
-      document.querySelector("#teamCount").textContent = state.teams.length;
-      document.querySelector("#teamsLabel").textContent = `${state.teams.length} teams`;
+      document.querySelector("#teamCount").textContent = myTeams.length;
+      document.querySelector("#teamsLabel").textContent = `${myTeams.length} teams`;
       renderTeamSelects();
     }
 
     function renderTeamSelects() {
-      const options = state.teams.map((team) => `<option>${team.name}</option>`).join("");
-      ["#newPlayerTeam", "#requestFrom", "#requestTo"].forEach((selector) => {
-        document.querySelector(selector).innerHTML = options;
+      const myTeams = state.teams.filter(t => isOwner(t));
+      const options = myTeams.map((team) => `<option>${team.name}</option>`).join("");
+      ["#newPlayerTeam", "#requestFrom"].forEach((selector) => {
+        const el = document.querySelector(selector);
+        if (el) el.innerHTML = options;
       });
-      document.querySelector("#requestTo").selectedIndex = state.teams.length > 1 ? 1 : 0;
+      
+      // Request 'To' can still be any team (to challenge others)
+      const allOptions = state.teams.map((team) => `<option>${team.name}</option>`).join("");
+      const toEl = document.querySelector("#requestTo");
+      if (toEl) {
+        toEl.innerHTML = allOptions;
+        toEl.selectedIndex = state.teams.length > 1 ? 1 : 0;
+      }
+      
       renderTournamentSelects();
     }
 
     function renderPlayers() {
-      document.querySelector("#playerRows").innerHTML = state.players.map((p) => {
+      const myPlayers = state.players.filter(p => isOwner(p));
+      document.querySelector("#playerRows").innerHTML = myPlayers.map((p) => {
         const sr = p.balls_faced ? ((p.runs / p.balls_faced) * 100).toFixed(1) : "0.0";
         const ave = p.innings_played ? (p.runs / p.innings_played).toFixed(1) : p.runs.toFixed(1);
         const econ = p.balls_bowled ? ((p.runs_conceded / p.balls_bowled) * 6).toFixed(2) : "0.00";
@@ -1739,12 +1751,12 @@
             <td>${sr}</td>
             <td>${p.wickets}</td>
             <td>${econ}</td>
-            <td>${isOwner(p) ? `<button class="btn ghost danger" style="padding: 2px 6px; font-size: 0.65rem;" data-delete-player="${p.id}">Delete</button>` : ""}</td>
+            <td><button class="btn ghost danger" style="padding: 2px 6px; font-size: 0.65rem;" data-delete-player="${p.id}">Delete</button></td>
           </tr>
         `;
       }).join("");
-      document.querySelector("#playerCount").textContent = state.players.length;
-      document.querySelector("#playersLabel").textContent = `${state.players.length} players`;
+      document.querySelector("#playerCount").textContent = myPlayers.length;
+      document.querySelector("#playersLabel").textContent = `${myPlayers.length} players`;
       renderBowlerSelect();
     }
 
