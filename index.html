@@ -863,28 +863,30 @@
         display: block; /* single column, sidebar goes fixed */
       }
 
-      /* Floating 3D bottom pill */
+      /* Sticky full-width bottom bar */
       .sidebar {
         position: fixed;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%) translateZ(0);
+        bottom: 0;
+        left: 0;
+        right: 0;
+        transform: translateZ(0);
         top: auto;
         height: auto;
-        width: max-content;
-        max-width: calc(100% - 32px);
+        width: 100%;
+        max-width: 100%;
         z-index: 9000;
         display: flex;
         flex-direction: row;
         align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        background: rgba(10, 20, 30, 0.85);
+        gap: 0;
+        padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+        border-radius: 24px 24px 0 0;
+        border: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(10, 20, 30, 0.95);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
-        box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.1), 0 20px 40px -10px rgba(0, 242, 255, 0.15);
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
         perspective: 1000px;
       }
 
@@ -899,34 +901,43 @@
         flex: 1;
         display: flex;
         flex-direction: row;
-        gap: 8px;
-        overflow-x: auto;
-        scrollbar-width: none;
+        gap: 0;
+        justify-content: space-around;
+        overflow-x: visible; /* All options visible */
         align-items: center;
       }
       .nav::-webkit-scrollbar { display: none; }
 
-      /* Each nav button: stacked icon + label inside a rounded container */
+      /* Each nav button: fluid width to fit all items */
       .nav button,
       #mobileProfileBtn {
-        flex: 0 0 auto;
-        min-width: 64px;
-        min-height: 56px;
+        flex: 1;
+        min-width: unset;
+        min-height: 50px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 4px;
-        padding: 6px 12px;
-        border-radius: 16px;
+        gap: 2px;
+        padding: 4px 1px;
+        border-radius: 12px;
         color: var(--muted);
-        font-size: 0.6rem;
+        font-size: 0.5rem; /* tiny font to fit all text */
         font-weight: 800;
-        letter-spacing: 0.02em;
+        letter-spacing: -0.02em;
         text-transform: uppercase;
         background: transparent;
-        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, color 0.2s, box-shadow 0.2s;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, color 0.2s;
         transform-style: preserve-3d;
+      }
+      
+      /* Make sure text doesn't overflow container */
+      .nav button span:not(.nav-icon),
+      #mobileProfileLabel {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .nav button:active,
@@ -934,10 +945,10 @@
         transform: scale(0.9) translateZ(-10px);
       }
 
-      /* Active pill styling like the reference image */
+      /* Active styling */
       .nav button:hover,
       .nav button.active {
-        background: rgba(0, 242, 255, 0.15); /* The background for the whole button */
+        background: rgba(0, 242, 255, 0.1); 
         color: var(--cyan);
       }
 
@@ -949,18 +960,18 @@
       .nav-icon {
         display: grid;
         place-items: center;
-        width: 24px;
-        height: 24px;
-        font-size: 1.15rem;
+        width: 22px;
+        height: 22px;
+        font-size: 1rem;
         color: inherit;
         border-radius: 50%;
       }
 
-      /* Auth button pinned at the right of the bottom pill */
+      /* Auth button pinned at the right */
       #mobileProfileBtn {
         display: flex !important;
         border: none;
-        border-radius: 50%;
+        border-radius: 12px;
         background: transparent;
         color: var(--cyan);
         cursor: pointer;
@@ -971,9 +982,9 @@
       #mobileProfileBtn::before {
         content: "";
         position: absolute;
-        left: -4px;
-        top: 10%;
-        height: 80%;
+        left: 0;
+        top: 15%;
+        height: 70%;
         width: 1px;
         background: rgba(255,255,255,0.1);
       }
@@ -985,7 +996,8 @@
       }
 
       /* When logged in, show a different colour for mobile profile icon */
-      #mobileProfileBtn.logged-in .nav-icon {
+      #mobileProfileBtn.logged-in .nav-icon,
+      #mobileProfileBtn.logged-in {
         background: transparent;
         color: var(--green);
       }
