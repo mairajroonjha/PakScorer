@@ -1036,6 +1036,18 @@
 
       .form-grid { grid-template-columns: 1fr; }
       
+      /* Fix Scoring Button Overflow */
+      #scoring .panel-body .form-grid div[style*="display:flex"] {
+        flex-wrap: wrap;
+        gap: 8px !important;
+      }
+      #scoring .panel-body .form-grid div[style*="display:flex"] .btn {
+        flex: 1;
+        min-width: 120px;
+        white-space: nowrap;
+        font-size: 0.8rem;
+      }
+
       .ball-buttons {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -1058,6 +1070,13 @@
       #scoringControls .grid.cols-4 {
         grid-template-columns: 1fr 1fr;
         gap: 8px;
+      }
+      .score-main {
+        font-size: 3rem !important;
+      }
+      .scoreboard h2, #inningsStatus {
+        font-size: 1rem;
+        word-break: break-word;
       }
 
       /* Teams Sub-navigation for mobile */
@@ -1306,10 +1325,10 @@
               <label>Select Match
                 <select id="scoringMatchSelect"><option value="">-- Select a match --</option></select>
               </label>
-              <div style="display:flex; gap:8px;">
-                <button class="btn primary" id="startMatchBtn">Start/Resume Match</button>
-                <button class="btn" id="cancelMatchBtn">Cancel</button>
-                <button class="btn danger" id="endMatchBtn">End Match</button>
+              <div style="display:flex; gap:8px; flex-wrap: wrap;">
+                <button class="btn primary" id="startMatchBtn" style="flex: 1; min-width: 140px;">Start/Resume</button>
+                <button class="btn" id="cancelMatchBtn" style="flex: 1;">Cancel</button>
+                <button class="btn danger" id="endMatchBtn" style="flex: 1;">End Match</button>
               </div>
             </div>
             
