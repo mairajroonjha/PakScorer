@@ -2428,15 +2428,20 @@
 
       const matchId = select.value;
       if (!matchId) {
-        btn.textContent = "Start/Resume";
+        btn.textContent = "Start Match";
+        btn.disabled = true;
+        btn.style.opacity = "0.5";
         return;
       }
 
+      btn.disabled = false;
+      btn.style.opacity = "1";
       const match = state.matches.find(m => String(m.id) === String(matchId));
-      if (match && match.status === "Scheduled") {
-        btn.textContent = "Start Match";
-      } else {
+      
+      if (match && (match.status === "Live" || match.status === "Setup")) {
         btn.textContent = "Resume Match";
+      } else {
+        btn.textContent = "Start Match";
       }
     }
 
