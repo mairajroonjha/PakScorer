@@ -1034,14 +1034,42 @@
         flex-direction: column;
       }
 
-      .form-grid,
+      .form-grid { grid-template-columns: 1fr; }
+      
       .ball-buttons {
-        grid-template-columns: 1fr 1fr;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
       }
+      .ball-buttons button {
+        padding: 12px 4px;
+        font-size: 1.1rem;
+        font-weight: 700;
+      }
+      .ball-buttons .btn.danger { grid-column: span 2; }
+      .ball-buttons #undoBall { grid-column: span 2; }
 
       .status-pill {
         width: 100%;
         justify-content: center;
+      }
+
+      /* Specific Scoreboard metric grid for mobile */
+      #scoringControls .grid.cols-4 {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      /* Teams Sub-navigation for mobile */
+      .sub-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .sub-nav-btn {
+        flex: 1;
+        min-width: 100px;
+        font-size: 0.75rem;
+        padding: 8px 4px;
       }
     }
     .sub-page { display: none; }
@@ -1336,10 +1364,10 @@
                 <button class="btn" data-ball="3">3</button>
                 <button class="btn primary" data-ball="4">4</button>
                 <button class="btn primary" data-ball="6">6</button>
-                <button class="btn" data-extra="Wd">Wide</button>
-                <button class="btn" data-extra="Nb">No Ball</button>
-                <button class="btn" data-extra="B">Bye</button>
-                <button class="btn" data-extra="Lb">Leg Bye</button>
+                <button class="btn" data-extra="Wd">Wd</button>
+                <button class="btn" data-extra="Nb">Nb</button>
+                <button class="btn" data-extra="B">B</button>
+                <button class="btn" data-extra="Lb">Lb</button>
                 <button class="btn danger" data-wicket="true">Wicket</button>
                 <button class="btn ghost" id="undoBall">Undo</button>
               </div>
