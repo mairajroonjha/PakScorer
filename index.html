@@ -1714,22 +1714,35 @@
 
     function renderTeams() {
       const myTeams = state.teams.filter(t => isOwner(t));
-      document.querySelector("#teamList").innerHTML = myTeams.map((team) => `
-        <article class="card team-card">
-          <div class="team-top">
-            <div class="avatar">${initials(team.name)}</div>
-            <div>
-              <h3>${team.name}</h3>
-              <p>${team.city}</p>
+      document.querySelector("#teamList").innerHTML = myTeams.map((team) => {
+        const teamPlayers = state.players.filter(p => p.team === team.name);
+        const rosterHtml = teamPlayers.length ? `
+          <div class="team-roster" style="margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px;">
+            <p style="font-size: 0.75rem; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.05em;">Squad (${teamPlayers.length})</p>
+            <ul style="list-style: none; display: flex; flex-wrap: wrap; gap: 6px;">
+              ${teamPlayers.map(p => `<li class="tag" style="font-size: 0.7rem; background: rgba(255,255,255,0.05);">${p.name} <small class="muted">(${p.role})</small></li>`).join("")}
+            </ul>
+          </div>
+        ` : `<p class="muted" style="font-size: 0.75rem; margin-top: 12px;">No players added yet</p>`;
+
+        return `
+          <article class="card team-card" style="display: flex; flex-direction: column;">
+            <div class="team-top">
+              <div class="avatar">${initials(team.name)}</div>
+              <div>
+                <h3>${team.name}</h3>
+                <p>${team.city}</p>
+              </div>
             </div>
-          </div>
-          <div class="actions">
-            <span class="tag green">${team.record}</span>
-            <span class="tag">Captain: ${team.captain}</span>
-            <button class="btn ghost danger" style="padding: 2px 6px; font-size: 0.65rem;" data-delete-team="${team.id}">Delete</button>
-          </div>
-        </article>
-      `).join("");
+            ${rosterHtml}
+            <div class="actions" style="margin-top: auto; padding-top: 12px;">
+              <span class="tag green">${team.record}</span>
+              <span class="tag">Captain: ${team.captain}</span>
+              <button class="btn ghost danger" style="padding: 2px 6px; font-size: 0.65rem;" data-delete-team="${team.id}">Delete</button>
+            </div>
+          </article>
+        `;
+      }).join("");
       document.querySelector("#teamCount").textContent = myTeams.length;
       document.querySelector("#teamsLabel").textContent = `${myTeams.length} teams`;
       renderTeamSelects();
