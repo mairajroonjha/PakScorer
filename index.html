@@ -975,20 +975,8 @@
         background: transparent;
         color: var(--cyan);
         cursor: pointer;
-        position: relative;
       }
       
-      /* Vertical separator before profile btn */
-      #mobileProfileBtn::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 15%;
-        height: 70%;
-        width: 1px;
-        background: rgba(255,255,255,0.1);
-      }
-
       #mobileProfileBtn:hover { background: rgba(0,242,255,0.08); }
       #mobileProfileBtn .nav-icon {
         background: transparent;
@@ -1077,13 +1065,13 @@
         <button data-page="scoring"><span class="nav-icon">S</span>Scoring</button>
         <button data-page="public"><span class="nav-icon">L</span>Live View</button>
         <button data-page="tournaments"><span class="nav-icon">C</span>Tournaments</button>
-      </nav>
 
-      <!-- Mobile-only Profile tab in the bottom bar -->
-      <button id="mobileProfileBtn" aria-label="Profile" style="display:none;">
-        <span class="nav-icon" id="mobileProfileIcon">&#128100;</span>
-        <span id="mobileProfileLabel">Profile</span>
-      </button>
+        <!-- Mobile-only Profile tab in the bottom bar -->
+        <button id="mobileProfileBtn" aria-label="Profile" style="display:none;">
+          <span class="nav-icon" id="mobileProfileIcon">&#128100;</span>
+          <span id="mobileProfileLabel">Profile</span>
+        </button>
+      </nav>
 
       <div class="sidebar-footer">
         <div id="adminProfile" style="display: none; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line);">
