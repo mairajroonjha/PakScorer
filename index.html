@@ -863,28 +863,28 @@
         display: block; /* single column, sidebar goes fixed */
       }
 
-      /* Floating 3D bottom bar */
+      /* Floating 3D bottom pill */
       .sidebar {
         position: fixed;
-        bottom: 12px;
-        left: 12px;
-        right: 12px;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateZ(0);
         top: auto;
         height: auto;
-        width: auto;
+        width: max-content;
+        max-width: calc(100% - 32px);
         z-index: 9000;
         display: flex;
         flex-direction: row;
-        align-items: stretch;
-        gap: 0;
-        padding: 4px;
-        border-radius: 20px;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
         border: 1px solid rgba(255, 255, 255, 0.1);
-        background: rgba(5, 10, 15, 0.85);
+        background: rgba(10, 20, 30, 0.85);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
         box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.1), 0 20px 40px -10px rgba(0, 242, 255, 0.15);
-        transform: translateZ(0);
         perspective: 1000px;
       }
 
@@ -905,23 +905,25 @@
       }
       .nav::-webkit-scrollbar { display: none; }
 
-      /* Each nav button: stacked icon + label */
+      /* Hide text labels in the pill */
+      .nav button span:not(.nav-icon),
+      #mobileProfileLabel {
+        display: none !important;
+      }
+
+      /* Each nav button: purely circular icon */
       .nav button,
       #mobileProfileBtn {
-        flex: 1;
-        min-width: 52px;
-        min-height: 60px;
+        flex: 0 0 auto;
+        width: 48px;
+        height: 48px;
+        min-width: unset;
+        min-height: unset;
         display: flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 4px;
-        padding: 6px 4px 8px;
-        border-radius: 16px;
-        font-size: 0.55rem;
-        font-weight: 800;
-        letter-spacing: 0.02em;
-        text-transform: uppercase;
+        padding: 0;
+        border-radius: 50%;
         color: var(--muted);
         background: transparent;
         transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, color 0.2s, box-shadow 0.2s;
@@ -930,50 +932,61 @@
 
       .nav button:active,
       #mobileProfileBtn:active {
-        transform: scale(0.9) translateZ(-10px);
+        transform: scale(0.85) translateZ(-10px);
       }
 
+      /* Active pill styling like the reference image */
       .nav button:hover,
       .nav button.active {
-        background: rgba(255,255,255,0.05);
+        background: rgba(0, 242, 255, 0.15); /* The circular background */
         color: var(--cyan);
       }
 
       .nav button.active .nav-icon {
-        background: linear-gradient(135deg, var(--green), var(--cyan));
-        color: #050a0f;
+        color: var(--cyan);
+        background: transparent;
       }
 
       .nav-icon {
-        width: 28px;
-        height: 28px;
-        font-size: 0.85rem;
-        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        width: 100%;
+        height: 100%;
+        font-size: 1.25rem;
+        border-radius: 50%;
       }
 
-      /* Auth button pinned at the right of the bottom bar */
+      /* Auth button pinned at the right of the bottom pill */
       #mobileProfileBtn {
         display: flex !important;
         border: none;
-        border-left: 1px solid rgba(255,255,255,0.05);
-        border-radius: 16px;
+        border-radius: 50%;
         background: transparent;
         color: var(--cyan);
         cursor: pointer;
+        position: relative;
       }
       
+      /* Vertical separator before profile btn */
+      #mobileProfileBtn::before {
+        content: "";
+        position: absolute;
+        left: -4px;
+        top: 10%;
+        height: 80%;
+        width: 1px;
+        background: rgba(255,255,255,0.1);
+      }
+
       #mobileProfileBtn:hover { background: rgba(0,242,255,0.08); }
       #mobileProfileBtn .nav-icon {
-        background: rgba(0,242,255,0.15);
+        background: transparent;
         color: var(--cyan);
       }
 
       /* When logged in, show a different colour for mobile profile icon */
-      #mobileProfileBtn.logged-in {
-        color: var(--green);
-      }
       #mobileProfileBtn.logged-in .nav-icon {
-        background: rgba(0,255,163,0.15);
+        background: transparent;
         color: var(--green);
       }
       
