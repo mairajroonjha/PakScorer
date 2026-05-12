@@ -1629,6 +1629,18 @@
       if (!user && restrictedPages.includes(activePage)) {
         document.querySelector("[data-page='public']").click();
       }
+
+      // Hide/Show admin-only elements (like create forms on public pages)
+      document.querySelectorAll("[data-admin-only]").forEach(el => {
+        el.style.display = user ? "" : "none";
+      });
+
+      // Trigger re-renders to show/hide owner-only buttons
+      renderMatches();
+      renderTeams();
+      renderPlayers();
+      renderRequests();
+      renderTournaments();
     }
 
     async function handleLogin(email, password) {
@@ -2263,7 +2275,7 @@
           ${isOwner(match) ? `<button class="btn ghost danger" data-admin-only style="padding: 4px 8px; font-size: 0.75rem;" data-delete-match="${match.id}">Delete</button>` : ""}
         </li>
       `;
-      }).join("") : `<li><strong>No scheduled matches yet</strong><span>Accept a request to create one</span></li>`;
+      }).join("") : `<li><strong>No scheduled matches yet</strong>${state.user ? '<span>Accept a request to create one</span>' : ''}</li>`;
 
       const history = state.matches.filter((match) => (match.status === "Completed" || match.status === "Cancelled") && !match.tournamentId);
       const historyRows = history.length ? history.map((match) => `
@@ -2272,7 +2284,7 @@
             <strong>${match.teamA} vs ${match.teamB}</strong>
             <span class="muted" style="font-size:0.75rem;">${match.status} · ${match.venue}</span>
           </div>
-          <button class="btn ghost danger" data-admin-only style="padding: 4px 8px; font-size: 0.75rem;" data-delete-match="${match.id}">Delete</button>
+          ${isOwner(match) ? `<button class="btn ghost danger" data-admin-only style="padding: 4px 8px; font-size: 0.75rem;" data-delete-match="${match.id}">Delete</button>` : ""}
         </li>
       `).join("") : `<li><strong>No match history</strong></li>`;
 
@@ -2298,7 +2310,7 @@
 
       const activeMatch = state.currentMatch;
       const options = state.matches
-        .filter(m => m.status === "Scheduled" || m.status === "Live" || m.status === "Setup")
+        .filter(m => (m.status === "Scheduled" || m.status === "Live" || m.status === "Setup") && isOwner(m))
         .map(m => {
           const tId = m.tournamentId;
           const tournament = tId ? state.tournaments.find(t => t.id === tId) : null;
@@ -2307,7 +2319,7 @@
         })
         .join("");
         
-      select.innerHTML = `<option value="">-- Select a match --</option>${options}`;
+      select.innerHTML = options ? `<option value="">-- Select a match --</option>${options}` : `<option value="">No matches to score</option>`;
     }
 
     function calculateStandings(tournamentId) {
@@ -2448,7 +2460,7 @@
                     <span><strong>${m.teamA}</strong> vs <strong>${m.teamB}</strong></span>
                     <div style="display:flex; gap: 8px; align-items: center;">
                       <span class="tag ${m.status === 'Live' ? 'green' : m.status === 'Completed' ? 'cyan' : ''}" style="font-size: 0.75rem;">${m.status}</span>
-                      ${isOwner(tournament) ? `<button class="btn ghost danger" data-admin-only style="padding: 2px 6px; font-size: 0.65rem;" data-delete-match="${m.id}">Delete</button>` : ""}
+                      ${isOwner(match) || isOwner(tournament) ? `<button class="btn ghost danger" data-admin-only style="padding: 2px 6px; font-size: 0.65rem;" data-delete-match="${m.id}">Delete</button>` : ""}
                     </div>
                   </li>
                 `).join("")}
@@ -2490,6 +2502,7 @@
               ${standingsHtml}
               ${statsHtml}
               ${matchesList}
+              ${isOwner(tournament) ? `<button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem; align-self: flex-end; margin-top: 8px;" data-delete-tournament="${tournament.id}">Delete Tournament</button>` : ""}
             </article>
           `;
         }));
@@ -3555,38 +3568,114 @@
     });
 
     document.querySelector(".main").addEventListener("click", async (event) => {
-      const button = event.target.closest("[data-delete-match]");
-      if (!button) return;
-      
-      const matchId = button.dataset.deleteMatch;
-      if (!confirm("Are you sure you want to permanently delete this match and all its data?")) return;
-      
-      button.textContent = "Deleting...";
-      button.disabled = true;
+      // DELETE MATCH
+      let button = event.target.closest("[data-delete-match]");
+      if (button) {
+        const matchId = button.dataset.deleteMatch;
+        if (!confirm("Are you sure you want to permanently delete this match and all its data?")) return;
+        
+        button.textContent = "Deleting...";
+        button.disabled = true;
 
-      try {
-        if (state.usingDatabase) {
-          const count = await deleteMatchFromDatabase(matchId);
-          if (count === 0 && isNaN(matchId)) {
-            alert("Wait! The match was not deleted from the database. Check your Supabase RLS policies.");
-            button.textContent = "Delete";
-            button.disabled = false;
-            return;
+        try {
+          if (state.usingDatabase) {
+            const count = await deleteMatchFromDatabase(matchId);
+            if (count === 0 && isNaN(matchId)) {
+              alert("Wait! The match was not deleted from the database. Check your Supabase RLS policies.");
+              button.textContent = "Delete";
+              button.disabled = false;
+              return;
+            }
+            await loadMatchesFromDatabase();
+            await loadMatchRequestsFromDatabase();
+            await loadTournamentsFromDatabase();
+          } else {
+            state.matches = state.matches.filter(m => String(m.id) !== String(matchId));
+            renderMatches();
+            renderTournaments();
           }
-          // Force a full reload from the database to ensure all views are synced
-          await loadMatchesFromDatabase();
-          await loadMatchRequestsFromDatabase();
-          await loadTournamentsFromDatabase();
-        } else {
-          state.matches = state.matches.filter(m => String(m.id) !== String(matchId));
-          renderMatches();
-          renderTournaments();
+          renderPublicLiveView();
+        } catch (error) {
+          alert("Failed to delete match: " + error.message);
+          button.textContent = "Delete";
+          button.disabled = false;
         }
-        renderPublicLiveView();
-      } catch (error) {
-        alert("Failed to delete match: " + error.message);
-        button.textContent = "Delete";
-        button.disabled = false;
+        return;
+      }
+
+      // DELETE TEAM
+      button = event.target.closest("[data-delete-team]");
+      if (button) {
+        const teamId = button.dataset.deleteTeam;
+        if (!confirm("Are you sure you want to delete this team?")) return;
+        button.disabled = true;
+        try {
+          if (state.usingDatabase) {
+            const { error } = await supabase.from("teams").delete().eq("id", teamId);
+            if (error) throw error;
+            await loadTeamsFromDatabase();
+          } else {
+            state.teams = state.teams.filter(t => String(t.id) !== String(teamId));
+            renderTeams();
+          }
+        } catch (e) { alert("Error deleting team: " + e.message); button.disabled = false; }
+        return;
+      }
+
+      // DELETE PLAYER
+      button = event.target.closest("[data-delete-player]");
+      if (button) {
+        const playerId = button.dataset.deletePlayer;
+        if (!confirm("Are you sure you want to delete this player?")) return;
+        button.disabled = true;
+        try {
+          if (state.usingDatabase) {
+            const { error } = await supabase.from("players").delete().eq("id", playerId);
+            if (error) throw error;
+            await loadPlayersFromDatabase();
+          } else {
+            state.players = state.players.filter(p => String(p.id) !== String(playerId));
+            renderPlayers();
+          }
+        } catch (e) { alert("Error deleting player: " + e.message); button.disabled = false; }
+        return;
+      }
+
+      // DELETE REQUEST
+      button = event.target.closest("[data-delete-request]");
+      if (button) {
+        const reqId = button.dataset.deleteRequest;
+        if (!confirm("Are you sure you want to delete this match request?")) return;
+        button.disabled = true;
+        try {
+          if (state.usingDatabase) {
+            await deleteMatchRequestFromDatabase(reqId);
+            await loadMatchRequestsFromDatabase();
+          } else {
+            state.requests = state.requests.filter(r => String(r.id) !== String(reqId));
+            renderRequests();
+          }
+        } catch (e) { alert("Error deleting request: " + e.message); button.disabled = false; }
+        return;
+      }
+
+      // DELETE TOURNAMENT
+      button = event.target.closest("[data-delete-tournament]");
+      if (button) {
+        const tourneyId = button.dataset.deleteTournament;
+        if (!confirm("Are you sure you want to delete this tournament? All applications will be removed.")) return;
+        button.disabled = true;
+        try {
+          if (state.usingDatabase) {
+            const { error } = await supabase.from("tournaments").delete().eq("id", tourneyId);
+            if (error) throw error;
+            await loadTournamentsFromDatabase();
+          } else {
+            state.tournaments = state.tournaments.filter(t => String(t.id) !== String(tourneyId));
+            renderTournaments();
+          }
+        } catch (e) { alert("Error deleting tournament: " + e.message); button.disabled = false; }
+        return;
       }
     });
 
