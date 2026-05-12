@@ -848,24 +848,8 @@
       }
     }
 
+    /* ── Tablet: sidebar collapses above content ── */
     @media (max-width: 1040px) {
-      .app {
-        grid-template-columns: 1fr;
-      }
-
-      .sidebar {
-        position: static;
-        height: auto;
-      }
-
-      .nav {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .sidebar-footer {
-        display: none;
-      }
-
       .split,
       .grid.cols-2,
       .grid.cols-3 {
@@ -873,19 +857,148 @@
       }
     }
 
-    @media (max-width: 640px) {
-      .main,
-      .sidebar {
-        padding: 16px;
+    /* ── Mobile: sidebar becomes a fixed bottom tab bar ── */
+    @media (max-width: 768px) {
+      .app {
+        display: block; /* single column, sidebar goes fixed */
       }
 
+      /* Hide the top sidebar entirely – we'll show a bottom bar */
+      .sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        height: auto;
+        width: 100%;
+        z-index: 9000;
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        gap: 0;
+        padding: 0;
+        border-right: none;
+        border-top: 1px solid var(--line);
+        background: rgba(5, 10, 15, 0.96);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        box-shadow: 0 -4px 30px rgba(0,0,0,0.5);
+      }
+
+      /* Hide brand & footer in the bottom bar */
+      .sidebar .brand,
+      .sidebar-footer {
+        display: none !important;
+      }
+
+      /* Nav takes all available space */
+      .nav {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        gap: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .nav::-webkit-scrollbar { display: none; }
+
+      /* Each nav button: stacked icon + label */
+      .nav button {
+        flex: 1;
+        min-width: 52px;
+        min-height: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 6px 4px 8px;
+        border-radius: 0;
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+        background: transparent;
+        transition: color 0.2s, background 0.2s;
+      }
+
+      .nav button:hover,
+      .nav button.active {
+        background: rgba(255,255,255,0.05);
+        color: var(--cyan);
+      }
+
+      .nav button.active .nav-icon {
+        background: linear-gradient(135deg, var(--green), var(--cyan));
+        color: #050a0f;
+      }
+
+      .nav-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 0.85rem;
+        border-radius: 8px;
+      }
+
+      /* Login button pinned at the right of the bottom bar */
+      #mobileLoginBtn {
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        min-width: 52px;
+        min-height: 60px;
+        padding: 6px 8px 8px;
+        border: none;
+        border-left: 1px solid var(--line);
+        border-radius: 0;
+        background: transparent;
+        color: var(--green);
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      #mobileLoginBtn:hover { background: rgba(0,255,163,0.08); }
+      #mobileLoginBtn .nav-icon {
+        background: rgba(0,255,163,0.15);
+        color: var(--green);
+      }
+
+      /* When logged in, show a different colour for mobile login icon */
+      #mobileLoginBtn.logged-in {
+        color: var(--red);
+      }
+      #mobileLoginBtn.logged-in .nav-icon {
+        background: rgba(255,62,109,0.15);
+        color: var(--red);
+      }
+
+      /* Give the main content padding so it isn't hidden behind the bar */
+      .main {
+        padding: 16px 16px 80px;
+      }
+
+      /* Collapse multi-column grids to 1 column */
+      .split,
+      .grid.cols-2,
+      .grid.cols-3,
+      .grid.cols-4 {
+        grid-template-columns: 1fr;
+      }
+
+      /* Other small-screen tweaks */
       .topbar,
       .panel-head {
         align-items: flex-start;
         flex-direction: column;
       }
 
-      .nav,
       .form-grid,
       .ball-buttons {
         grid-template-columns: 1fr 1fr;
@@ -918,6 +1031,12 @@
         <button data-page="public"><span class="nav-icon">L</span>Live View</button>
         <button data-page="tournaments"><span class="nav-icon">C</span>Tournaments</button>
       </nav>
+
+      <!-- Mobile-only Login / Logout tab in the bottom bar -->
+      <button id="mobileLoginBtn" aria-label="Login / Logout" style="display:none;">
+        <span class="nav-icon" id="mobileLoginIcon">&#128274;</span>
+        <span id="mobileLoginLabel">Login</span>
+      </button>
 
       <div class="sidebar-footer">
         <div id="adminProfile" style="display: none; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line);">
@@ -1439,10 +1558,22 @@
         showLoginBtn.style.display = "none";
         adminEmail.textContent = user.email;
         document.body.classList.add("is-admin");
+        const mobileBtn = document.querySelector("#mobileLoginBtn");
+        if (mobileBtn) {
+          mobileBtn.classList.add("logged-in");
+          document.querySelector("#mobileLoginLabel").textContent = "Logout";
+          document.querySelector("#mobileLoginIcon").innerHTML = "&#10006;"; /* X icon */
+        }
       } else {
         adminProfile.style.display = "none";
         showLoginBtn.style.display = "block";
         document.body.classList.remove("is-admin");
+        const mobileBtn = document.querySelector("#mobileLoginBtn");
+        if (mobileBtn) {
+          mobileBtn.classList.remove("logged-in");
+          document.querySelector("#mobileLoginLabel").textContent = "Login";
+          document.querySelector("#mobileLoginIcon").innerHTML = "&#128274;"; /* Lock icon */
+        }
       }
       
       const restrictedPages = ["teams", "players", "requests", "scoring"];
@@ -3421,6 +3552,16 @@
     // Auth Event Listeners
     document.querySelector("#showLoginBtn").addEventListener("click", () => {
       document.querySelector("#loginModal").style.display = "grid";
+    });
+
+    document.querySelector("#mobileLoginBtn").addEventListener("click", () => {
+      if (state.user) {
+        if (confirm("Are you sure you want to log out?")) {
+          handleLogout();
+        }
+      } else {
+        document.querySelector("#loginModal").style.display = "grid";
+      }
     });
 
     document.querySelector("#closeLogin").addEventListener("click", () => {
