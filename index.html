@@ -907,8 +907,7 @@
 
       /* Each nav button: stacked icon + label */
       .nav button,
-      #mobileLoginBtn,
-      #mobileSignupBtn {
+      #mobileProfileBtn {
         flex: 1;
         min-width: 52px;
         min-height: 60px;
@@ -930,8 +929,7 @@
       }
 
       .nav button:active,
-      #mobileLoginBtn:active,
-      #mobileSignupBtn:active {
+      #mobileProfileBtn:active {
         transform: scale(0.9) translateZ(-10px);
       }
 
@@ -953,38 +951,54 @@
         border-radius: 8px;
       }
 
-      /* Auth buttons pinned at the right of the bottom bar */
-      #mobileLoginBtn, #mobileSignupBtn {
+      /* Auth button pinned at the right of the bottom bar */
+      #mobileProfileBtn {
         display: flex !important;
         border: none;
         border-left: 1px solid rgba(255,255,255,0.05);
         border-radius: 16px;
         background: transparent;
-        color: var(--green);
+        color: var(--cyan);
         cursor: pointer;
       }
       
-      #mobileSignupBtn {
-        color: var(--cyan);
-      }
-      #mobileLoginBtn:hover { background: rgba(0,255,163,0.08); }
-      #mobileSignupBtn:hover { background: rgba(0,242,255,0.08); }
-      #mobileLoginBtn .nav-icon {
-        background: rgba(0,255,163,0.15);
-        color: var(--green);
-      }
-      #mobileSignupBtn .nav-icon {
+      #mobileProfileBtn:hover { background: rgba(0,242,255,0.08); }
+      #mobileProfileBtn .nav-icon {
         background: rgba(0,242,255,0.15);
         color: var(--cyan);
       }
 
-      /* When logged in, show a different colour for mobile login icon */
-      #mobileLoginBtn.logged-in {
-        color: var(--red);
+      /* When logged in, show a different colour for mobile profile icon */
+      #mobileProfileBtn.logged-in {
+        color: var(--green);
       }
-      #mobileLoginBtn.logged-in .nav-icon {
-        background: rgba(255,62,109,0.15);
-        color: var(--red);
+      #mobileProfileBtn.logged-in .nav-icon {
+        background: rgba(0,255,163,0.15);
+        color: var(--green);
+      }
+      
+      /* Auth Tabs for Mobile */
+      .auth-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 8px;
+      }
+      
+      .auth-tabs button {
+        flex: 1;
+        padding: 8px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--muted);
+        border-bottom: 2px solid transparent;
+        transition: color 0.2s, border-color 0.2s;
+      }
+      
+      .auth-tabs button.active {
+        color: var(--cyan);
+        border-color: var(--cyan);
       }
 
       /* Give the main content padding so it isn't hidden behind the bar */
@@ -1040,14 +1054,10 @@
         <button data-page="tournaments"><span class="nav-icon">C</span>Tournaments</button>
       </nav>
 
-      <!-- Mobile-only Login / Sign Up tabs in the bottom bar -->
-      <button id="mobileLoginBtn" aria-label="Login / Logout" style="display:none;">
-        <span class="nav-icon" id="mobileLoginIcon">&#128274;</span>
-        <span id="mobileLoginLabel">Login</span>
-      </button>
-      <button id="mobileSignupBtn" aria-label="Sign Up" style="display:none;">
-        <span class="nav-icon" id="mobileSignupIcon">&#10010;</span>
-        <span id="mobileSignupLabel">Sign Up</span>
+      <!-- Mobile-only Profile tab in the bottom bar -->
+      <button id="mobileProfileBtn" aria-label="Profile" style="display:none;">
+        <span class="nav-icon" id="mobileProfileIcon">&#128100;</span>
+        <span id="mobileProfileLabel">Profile</span>
       </button>
 
       <div class="sidebar-footer">
@@ -1066,6 +1076,12 @@
     <div id="loginModal" class="modal-overlay" style="display: none;">
       <div class="modal-content glass">
         <div class="mark" style="margin: 0 auto 20px;">PS</div>
+        
+        <div class="auth-tabs" id="authTabs">
+          <button class="active" data-mode="login">Login</button>
+          <button data-mode="signup">Sign Up</button>
+        </div>
+
         <h2 id="authModalTitle" style="text-align: center; margin-bottom: 8px;">Admin Access</h2>
         <p id="authModalSubtitle" class="muted" style="text-align: center; margin-bottom: 24px;">Enter your credentials to unlock management tools.</p>
         <form id="loginForm" class="form-grid">
@@ -1565,33 +1581,26 @@
       const showLoginBtn = document.querySelector("#showLoginBtn");
       const adminEmail = document.querySelector("#adminEmail");
       
-      const mobileLoginBtn = document.querySelector("#mobileLoginBtn");
-      const mobileSignupBtn = document.querySelector("#mobileSignupBtn");
+      const mobileProfileBtn = document.querySelector("#mobileProfileBtn");
 
       if (user) {
         adminProfile.style.display = "block";
         showLoginBtn.style.display = "none";
         adminEmail.textContent = user.email;
         document.body.classList.add("is-admin");
-        if (mobileLoginBtn) {
-          mobileLoginBtn.classList.add("logged-in");
-          document.querySelector("#mobileLoginLabel").textContent = "Logout";
-          document.querySelector("#mobileLoginIcon").innerHTML = "&#10006;"; /* X icon */
-        }
-        if (mobileSignupBtn) {
-          mobileSignupBtn.style.setProperty("display", "none", "important");
+        if (mobileProfileBtn) {
+          mobileProfileBtn.classList.add("logged-in");
+          document.querySelector("#mobileProfileLabel").textContent = "Logout";
+          document.querySelector("#mobileProfileIcon").innerHTML = "&#10006;"; /* X icon */
         }
       } else {
         adminProfile.style.display = "none";
         showLoginBtn.style.display = "block";
         document.body.classList.remove("is-admin");
-        if (mobileLoginBtn) {
-          mobileLoginBtn.classList.remove("logged-in");
-          document.querySelector("#mobileLoginLabel").textContent = "Login";
-          document.querySelector("#mobileLoginIcon").innerHTML = "&#128274;"; /* Lock icon */
-        }
-        if (mobileSignupBtn) {
-          mobileSignupBtn.style.setProperty("display", "flex", "important");
+        if (mobileProfileBtn) {
+          mobileProfileBtn.classList.remove("logged-in");
+          document.querySelector("#mobileProfileLabel").textContent = "Profile";
+          document.querySelector("#mobileProfileIcon").innerHTML = "&#128100;"; /* User icon */
         }
       }
       
@@ -3577,7 +3586,10 @@
       const subtitle = document.querySelector("#authModalSubtitle");
       const submitBtn = document.querySelector("#authSubmitBtn");
       const msg = document.querySelector("#loginMessage");
+      const tabs = document.querySelectorAll("#authTabs button");
       
+      tabs.forEach(t => t.classList.toggle("active", t.dataset.mode === mode));
+
       if (msg) {
         msg.textContent = "";
         msg.className = "form-message";
@@ -3594,12 +3606,18 @@
       }
     }
 
+    document.querySelectorAll("#authTabs button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        setAuthMode(btn.dataset.mode);
+      });
+    });
+
     document.querySelector("#showLoginBtn").addEventListener("click", () => {
       setAuthMode('login');
       document.querySelector("#loginModal").style.display = "grid";
     });
 
-    document.querySelector("#mobileLoginBtn").addEventListener("click", () => {
+    document.querySelector("#mobileProfileBtn").addEventListener("click", () => {
       if (state.user) {
         if (confirm("Are you sure you want to log out?")) {
           handleLogout();
@@ -3608,11 +3626,6 @@
         setAuthMode('login');
         document.querySelector("#loginModal").style.display = "grid";
       }
-    });
-
-    document.querySelector("#mobileSignupBtn").addEventListener("click", () => {
-      setAuthMode('signup');
-      document.querySelector("#loginModal").style.display = "grid";
     });
 
     document.querySelector("#closeLogin").addEventListener("click", () => {
