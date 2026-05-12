@@ -1612,6 +1612,11 @@
       });
     });
 
+    const scoringSelect = document.querySelector("#scoringMatchSelect");
+    if (scoringSelect) {
+      scoringSelect.addEventListener("change", updateStartButtonText);
+    }
+
     // Sub-navigation logic for Teams
     document.querySelectorAll(".sub-nav-btn").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -2411,6 +2416,28 @@
         .join("");
         
       select.innerHTML = options ? `<option value="">-- Select a match --</option>${options}` : `<option value="">No matches to score</option>`;
+      
+      // Update Start/Resume button text
+      updateStartButtonText();
+    }
+
+    function updateStartButtonText() {
+      const select = document.querySelector("#scoringMatchSelect");
+      const btn = document.querySelector("#startMatchBtn");
+      if (!select || !btn) return;
+
+      const matchId = select.value;
+      if (!matchId) {
+        btn.textContent = "Start/Resume";
+        return;
+      }
+
+      const match = state.matches.find(m => String(m.id) === String(matchId));
+      if (match && match.status === "Scheduled") {
+        btn.textContent = "Start Match";
+      } else {
+        btn.textContent = "Resume Match";
+      }
     }
 
     function calculateStandings(tournamentId) {
