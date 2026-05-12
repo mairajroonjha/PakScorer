@@ -1044,6 +1044,9 @@
         justify-content: center;
       }
     }
+    .sub-page { display: none; }
+    .sub-page.active { display: block; }
+    .sub-nav-btn.active { border-bottom: 2px solid var(--primary); color: var(--primary); background: rgba(var(--primary-rgb), 0.1); }
   </style>
 </head>
 <body>
@@ -1060,11 +1063,10 @@
       <nav class="nav" aria-label="Main navigation">
         <button class="active" data-page="home"><span class="nav-icon">H</span>Home</button>
         <button data-page="teams"><span class="nav-icon">T</span>Teams</button>
-        <button data-page="players"><span class="nav-icon">P</span>Players</button>
         <button data-page="requests"><span class="nav-icon">R</span>Requests</button>
         <button data-page="scoring"><span class="nav-icon">S</span>Scoring</button>
+        <button data-page="tournaments"><span class="nav-icon">🏆</span>Tournaments</button>
         <button data-page="public"><span class="nav-icon">L</span>Live View</button>
-        <button data-page="tournaments"><span class="nav-icon">C</span>Tournaments</button>
 
         <!-- Mobile-only Profile tab in the bottom bar -->
         <button id="mobileProfileBtn" aria-label="Profile" style="display:none;">
@@ -1119,7 +1121,7 @@
       <header class="topbar">
         <div class="title-block">
           <h1 id="pageTitle">Dashboard</h1>
-          <p id="pageSubtitle">Foundation prototype for teams, players, requests, scoring, and tournaments.</p>
+          <p id="pageSubtitle">Foundation prototype for teams, requests, scoring, and tournaments.</p>
         </div>
         <div class="status-pill"><span class="dot"></span><span id="liveStatus">Live prototype</span></div>
       </header>
@@ -1184,107 +1186,49 @@
       </section>
 
       <section class="page" id="teams">
-        <div class="split">
+        <div class="sub-nav" style="display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid var(--line); padding-bottom: 12px;">
+          <button class="btn primary btn-sm sub-nav-btn active" data-sub="profiles">Team Profiles</button>
+          <button class="btn ghost btn-sm sub-nav-btn" data-sub="create">Create New Team</button>
+          <button class="btn ghost btn-sm sub-nav-btn" data-sub="fixtures">Scheduled Matches</button>
+        </div>
+
+        <div id="sub-profiles" class="sub-page active">
           <section class="panel">
             <div class="panel-head">
-              <h2>Team Profiles</h2>
-              <span id="teamsLabel">4 teams</span>
+              <h2>My Teams</h2>
+              <span id="teamsLabel">0 teams</span>
             </div>
             <div class="panel-body">
               <div class="grid cols-2" id="teamList"></div>
             </div>
           </section>
-
-          <div class="grid" style="gap:16px;">
-            <section class="panel">
-              <div class="panel-head">
-                <h2>Create Team</h2>
-                <span>Prototype form</span>
-              </div>
-              <form class="panel-body grid" id="teamForm">
-                <label>Team name <input id="newTeamName" value="Rawalpindi Royals" /></label>
-                <label>City <input id="newTeamCity" value="Rawalpindi" /></label>
-                <label>Captain <input id="newTeamCaptain" value="Bilal Khan" /></label>
-                <p class="form-message" id="teamFormMessage" aria-live="polite"></p>
-                <button class="btn primary" type="submit">Add Team</button>
-              </form>
-            </section>
-
-            <section class="panel">
-              <div class="panel-head">
-                <h2>Apply to Tournament</h2>
-                <span>Team registration</span>
-              </div>
-              <form class="panel-body grid" id="applyForm">
-                <label>Tournament
-                  <select id="applyTournament"><option value="">-- Select tournament --</option></select>
-                </label>
-                <label>Team
-                  <select id="applyTeam"></select>
-                </label>
-                <p class="form-message" id="applyFormMessage" aria-live="polite"></p>
-                <button class="btn primary" type="submit">Apply Now</button>
-              </form>
-            </section>
-
-            <section class="panel">
-              <div class="panel-head">
-                <h2>Scheduled Matches</h2>
-                <span id="scheduledMatchCount">0 matches</span>
-              </div>
-              <div class="panel-body">
-                <ul class="feed" id="scheduledMatchList"></ul>
-              </div>
-            </section>
-          </div>
         </div>
-      </section>
 
-      <section class="page" id="players">
-        <div class="split">
-          <section class="panel">
+        <div id="sub-create" class="sub-page">
+          <section class="panel" style="max-width: 500px;">
             <div class="panel-head">
-              <h2>Players</h2>
-              <span id="playersLabel">18 players</span>
+              <h2>Create New Team</h2>
+              <span>Expand your roster</span>
             </div>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Team</th>
-                    <th>Role</th>
-                    <th>Runs (Ave)</th>
-                    <th>SR</th>
-                    <th>Wkts</th>
-                    <th>Econ</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody id="playerRows"></tbody>
-              </table>
-            </div>
-          </section>
-
-          <section class="panel">
-            <div class="panel-head">
-              <h2>Add Player</h2>
-              <span>Team roster</span>
-            </div>
-            <form class="panel-body grid" id="playerForm">
-              <label>Player name <input id="newPlayerName" value="Hassan Ali" /></label>
-              <label>Team <select id="newPlayerTeam"></select></label>
-              <label>Role
-                <select id="newPlayerRole">
-                  <option>All-rounder</option>
-                  <option>Batter</option>
-                  <option>Bowler</option>
-                  <option>Wicketkeeper</option>
-                </select>
-              </label>
-              <p class="form-message" id="playerFormMessage" aria-live="polite"></p>
-              <button class="btn primary" type="submit">Add Player</button>
+            <form class="panel-body grid" id="teamForm">
+              <label>Team name <input id="newTeamName" value="Rawalpindi Royals" /></label>
+              <label>City <input id="newTeamCity" value="Rawalpindi" /></label>
+              <label>Captain <input id="newTeamCaptain" value="Bilal Khan" /></label>
+              <p class="form-message" id="teamFormMessage" aria-live="polite"></p>
+              <button class="btn primary" type="submit">Add Team</button>
             </form>
+          </section>
+        </div>
+
+        <div id="sub-fixtures" class="sub-page">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Upcoming Fixtures</h2>
+              <span id="scheduledMatchCount">0 matches</span>
+            </div>
+            <div class="panel-body">
+              <ul class="feed" id="scheduledMatchList"></ul>
+            </div>
           </section>
         </div>
       </section>
@@ -1472,6 +1416,23 @@
           <div class="grid" data-admin-only style="gap:16px;">
             <section class="panel">
               <div class="panel-head">
+                <h2>Apply to Tournament</h2>
+                <span>Register your team</span>
+              </div>
+              <form class="panel-body grid" id="applyForm">
+                <label>Tournament
+                  <select id="applyTournament"><option value="">-- Select tournament --</option></select>
+                </label>
+                <label>Your Team
+                  <select id="applyTeam"></select>
+                </label>
+                <p class="form-message" id="applyFormMessage" aria-live="polite"></p>
+                <button class="btn primary" type="submit">Apply Now</button>
+              </form>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
                 <h2>Create Tournament</h2>
                 <span>New competition</span>
               </div>
@@ -1523,8 +1484,7 @@
 
     const pages = {
       home: ["Home", "Your central hub for local cricket activity."],
-      teams: ["Teams", "Manage your squads and track their performance."],
-      players: ["Players", "The talent roster for your teams."],
+      teams: ["Teams & Management", "Manage your squads, players, and match fixtures."],
       requests: ["Requests", "Challenges and match invitations."],
       scoring: ["Scoring", "Professional ball-by-ball match management."],
       public: ["Live View", "Detailed ball-by-ball spectator experience."],
@@ -1598,11 +1558,24 @@
           renderTournaments();
         }
 
-        if (publicViewInterval) clearInterval(publicViewInterval);
         if (page === "public") {
           renderPublicLiveView();
           publicViewInterval = setInterval(renderPublicLiveView, 5000);
         }
+      });
+    });
+
+    // Sub-navigation logic for Teams
+    document.querySelectorAll(".sub-nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const sub = btn.dataset.sub;
+        document.querySelectorAll(".sub-nav-btn").forEach(b => b.classList.replace("primary", "ghost"));
+        document.querySelectorAll(".sub-nav-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.replace("ghost", "primary");
+        btn.classList.add("active");
+        
+        document.querySelectorAll(".sub-page").forEach(p => p.classList.remove("active"));
+        document.querySelector(`#sub-${sub}`).classList.add("active");
       });
     });
 
@@ -1635,7 +1608,7 @@
         }
       }
       
-      const restrictedPages = ["teams", "players", "requests", "scoring"];
+      const restrictedPages = ["teams", "requests", "scoring"];
       document.querySelectorAll(".nav button").forEach(btn => {
         if (restrictedPages.includes(btn.dataset.page)) {
           btn.style.display = user ? "flex" : "none";
@@ -1719,8 +1692,13 @@
         const rosterHtml = teamPlayers.length ? `
           <div class="team-roster" style="margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px;">
             <p style="font-size: 0.75rem; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.05em;">Squad (${teamPlayers.length})</p>
-            <ul style="list-style: none; display: flex; flex-wrap: wrap; gap: 6px;">
-              ${teamPlayers.map(p => `<li class="tag" style="font-size: 0.7rem; background: rgba(255,255,255,0.05);">${p.name} <small class="muted">(${p.role})</small></li>`).join("")}
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 4px;">
+              ${teamPlayers.map(p => `
+                <li style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 4px 8px; border-radius: 6px;">
+                  <span style="font-size: 0.82rem;"><strong>${p.name}</strong> <small class="muted">(${p.role})</small></span>
+                  <button class="btn ghost danger" style="padding: 2px 4px; font-size: 0.6rem;" data-delete-player="${p.id}">Remove</button>
+                </li>
+              `).join("")}
             </ul>
           </div>
         ` : `<p class="muted" style="font-size: 0.75rem; margin-top: 12px;">No players added yet</p>`;
@@ -1734,7 +1712,20 @@
                 <p>${team.city}</p>
               </div>
             </div>
+            
             ${rosterHtml}
+
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line);">
+              <p style="font-size: 0.7rem; color: var(--gold); font-weight: 800; text-transform: uppercase; margin-bottom: 6px;">Quick Add Player</p>
+              <form class="quick-add-player" data-team-name="${team.name}" style="display: flex; gap: 4px;">
+                <input type="text" placeholder="Name" class="player-name-in" style="flex: 1; font-size: 0.8rem; padding: 4px 8px;" required>
+                <select class="player-role-in" style="font-size: 0.8rem; padding: 4px;">
+                  <option>Batter</option><option>Bowler</option><option>All-rounder</option><option>WK</option>
+                </select>
+                <button class="btn primary btn-sm" type="submit">+</button>
+              </form>
+            </div>
+
             <div class="actions" style="margin-top: auto; padding-top: 12px;">
               <span class="tag green">${team.record}</span>
               <span class="tag">Captain: ${team.captain}</span>
@@ -1751,7 +1742,7 @@
     function renderTeamSelects() {
       const myTeams = state.teams.filter(t => isOwner(t));
       const options = myTeams.map((team) => `<option>${team.name}</option>`).join("");
-      ["#newPlayerTeam", "#requestFrom"].forEach((selector) => {
+      ["#newPlayerTeam", "#requestFrom", "#applyTeam"].forEach((selector) => {
         const el = document.querySelector(selector);
         if (el) el.innerHTML = options;
       });
@@ -2563,15 +2554,18 @@
       }
 
       document.querySelector("#applicationCount").textContent = `${state.applications.length} team${state.applications.length !== 1 ? "s" : ""}`;
-      document.querySelector("#applicationList").innerHTML = state.applications.length ? state.applications.map((application, index) => `
-        <li>
-          <strong>${application.team}${application.tournamentName ? ` <span style="color:var(--muted);font-size:0.82rem;font-weight:600;">· ${application.tournamentName}</span>` : ""}</strong>
-          <span>
-            <span class="tag ${application.status === "Approved" ? "green" : application.status === "Rejected" ? "red" : "gold"}">${application.status}</span>
-            ${application.status === "Pending" ? `<button class="btn ghost" data-application="${index}" data-app-id="${application.id || ""}" style="margin-left: 8px;">Approve</button>` : ""}
-          </span>
-        </li>
-      `).join("") : `<li><strong>No applications yet</strong><span>Teams apply after tournaments are created</span></li>`;
+      document.querySelector("#applicationList").innerHTML = state.applications.length ? state.applications.map((application, index) => {
+        const tournament = state.tournaments.find(t => t.id === application.tournamentId);
+        return `
+          <li>
+            <strong>${application.team}${application.tournamentName ? ` <span style="color:var(--muted);font-size:0.82rem;font-weight:600;">· ${application.tournamentName}</span>` : ""}</strong>
+            <span>
+              <span class="tag ${application.status === "Approved" ? "green" : application.status === "Rejected" ? "red" : "gold"}">${application.status}</span>
+              ${application.status === "Pending" && isOwner(tournament) ? `<button class="btn ghost" data-application="${index}" data-app-id="${application.id || ""}" style="margin-left: 8px;">Approve</button>` : ""}
+            </span>
+          </li>
+        `;
+      }).join("") : `<li><strong>No applications yet</strong><span>Teams apply after tournaments are created</span></li>`;
       
       renderTournamentSelects();
 
@@ -3892,6 +3886,47 @@
       console.warn("Supabase teams unavailable:", error.message);
       renderTournaments();
     });
+    document.addEventListener("submit", async (event) => {
+      const quickAddForm = event.target.closest(".quick-add-player");
+      if (quickAddForm) {
+        event.preventDefault();
+        const teamName = quickAddForm.dataset.teamName;
+        const nameIn = quickAddForm.querySelector(".player-name-in");
+        const roleIn = quickAddForm.querySelector(".player-role-in");
+        
+        const name = nameIn.value.trim();
+        const role = roleIn.value;
+        const selectedTeam = state.teams.find(t => t.name === teamName);
+
+        if (!name) return;
+
+        const player = {
+          name,
+          team: teamName,
+          team_id: selectedTeam?.id,
+          role,
+          user_id: state.user?.id
+        };
+
+        const submitBtn = quickAddForm.querySelector("button");
+        submitBtn.disabled = true;
+
+        try {
+          if (state.usingDatabase) {
+            const newPlayer = await createPlayerInDatabase(player);
+            state.players.push(newPlayer);
+          } else {
+            state.players.push({ id: Date.now(), ...player, runs: 0, wickets: 0 });
+          }
+          renderTeams();
+        } catch (e) {
+          alert("Error adding player: " + e.message);
+        } finally {
+          submitBtn.disabled = false;
+        }
+      }
+    });
+
     renderPlayers();
     renderRequests();
     renderMatches();
