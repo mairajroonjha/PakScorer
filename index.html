@@ -1687,11 +1687,24 @@
       const status = document.querySelector("#liveStatus");
       const pill = document.querySelector(".status-pill");
       if (status) {
-        status.textContent = "Error at line " + lineNo + ": " + msg.split(":")[0].replace("Uncaught ","");
+        const cleanMsg = msg.toString().split(":")[0].replace("Uncaught ","");
+        status.textContent = `Err L${lineNo}: ${cleanMsg}`;
         if (pill) pill.classList.add("warning");
       }
       return false;
     };
+
+    async function requestNotificationPermission() {
+      if (!("Notification" in window)) return;
+      try {
+        const permission = await Notification.requestPermission();
+        const btn = document.querySelector("#notifyBtn");
+        if (permission === "granted" && btn) {
+          btn.textContent = "🔕";
+          new Notification("PakScorer Elite", { body: "Real-time match alerts enabled!" });
+        }
+      } catch (e) { console.warn("Notifications blocked"); }
+    }
 
     let supabase;
     try {
@@ -1767,9 +1780,11 @@
         document.querySelectorAll(".nav button").forEach((item) => item.classList.remove("active"));
         document.querySelectorAll(".page").forEach((item) => item.classList.remove("active"));
         button.classList.add("active");
-        document.querySelector(`#${page}`).classList.add("active");
-        title.textContent = pages[page][0];
-        subtitle.textContent = pages[page][1];
+        const targetPage = document.querySelector(`#${page}`);
+        if (targetPage) targetPage.classList.add("active");
+        
+        if (title) title.textContent = pages[page][0];
+        if (subtitle) subtitle.textContent = pages[page][1];
 
         // Custom logic for Home page refresh when clicking
         if (page === "home") {
@@ -4838,10 +4853,14 @@
       }
       
       // Re-attach listener to the new dynamic link
-      document.querySelector("#authToggleButton").addEventListener("click", (e) => {
-        e.preventDefault();
-        setAuthMode(authMode === 'login' ? 'signup' : 'login');
-      });
+      const toggleBtn = document.querySelector("#authToggleButton");
+      if (toggleBtn) {
+        toggleBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          setAuthMode(authMode === 'login' ? 'signup' : 'login');
+        });
+      }
+    }
     }
 
     document.querySelectorAll("#authTabs button").forEach(btn => {
@@ -4850,35 +4869,57 @@
       });
     });
 
-    document.querySelector("#showLoginBtn").addEventListener("click", () => {
-      setAuthMode('login');
-      document.querySelector("#loginModal").style.display = "grid";
-    });
-
-    document.querySelector("#mobileProfileBtn").addEventListener("click", () => {
-      if (state.user) {
-        if (confirm("Are you sure you want to log out?")) {
-          handleLogout();
-        }
-      } else {
+    const showBtn = document.querySelector("#showLoginBtn");
+    if (showBtn) {
+      showBtn.addEventListener("click", () => {
         setAuthMode('login');
-        document.querySelector("#loginModal").style.display = "grid";
-      }
-    });
+        const modal = document.querySelector("#loginModal");
+        if (modal) modal.style.display = "grid";
+      });
+    }
 
-    document.querySelector("#closeLogin").addEventListener("click", () => {
-      document.querySelector("#loginModal").style.display = "none";
-    });
+    const mobileBtn = document.querySelector("#mobileProfileBtn");
+    if (mobileBtn) {
+      mobileBtn.addEventListener("click", () => {
+        if (state.user) {
+          if (confirm("Are you sure you want to log out?")) {
+            handleLogout();
+          }
+        } else {
+          setAuthMode('login');
+          const modal = document.querySelector("#loginModal");
+          if (modal) modal.style.display = "grid";
+        }
+      });
+    }
 
-    document.querySelector("#logoutBtn").addEventListener("click", () => {
-      handleLogout();
-    });
+    const closeBtn = document.querySelector("#closeLogin");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => {
+        const modal = document.querySelector("#loginModal");
+        if (modal) modal.style.display = "none";
+      });
+    }
 
-    document.querySelector("#loginForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = document.querySelector("#loginEmail").value;
-      const password = document.querySelector("#loginPassword").value;
-      const msg = document.querySelector("#loginMessage");
+    const logoutBtnEl = document.querySelector("#logoutBtn");
+    if (logoutBtnEl) {
+      logoutBtnEl.addEventListener("click", () => {
+        handleLogout();
+      });
+    }
+
+    const loginF = document.querySelector("#loginForm");
+    if (loginF) {
+      loginF.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const emailEl = document.querySelector("#loginEmail");
+        const passEl = document.querySelector("#loginPassword");
+        const msg = document.querySelector("#loginMessage");
+        
+        if (!emailEl || !passEl || !msg) return;
+        
+        const email = emailEl.value;
+        const password = passEl.value;
       
       msg.textContent = authMode === 'signup' ? "Creating account..." : "Verifying...";
       msg.className = "form-message";
@@ -4930,9 +4971,12 @@
       updateAuthUI();
     }
 
-    document.querySelector("#notifyBtn").addEventListener("click", requestNotificationPermission);
-    if (Notification.permission === "granted") {
-      document.querySelector("#notifyBtn").textContent = "🔕";
+    const nBtn = document.querySelector("#notifyBtn");
+    if (nBtn) {
+      nBtn.addEventListener("click", requestNotificationPermission);
+      if (Notification.permission === "granted") {
+        nBtn.textContent = "🔕";
+      }
     }
 
     if (supabase) {
