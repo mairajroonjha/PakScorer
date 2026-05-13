@@ -2624,7 +2624,12 @@
               ${standingsHtml}
               ${statsHtml}
               ${matchesList}
-              ${isOwner(tournament) ? `<button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem; align-self: flex-end; margin-top: 8px;" data-delete-tournament="${tournament.id}">Delete Tournament</button>` : ""}
+              <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line);">
+                ${isOwner(tournament) && state.applications.filter(a => a.tournamentId === tournament.id && a.status === "Approved").length >= 2 && tournamentMatches.length === 0 ? `
+                  <button class="btn primary" style="padding: 4px 10px; font-size: 0.8rem;" data-generate-fixtures="${tournament.id}">Generate Fixtures</button>
+                ` : ""}
+                ${isOwner(tournament) ? `<button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem;" data-delete-tournament="${tournament.id}">Delete Tournament</button>` : ""}
+              </div>
             </article>
           `;
         }));
@@ -2646,8 +2651,62 @@
       }).join("") : `<li><strong>No applications yet</strong><span>Teams apply after tournaments are created</span></li>`;
       
       renderTournamentSelects();
+    }
 
-      // Home Page Tournaments
+    async function generateTournamentFixtures(tournamentId) {
+      const approvedApps = state.applications.filter(app => app.tournamentId === tournamentId && app.status === "Approved");
+      if (approvedApps.length < 2) {
+        alert("You need at least 2 approved teams to generate fixtures.");
+        return;
+      }
+
+      const tournament = state.tournaments.find(t => t.id === tournamentId);
+      if (!tournament) return;
+
+      if (!confirm(`Generate Round Robin fixtures for ${approvedApps.length} teams? This will create ${ (approvedApps.length * (approvedApps.length - 1)) / 2 } matches.`)) return;
+
+      const teams = approvedApps.map(app => ({ id: app.teamId, name: app.team }));
+      const pairings = [];
+      for (let i = 0; i < teams.length; i++) {
+        for (let j = i + 1; j < teams.length; j++) {
+          pairings.push([teams[i], teams[j]]);
+        }
+      }
+
+      try {
+        const promises = pairings.map(pair => {
+          const match = {
+            team_a_id: pair[0].id,
+            team_b_id: pair[1].id,
+            team_a: pair[0].name,
+            team_b: pair[1].name,
+            tournament_id: tournamentId,
+            venue: tournament.venue || "Tournament Ground",
+            overs: tournament.overs || 20,
+            status: "Scheduled",
+            user_id: state.user?.id
+          };
+          
+          if (state.usingDatabase) {
+            return createMatchInDatabase(match);
+          } else {
+            const newMatch = { id: Date.now() + Math.random(), ...match };
+            state.matches.push(newMatch);
+            return Promise.resolve(newMatch);
+          }
+        });
+
+        await Promise.all(promises);
+        if (state.usingDatabase) await loadMatchesFromDatabase();
+        renderTournaments();
+        renderMatches();
+        alert("Fixtures generated successfully!");
+      } catch (error) {
+        alert("Error generating fixtures: " + error.message);
+      }
+    }
+
+    // Home Page Tournaments
       const runningTournaments = state.tournaments.filter(t => t.status !== "Completed");
       safeSetText("#activeTournamentCount", `${runningTournaments.length} active`);
       const homeTourneyEl = document.querySelector("#homeTournaments");
@@ -3873,6 +3932,18 @@
             renderTournaments();
           }
         } catch (e) { alert("Error deleting tournament: " + e.message); button.disabled = false; }
+        return;
+      }
+
+      // GENERATE FIXTURES
+      button = event.target.closest("[data-generate-fixtures]");
+      if (button) {
+        const tourneyId = button.dataset.generateFixtures;
+        button.disabled = true;
+        button.textContent = "Generating...";
+        await generateTournamentFixtures(tourneyId);
+        button.textContent = "Generate Fixtures";
+        button.disabled = false;
         return;
       }
     });
