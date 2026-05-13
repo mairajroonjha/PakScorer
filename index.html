@@ -271,6 +271,14 @@
     [data-admin-only] {
       display: none !important;
     }
+
+    [data-auth-only] {
+      display: none !important;
+    }
+
+    .is-authenticated [data-auth-only] {
+      display: flex !important;
+    }
     
     .is-admin [data-admin-only] {
       display: block !important;
@@ -1374,6 +1382,7 @@
       <nav class="nav" aria-label="Main navigation">
         <button class="active" data-page="home"><span class="nav-icon">H</span>Home</button>
         <button data-page="teams"><span class="nav-icon">T</span>Teams</button>
+        <button data-page="profile" data-auth-only><span class="nav-icon">P</span>Profile</button>
         <button data-page="requests" data-admin-only><span class="nav-icon">R</span>Requests</button>
         <button data-page="scoring" data-admin-only><span class="nav-icon">S</span>Scoring</button>
         <button data-page="tournaments"><span class="nav-icon">🏆</span>Tournaments</button>
@@ -1516,6 +1525,43 @@
         <div class="field-orbit" style="margin-top: 16px;" aria-hidden="true">
           <div class="pitch"></div>
           <div class="orbit-ball"></div>
+        </div>
+      </section>
+
+      <section class="page" id="profile">
+        <div class="grid cols-2">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>User Profile</h2>
+              <span id="profileRoleBadge">Viewer</span>
+            </div>
+            <div class="panel-body grid">
+              <div class="card">
+                <span class="muted">Signed in as</span>
+                <h3 id="profileEmail">Not logged in</h3>
+                <p class="muted" id="profileUserId">Login to manage your teams and matches.</p>
+              </div>
+              <label>App Role
+                <select id="profileRoleSelect">
+                  <option value="viewer">Viewer</option>
+                  <option value="team_admin">Team Admin</option>
+                  <option value="tournament_admin">Tournament Admin</option>
+                  <option value="scorer">Scorer</option>
+                </select>
+              </label>
+              <p class="form-message" id="profileMessage" aria-live="polite"></p>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Role Access</h2>
+              <span>What this account can do</span>
+            </div>
+            <div class="panel-body">
+              <ul class="feed" id="profileRoleAccess"></ul>
+            </div>
+          </section>
         </div>
       </section>
 
@@ -1691,6 +1737,13 @@
                 <button class="btn" data-extra="Nb">Nb</button>
                 <button class="btn" data-extra="B">B</button>
                 <button class="btn" data-extra="Lb">Lb</button>
+                <select id="wicketTypeSelect" title="Wicket type">
+                  <option value="bowled">Bowled</option>
+                  <option value="caught">Caught</option>
+                  <option value="run_out">Run out</option>
+                  <option value="lbw">LBW</option>
+                  <option value="stumped">Stumped</option>
+                </select>
                 <button class="btn danger" data-wicket="true">Wicket</button>
                 <button class="btn ghost" id="undoBall">Undo</button>
               </div>
@@ -1705,6 +1758,24 @@
             <div class="panel-body">
               <div class="last-balls" id="lastBalls"></div>
               <ul class="feed" id="commentary" style="margin-top: 16px;"></ul>
+              <div class="grid cols-2" style="margin-top: 16px;">
+                <div class="card">
+                  <span class="muted">Batters</span>
+                  <div id="batterScorecard" class="grid" style="gap: 6px; margin-top: 10px;"></div>
+                </div>
+                <div class="card">
+                  <span class="muted">Bowler spell</span>
+                  <div id="bowlerSpellStats" class="grid" style="gap: 6px; margin-top: 10px;"></div>
+                </div>
+                <div class="card">
+                  <span class="muted">Extras</span>
+                  <div id="extrasBreakdown" class="grid" style="gap: 6px; margin-top: 10px;"></div>
+                </div>
+                <div class="card">
+                  <span class="muted">Fall of wickets</span>
+                  <div id="fallOfWickets" class="grid" style="gap: 6px; margin-top: 10px;"></div>
+                </div>
+              </div>
             </div>
           </section>
         </div>
@@ -1718,6 +1789,46 @@
           </div>
           <div class="grid" id="publicDashboardGrid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
             <!-- Matches will be injected here -->
+          </div>
+          <div class="grid cols-2" style="margin-top: 20px;">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Upcoming Matches</h2>
+                <span id="publicUpcomingCount">0 scheduled</span>
+              </div>
+              <div class="panel-body">
+                <ul class="feed" id="publicUpcomingMatches"></ul>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Completed Scorecards</h2>
+                <span id="publicCompletedCount">0 completed</span>
+              </div>
+              <div class="panel-body">
+                <ul class="feed" id="publicCompletedMatches"></ul>
+              </div>
+            </section>
+          </div>
+          <div class="grid cols-2" style="margin-top: 20px;">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Team Profiles</h2>
+                <span id="publicTeamCount">0 teams</span>
+              </div>
+              <div class="panel-body">
+                <ul class="feed" id="publicTeamProfiles"></ul>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Player Leaders</h2>
+                <span>Top runs and wickets</span>
+              </div>
+              <div class="panel-body">
+                <ul class="feed" id="publicPlayerLeaders"></ul>
+              </div>
+            </section>
           </div>
         </div>
 
@@ -1748,6 +1859,16 @@
               <div class="panel-body">
                 <div class="last-balls" id="publicDetailLastBalls"></div>
                 <ul class="feed" id="publicDetailCommentary" style="margin-top: 16px;"></ul>
+                <div class="grid cols-2" style="margin-top: 16px;">
+                  <div class="card">
+                    <span class="muted">Scorecard</span>
+                    <div id="publicDetailScorecard" class="grid" style="gap: 6px; margin-top: 10px;"></div>
+                  </div>
+                  <div class="card">
+                    <span class="muted">Extras</span>
+                    <div id="publicDetailExtras" class="grid" style="gap: 6px; margin-top: 10px;"></div>
+                  </div>
+                </div>
               </div>
             </section>
           </div>
@@ -1966,6 +2087,7 @@
     const pages = {
       home: ["Home", "Your central hub for local cricket activity."],
       teams: ["Teams & Management", "Manage your squads, players, and match fixtures."],
+      profile: ["Profile", "Your account, role, and access."],
       requests: ["Requests", "Challenges and match invitations."],
       scoring: ["Scoring", "Professional ball-by-ball match management."],
       public: ["Live View", "Detailed ball-by-ball spectator experience."],
@@ -2010,6 +2132,12 @@
         last: ["1", "4", "0", "Wd", "2", "W"],
         lastEventType: "danger",
         needsBowler: false,
+        striker: "Ali Raza",
+        nonStriker: "Hamza Shah",
+        batterStats: {},
+        bowlerStats: {},
+        extras: { wides: 0, noBalls: 0, byes: 0, legByes: 0 },
+        fallOfWickets: [],
         history: [
           { label: "10.4", text: "Wicket. Hamza Shah caught at long-on." },
           { label: "10.3", text: "Two runs into the leg side." },
@@ -2100,11 +2228,15 @@
       const adminEmail = document.querySelector("#adminEmail");
       
       const mobileProfileBtn = document.querySelector("#mobileProfileBtn");
+      document.querySelectorAll("[data-auth-only]").forEach(el => {
+        el.style.display = user ? "" : "none";
+      });
 
       if (user) {
+        document.body.classList.add("is-authenticated");
         if (adminProfile) adminProfile.style.display = "block";
         if (showLoginBtn) showLoginBtn.style.display = "none";
-        if (adminEmail) adminEmail.textContent = user.email;
+        if (adminEmail) adminEmail.textContent = `${user.email} (${roleLabel()})`;
         if (isAdmin()) {
           document.body.classList.add("is-admin");
         } else {
@@ -2118,6 +2250,7 @@
           if (icon) icon.innerHTML = "&#10006;"; /* X icon */
         }
       } else {
+        document.body.classList.remove("is-authenticated");
         if (adminProfile) adminProfile.style.display = "none";
         if (showLoginBtn) showLoginBtn.style.display = "block";
         document.body.classList.remove("is-admin");
@@ -2145,6 +2278,9 @@
       if (!user && restrictedPages.includes(activePage)) {
         document.querySelector("[data-page='home']").click();
       }
+      if (!user && activePage === "profile") {
+        document.querySelector("[data-page='home']").click();
+      }
 
       // Hide/Show admin-only elements
       document.querySelectorAll("[data-admin-only]").forEach(el => {
@@ -2166,6 +2302,7 @@
       renderPlayers();
       renderRequests();
       renderTournaments();
+      renderProfile();
 
       // Show/Hide sub-page login prompts
       const createPrompt = document.querySelector("#createTourneyLoginPrompt");
@@ -2217,8 +2354,55 @@
 
     function isAdmin() {
       if (!state.user) return false;
-      const email = state.user.email || "";
-      return email === "admin@pakscorer.com" || (state.user.app_metadata && state.user.app_metadata.role === "admin");
+      return ["team_admin", "tournament_admin", "scorer", "admin"].includes(getUserRole());
+    }
+
+    function getUserRole() {
+      if (!state.user) return "viewer";
+      const savedRole = localStorage.getItem(`pakscorer_role_${state.user.id}`);
+      return savedRole || state.user.user_metadata?.app_role || state.user.app_metadata?.role || "viewer";
+    }
+
+    function roleLabel(role = getUserRole()) {
+      return {
+        viewer: "Viewer",
+        team_admin: "Team Admin",
+        tournament_admin: "Tournament Admin",
+        scorer: "Scorer",
+        admin: "Admin"
+      }[role] || "Viewer";
+    }
+
+    function renderProfile() {
+      const emailEl = document.querySelector("#profileEmail");
+      const userIdEl = document.querySelector("#profileUserId");
+      const roleBadge = document.querySelector("#profileRoleBadge");
+      const roleSelect = document.querySelector("#profileRoleSelect");
+      const accessEl = document.querySelector("#profileRoleAccess");
+      const role = getUserRole();
+
+      if (emailEl) emailEl.textContent = state.user?.email || "Not logged in";
+      if (userIdEl) userIdEl.textContent = state.user ? `User ID: ${state.user.id}` : "Login to manage teams, tournaments, and scoring.";
+      if (roleBadge) roleBadge.textContent = roleLabel(role);
+      if (roleSelect) roleSelect.value = role;
+
+      const access = {
+        viewer: ["View public matches", "Open team profiles", "Read tournaments and scorecards"],
+        team_admin: ["Create and edit your own teams", "Add players to your own teams", "Send match requests"],
+        tournament_admin: ["Create tournaments", "Approve tournament applications", "Generate fixtures and series"],
+        scorer: ["Start matches", "Use toss and innings flow", "Score balls live with undo"]
+      };
+
+      if (accessEl) {
+        accessEl.innerHTML = (access[role] || access.viewer).map(item => `<li><strong>${item}</strong><span>${roleLabel(role)}</span></li>`).join("");
+      }
+    }
+
+    function saveUserRole(role) {
+      if (!state.user) return;
+      localStorage.setItem(`pakscorer_role_${state.user.id}`, role);
+      renderProfile();
+      updateAuthUI();
     }
 
     function isOwner(item) {
@@ -2329,6 +2513,132 @@
       return state.players.filter((player) => (player.team || "").trim().toLowerCase() === bowlingTeam);
     }
 
+    function battingTeamPlayers() {
+      const battingTeam = (state.score.battingTeam || "").trim().toLowerCase();
+      return state.players.filter((player) => (player.team || "").trim().toLowerCase() === battingTeam);
+    }
+
+    function setupBattersForInnings() {
+      const batters = battingTeamPlayers();
+      state.score.striker = state.score.striker || batters[0]?.name || state.score.battingTeam;
+      state.score.nonStriker = state.score.nonStriker || batters[1]?.name || "Non-striker";
+      ensureBatter(state.score.striker);
+      ensureBatter(state.score.nonStriker);
+    }
+
+    function ensureBatter(name) {
+      if (!name) return;
+      if (!state.score.batterStats[name]) {
+        state.score.batterStats[name] = { runs: 0, balls: 0, fours: 0, sixes: 0, out: false };
+      }
+    }
+
+    function ensureBowler(name = state.score.currentBowler) {
+      if (!name) return;
+      if (!state.score.bowlerStats[name]) {
+        state.score.bowlerStats[name] = { runs: 0, legalBalls: 0, wickets: 0 };
+      }
+    }
+
+    function rotateStrike() {
+      [state.score.striker, state.score.nonStriker] = [state.score.nonStriker, state.score.striker];
+    }
+
+    function resetInningsScoreExtras() {
+      state.score.batterStats = {};
+      state.score.bowlerStats = {};
+      state.score.extras = { wides: 0, noBalls: 0, byes: 0, legByes: 0 };
+      state.score.fallOfWickets = [];
+      state.score.striker = "";
+      state.score.nonStriker = "";
+      setupBattersForInnings();
+    }
+
+    function getPlayerMeta(playerId) {
+      if (!playerId) return {};
+      try {
+        return JSON.parse(localStorage.getItem(`pakscorer_player_meta_${playerId}`) || "{}");
+      } catch {
+        return {};
+      }
+    }
+
+    function savePlayerMeta(playerId, meta) {
+      if (!playerId) return;
+      localStorage.setItem(`pakscorer_player_meta_${playerId}`, JSON.stringify(meta));
+    }
+
+    function statLine(label, value) {
+      return `<div style="display:flex; justify-content:space-between; gap: 10px;"><span class="muted">${label}</span><strong>${value}</strong></div>`;
+    }
+
+    function renderScoreBreakdowns() {
+      const score = state.score;
+      const batterEl = document.querySelector("#batterScorecard");
+      if (batterEl) {
+        const batters = Object.entries(score.batterStats);
+        batterEl.innerHTML = batters.length ? batters.map(([name, stat]) => {
+          const strike = name === score.striker ? "*" : "";
+          const sr = stat.balls ? ((stat.runs / stat.balls) * 100).toFixed(1) : "0.0";
+          return statLine(`${name}${strike}`, `${stat.runs} (${stat.balls}) SR ${sr}`);
+        }).join("") : `<p class="muted">No batter data yet.</p>`;
+      }
+
+      const bowlerEl = document.querySelector("#bowlerSpellStats");
+      if (bowlerEl) {
+        const bowlers = Object.entries(score.bowlerStats);
+        bowlerEl.innerHTML = bowlers.length ? bowlers.map(([name, stat]) => {
+          const overs = oversText(stat.legalBalls);
+          return statLine(name, `${stat.wickets}-${stat.runs} (${overs})`);
+        }).join("") : `<p class="muted">No bowler spell yet.</p>`;
+      }
+
+      const extrasEl = document.querySelector("#extrasBreakdown");
+      if (extrasEl) {
+        const extras = score.extras;
+        extrasEl.innerHTML = [
+          statLine("Wides", extras.wides),
+          statLine("No-balls", extras.noBalls),
+          statLine("Byes", extras.byes),
+          statLine("Leg-byes", extras.legByes)
+        ].join("");
+      }
+
+      const fowEl = document.querySelector("#fallOfWickets");
+      if (fowEl) {
+        fowEl.innerHTML = score.fallOfWickets.length ? score.fallOfWickets.map(item => statLine(`${item.score} (${item.over})`, item.text)).join("") : `<p class="muted">No wickets yet.</p>`;
+      }
+    }
+
+    function rebuildScoreMetaFromBalls(balls = []) {
+      resetInningsScoreExtras();
+      balls.forEach((ball) => {
+        const batter = ball.batter_name || state.score.striker || state.score.battingTeam;
+        const bowler = ball.bowler_name || state.score.currentBowler;
+        ensureBatter(batter);
+        ensureBowler(bowler);
+        state.score.batterStats[batter].runs += ball.runs_bat || 0;
+        if (ball.is_legal) state.score.batterStats[batter].balls += 1;
+        if ((ball.runs_bat || 0) === 4) state.score.batterStats[batter].fours += 1;
+        if ((ball.runs_bat || 0) === 6) state.score.batterStats[batter].sixes += 1;
+        state.score.bowlerStats[bowler].runs += (ball.runs_bat || 0) + (ball.extra_type === "Wide" || ball.extra_type === "No Ball" ? ball.runs_extra || 1 : 0);
+        if (ball.is_legal) state.score.bowlerStats[bowler].legalBalls += 1;
+        if (ball.is_wicket) {
+          state.score.batterStats[batter].out = true;
+          if (ball.wicket_type !== "run_out") state.score.bowlerStats[bowler].wickets += 1;
+          state.score.fallOfWickets.push({
+            score: `${state.score.runs || 0}/${state.score.fallOfWickets.length + 1}`,
+            over: `${ball.over_number}.${ball.ball_in_over}`,
+            text: `${batter} ${(ball.wicket_type || "wicket").replace("_", " ")}`
+          });
+        }
+        if (ball.extra_type === "Wide") state.score.extras.wides += ball.runs_extra || 1;
+        if (ball.extra_type === "No Ball") state.score.extras.noBalls += ball.runs_extra || 1;
+        if (ball.extra_type === "Bye") state.score.extras.byes += ball.runs_extra || 1;
+        if (ball.extra_type === "Leg Bye") state.score.extras.legByes += ball.runs_extra || 1;
+      });
+    }
+
     function renderTeams() {
       let visibleTeams;
       if (isAdmin()) {
@@ -2347,10 +2657,15 @@
             <p style="font-size: 0.75rem; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.05em;">Squad (${teamPlayers.length})</p>
             <ul style="list-style: none; display: flex; flex-direction: column; gap: 4px;">
               ${teamPlayers.map(p => `
-                <li style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 4px 8px; border-radius: 6px;">
-                  <span style="font-size: 0.82rem;"><strong>${p.name}</strong> <small class="muted">(${p.role})</small></span>
+                ${(() => { const meta = getPlayerMeta(p.id); return `
+                <li style="display: flex; justify-content: space-between; align-items: center; gap: 8px; background: rgba(255,255,255,0.03); padding: 4px 8px; border-radius: 6px;">
+                  <span style="display:flex; align-items:center; gap:8px; font-size: 0.82rem;">
+                    ${meta.photo ? `<img src="${meta.photo}" alt="${p.name}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">` : `<span class="avatar" style="width:32px;height:32px;font-size:0.7rem;">${initials(p.name)}</span>`}
+                    <span><strong>${p.name}</strong> <small class="muted">(${p.role}${meta.age ? `, ${meta.age}` : ""})</small><br><small class="muted">${meta.batting || "Batting"} / ${meta.bowling || "Bowling"}</small></span>
+                  </span>
                   ${owner || admin ? `<button class="btn ghost danger" style="padding: 2px 4px; font-size: 0.6rem;" data-delete-player="${p.id}">Remove</button>` : ""}
                 </li>
+                `; })()}
               `).join("")}
             </ul>
           </div>
@@ -2359,11 +2674,15 @@
         const managementTools = (owner || admin) ? `
             <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line);">
               <p style="font-size: 0.7rem; color: var(--gold); font-weight: 800; text-transform: uppercase; margin-bottom: 6px;">Quick Add Player</p>
-              <form class="quick-add-player" data-team-name="${team.name}" style="display: flex; gap: 4px;">
-                <input type="text" placeholder="Name" class="player-name-in" style="flex: 1; font-size: 0.8rem; padding: 4px 8px;" required>
+              <form class="quick-add-player" data-team-name="${team.name}" style="display: grid; grid-template-columns: 1.2fr 0.8fr 0.7fr; gap: 6px;">
+                <input type="text" placeholder="Name" class="player-name-in" style="font-size: 0.8rem; padding: 4px 8px;" required>
                 <select class="player-role-in" style="font-size: 0.8rem; padding: 4px;">
                   <option>Batter</option><option>Bowler</option><option>All-rounder</option><option>WK</option>
                 </select>
+                <input type="number" placeholder="Age" class="player-age-in" min="8" max="70" style="font-size: 0.8rem; padding: 4px 8px;">
+                <input type="text" placeholder="Batting style" class="player-batting-in" style="font-size: 0.8rem; padding: 4px 8px;">
+                <input type="text" placeholder="Bowling style" class="player-bowling-in" style="font-size: 0.8rem; padding: 4px 8px;">
+                <input type="url" placeholder="Photo URL" class="player-photo-in" style="font-size: 0.8rem; padding: 4px 8px;">
                 <button class="btn primary btn-sm" type="submit">+</button>
               </form>
             </div>
@@ -2420,12 +2739,13 @@
       const rowsEl = document.querySelector("#playerRows");
       if (rowsEl) {
         rowsEl.innerHTML = myPlayers.map((p) => {
+        const meta = getPlayerMeta(p.id);
         const sr = p.balls_faced ? ((p.runs / p.balls_faced) * 100).toFixed(1) : "0.0";
         const ave = p.innings_played ? (p.runs / p.innings_played).toFixed(1) : p.runs.toFixed(1);
         const econ = p.balls_bowled ? ((p.runs_conceded / p.balls_bowled) * 6).toFixed(2) : "0.00";
         return `
           <tr>
-            <td><strong>${p.name}</strong></td>
+            <td><strong>${p.name}</strong><br><small class="muted">${meta.age ? `${meta.age} yrs - ` : ""}${meta.batting || "Batting style"} / ${meta.bowling || "Bowling style"}</small></td>
             <td>${p.team}</td>
             <td><span class="tag">${p.role}</span></td>
             <td title="Innings: ${p.innings_played || 0}">${p.runs} <small class="muted">(${ave})</small></td>
@@ -3937,7 +4257,8 @@
       const targetText = score.target > 0 ? `Target: ${score.target}` : "";
       const inningsTextLabel = state.currentInnings ? `Innings ${state.currentInnings.innings_number}` : "Scoring";
       
-      safeSetText("#inningsStatus", `${score.battingTeam} batting (${inningsTextLabel}) ${targetText}`);
+      setupBattersForInnings();
+      safeSetText("#inningsStatus", `${score.battingTeam} batting (${inningsTextLabel}) ${targetText} - ${score.striker} on strike`);
       safeSetText("#scoreRuns", score.runs);
       safeSetText("#scoreWickets", score.wickets);
       safeSetText("#scoreOvers", overs);
@@ -3965,6 +4286,7 @@
       if (commEl) commEl.innerHTML = score.history.slice(0, 6).map((item) => `
         <li><strong>${item.label}</strong><span>${item.text}</span></li>
       `).join("");
+      renderScoreBreakdowns();
     }
 
     function chanceText(score) {
@@ -3979,7 +4301,44 @@
 
     let publicActiveMatchId = null;
 
+    function renderPublicOverviewSections() {
+      const scheduled = state.matches.filter(m => m.status === "Scheduled" || m.status === "Setup").slice(0, 8);
+      const completed = state.matches.filter(m => m.status === "Completed").slice(0, 8);
+      safeSetText("#publicUpcomingCount", `${scheduled.length} scheduled`);
+      safeSetText("#publicCompletedCount", `${completed.length} completed`);
+      safeSetText("#publicTeamCount", `${state.teams.length} teams`);
+
+      const upcomingEl = document.querySelector("#publicUpcomingMatches");
+      if (upcomingEl) {
+        upcomingEl.innerHTML = scheduled.length ? scheduled.map(m => `
+          <li data-view-match="${m.id}" style="cursor:pointer;"><strong>${m.teamA} vs ${m.teamB}</strong><span>${m.matchDate || "Date TBA"} ${m.matchTime || ""} - ${m.venue}</span></li>
+        `).join("") : `<li><strong>No upcoming matches</strong><span>New fixtures will appear here.</span></li>`;
+      }
+
+      const completedEl = document.querySelector("#publicCompletedMatches");
+      if (completedEl) {
+        completedEl.innerHTML = completed.length ? completed.map(m => `
+          <li data-view-match="${m.id}" style="cursor:pointer;"><strong>${m.teamA} vs ${m.teamB}</strong><span>${m.resultText || "Scorecard available"}</span></li>
+        `).join("") : `<li><strong>No completed scorecards</strong><span>Finished matches will appear here.</span></li>`;
+      }
+
+      const teamsEl = document.querySelector("#publicTeamProfiles");
+      if (teamsEl) {
+        teamsEl.innerHTML = state.teams.length ? state.teams.slice(0, 8).map(team => {
+          const players = state.players.filter(p => p.team === team.name).length;
+          return `<li><strong>${team.name}</strong><span>${team.city} - ${players} players - Captain ${team.captain}</span></li>`;
+        }).join("") : `<li><strong>No teams yet</strong><span>Teams will appear after registration.</span></li>`;
+      }
+
+      const leadersEl = document.querySelector("#publicPlayerLeaders");
+      if (leadersEl) {
+        const leaders = [...state.players].sort((a, b) => (b.runs || 0) - (a.runs || 0)).slice(0, 4);
+        leadersEl.innerHTML = leaders.length ? leaders.map(p => `<li><strong>${p.name}</strong><span>${p.runs || 0} runs - ${p.wickets || 0} wickets</span></li>`).join("") : `<li><strong>No player stats yet</strong><span>Stats build as matches are scored.</span></li>`;
+      }
+    }
+
     async function renderPublicLiveView() {
+      renderPublicOverviewSections();
       if (!state.usingDatabase) {
         const liveCount = document.querySelector("#publicLiveCount");
         const grid = document.querySelector("#publicDashboardGrid");
@@ -4078,6 +4437,35 @@
         }).join("");
         document.querySelector("#publicDetailCommentary").innerHTML = commentaryHtml;
 
+        const batterStats = {};
+        const extras = { wides: 0, noBalls: 0, byes: 0, legByes: 0 };
+        balls.forEach(b => {
+          const name = b.batter_name || "Batter";
+          if (!batterStats[name]) batterStats[name] = { runs: 0, balls: 0 };
+          batterStats[name].runs += b.runs_bat || 0;
+          if (b.is_legal) batterStats[name].balls += 1;
+          if (b.extra_type === "Wide") extras.wides += b.runs_extra || 1;
+          if (b.extra_type === "No Ball") extras.noBalls += b.runs_extra || 1;
+          if (b.extra_type === "Bye") extras.byes += b.runs_extra || 1;
+          if (b.extra_type === "Leg Bye") extras.legByes += b.runs_extra || 1;
+        });
+
+        const publicScorecard = document.querySelector("#publicDetailScorecard");
+        if (publicScorecard) {
+          const entries = Object.entries(batterStats);
+          publicScorecard.innerHTML = entries.length ? entries.map(([name, stat]) => statLine(name, `${stat.runs} (${stat.balls})`)).join("") : `<p class="muted">No batting data yet.</p>`;
+        }
+
+        const publicExtras = document.querySelector("#publicDetailExtras");
+        if (publicExtras) {
+          publicExtras.innerHTML = [
+            statLine("Wides", extras.wides),
+            statLine("No-balls", extras.noBalls),
+            statLine("Byes", extras.byes),
+            statLine("Leg-byes", extras.legByes)
+          ].join("");
+        }
+
       } catch (error) {
         console.error("Failed to render match detail", error);
       }
@@ -4154,6 +4542,12 @@
         currentBowler: score.currentBowler,
         lastEventType: score.lastEventType,
         needsBowler: score.needsBowler,
+        striker: score.striker,
+        nonStriker: score.nonStriker,
+        batterStats: JSON.parse(JSON.stringify(score.batterStats)),
+        bowlerStats: JSON.parse(JSON.stringify(score.bowlerStats)),
+        extras: { ...score.extras },
+        fallOfWickets: score.fallOfWickets.map((item) => ({ ...item })),
         last: [...score.last],
         history: score.history.map((item) => ({ ...item })),
       };
@@ -4167,6 +4561,12 @@
       score.currentBowler = snapshot.currentBowler;
       score.lastEventType = snapshot.lastEventType;
       score.needsBowler = snapshot.needsBowler;
+      score.striker = snapshot.striker;
+      score.nonStriker = snapshot.nonStriker;
+      score.batterStats = JSON.parse(JSON.stringify(snapshot.batterStats || {}));
+      score.bowlerStats = JSON.parse(JSON.stringify(snapshot.bowlerStats || {}));
+      score.extras = { ...(snapshot.extras || { wides: 0, noBalls: 0, byes: 0, legByes: 0 }) };
+      score.fallOfWickets = (snapshot.fallOfWickets || []).map((item) => ({ ...item }));
       score.last = [...snapshot.last];
       score.history = snapshot.history.map((item) => ({ ...item }));
     }
@@ -4184,6 +4584,7 @@
 
       const finishedOver = oversText(score.legalBalls);
       score.needsBowler = true;
+      rotateStrike();
       renderBowlerSelect();
       const notice = document.querySelector("#overNotice");
       notice.textContent = `Over ${finishedOver} complete. Select next bowler from ${score.bowlingTeam}.`;
@@ -4199,12 +4600,33 @@
       }
       rememberScore();
       const score = state.score;
+      const wicketType = document.querySelector("#wicketTypeSelect")?.value || "bowled";
+      setupBattersForInnings();
+      ensureBatter(score.striker);
+      ensureBowler();
+      const strikerName = score.striker;
       score.runs += runs;
       score.legalBalls += 1;
-      if (isWicket) score.wickets = Math.min(10, score.wickets + 1);
+      score.batterStats[strikerName].runs += runs;
+      score.batterStats[strikerName].balls += 1;
+      if (runs === 4) score.batterStats[strikerName].fours += 1;
+      if (runs === 6) score.batterStats[strikerName].sixes += 1;
+      score.bowlerStats[score.currentBowler].runs += runs;
+      score.bowlerStats[score.currentBowler].legalBalls += 1;
+      if (isWicket) {
+        score.wickets = Math.min(10, score.wickets + 1);
+        score.batterStats[strikerName].out = true;
+        if (wicketType !== "run_out") score.bowlerStats[score.currentBowler].wickets += 1;
+        score.fallOfWickets.push({
+          score: `${score.runs}/${score.wickets}`,
+          over: oversText(score.legalBalls),
+          text: `${strikerName} ${wicketType.replace("_", " ")}`
+        });
+      }
       score.last.push(label);
       score.lastEventType = isWicket ? "danger" : label === "4" || label === "6" ? "boundary" : "normal";
-      score.history.unshift({ label: oversText(score.legalBalls), text: isWicket ? "Wicket. New batter comes in." : `${label} run${runs === 1 ? "" : "s"} added.` });
+      score.history.unshift({ label: oversText(score.legalBalls), text: isWicket ? `Wicket: ${strikerName} ${wicketType.replace("_", " ")}.` : `${strikerName} takes ${label} run${runs === 1 ? "" : "s"}.` });
+      if (!isWicket && runs % 2 === 1) rotateStrike();
       askNextBowler();
       animatePublicScore(score.lastEventType);
       checkInningsStatus();
@@ -4217,12 +4639,14 @@
             ball_number: score.legalBalls,
             over_number: Math.floor((score.legalBalls - 1) / 6),
             ball_in_over: ((score.legalBalls - 1) % 6) + 1,
+            batter_name: strikerName,
             bowler_name: score.currentBowler,
             runs_bat: runs,
             runs_extra: 0,
             extra_type: null,
             is_legal: true,
             is_wicket: isWicket,
+            wicket_type: isWicket ? wicketType : null,
           };
           const savedBall = await addBallToDatabase(ball);
           state.score.undoStack[state.score.undoStack.length - 1].dbBallId = savedBall.id;
@@ -4248,11 +4672,25 @@
       rememberScore();
       const score = state.score;
       const isLegalExtra = label === "B" || label === "Lb";
+      setupBattersForInnings();
+      ensureBatter(score.striker);
+      ensureBowler();
+      const strikerName = score.striker;
       score.runs += 1;
       if (isLegalExtra) score.legalBalls += 1;
+      if (label === "Wd") score.extras.wides += 1;
+      if (label === "Nb") score.extras.noBalls += 1;
+      if (label === "B") score.extras.byes += 1;
+      if (label === "Lb") score.extras.legByes += 1;
+      score.bowlerStats[score.currentBowler].runs += label === "B" || label === "Lb" ? 0 : 1;
+      if (isLegalExtra) {
+        score.batterStats[strikerName].balls += 1;
+        score.bowlerStats[score.currentBowler].legalBalls += 1;
+      }
       score.last.push(label);
       score.lastEventType = label === "Nb" ? "danger" : "normal";
       score.history.unshift({ label: oversText(score.legalBalls), text: `${label} extra added.` });
+      if (isLegalExtra) rotateStrike();
       if (isLegalExtra) askNextBowler();
       animatePublicScore(score.lastEventType);
       checkInningsStatus();
@@ -4266,6 +4704,7 @@
             ball_number: isLegalExtra ? score.legalBalls : score.legalBalls + 1,
             over_number: isLegalExtra ? Math.floor((score.legalBalls - 1) / 6) : Math.floor(score.legalBalls / 6),
             ball_in_over: isLegalExtra ? ((score.legalBalls - 1) % 6) + 1 : (score.legalBalls % 6) + 1,
+            batter_name: strikerName,
             bowler_name: score.currentBowler,
             runs_bat: 0,
             runs_extra: 1,
@@ -4345,10 +4784,12 @@
       state.score.target = target;
       state.score.battingTeam = newBattingTeam;
       state.score.bowlingTeam = newBowlingTeam;
+      state.score.currentBowler = bowlingTeamPlayers()[0]?.name || state.score.currentBowler;
       state.score.last = [];
       state.score.history = [{ label: "Target", text: `${newBattingTeam} needs ${target} runs to win.` }];
       state.score.undoStack = [];
       state.score.needsBowler = true;
+      resetInningsScoreExtras();
       
       renderScore();
     }
@@ -4372,6 +4813,7 @@
       }
 
       alert(`Match Over! ${resultText}`);
+      showMatchResultSummary(resultText);
 
       if (state.usingDatabase) {
         try {
@@ -4389,6 +4831,26 @@
       document.querySelector("#scoringControls").style.pointerEvents = "none";
       document.querySelector("#activeMatchStatus").textContent = "Match Completed";
       renderMatches();
+    }
+
+    function showMatchResultSummary(resultText) {
+      const modal = document.querySelector("#matchSummaryModal");
+      const content = document.querySelector("#highlightsContent");
+      if (!modal || !content) return;
+      const extrasTotal = Object.values(state.score.extras || {}).reduce((sum, value) => sum + Number(value || 0), 0);
+      content.innerHTML = `
+        <div style="padding: 28px; background: #050a0f;">
+          <span class="tag green">Match Result</span>
+          <h2 style="margin: 14px 0 6px;">${state.currentMatch ? `${state.currentMatch.teamA} vs ${state.currentMatch.teamB}` : "Match Complete"}</h2>
+          <p class="muted">${resultText}</p>
+          <div class="grid cols-3" style="margin-top: 18px;">
+            <div class="card"><span class="muted">Final innings</span><h3>${state.score.runs}/${state.score.wickets}</h3></div>
+            <div class="card"><span class="muted">Overs</span><h3>${oversText(state.score.legalBalls)}</h3></div>
+            <div class="card"><span class="muted">Extras</span><h3>${extrasTotal}</h3></div>
+          </div>
+        </div>
+      `;
+      modal.style.display = "flex";
     }
 
     document.querySelector("#teamForm").addEventListener("submit", async (event) => {
@@ -4602,6 +5064,7 @@
       }
 
       request.status = nextStatus;
+      sendLocalNotification("Match request updated", `${request.from} vs ${request.to} was ${nextStatus.toLowerCase()}.`);
       renderRequests();
       renderMatches();
     });
@@ -4885,11 +5348,14 @@
           state.score.battingTeam = innings.batting_team;
           state.score.bowlingTeam = innings.bowling_team;
           state.score.target = innings.target || 0;
+          state.score.currentBowler = bowlingTeamPlayers()[0]?.name || state.score.currentBowler;
+          resetInningsScoreExtras();
           state.score.last = balls.slice(-6).map(b => b.is_wicket ? "W" : b.extra_type ? (b.extra_type==="Wide"?"Wd":b.extra_type==="No Ball"?"Nb":b.extra_type==="Bye"?"B":"Lb") : b.runs_bat.toString());
           state.score.history = balls.slice(-10).reverse().map(b => ({
             label: `${b.over_number}.${b.ball_in_over}`,
             text: b.is_wicket ? "Wicket." : b.extra_type ? `${b.extra_type} added.` : `${b.runs_bat} runs added.`
           }));
+          rebuildScoreMetaFromBalls(balls);
           state.score.undoStack = [];
           state.score.needsBowler = (innings.legal_balls % 6 === 0);
           
@@ -4919,6 +5385,7 @@
        if (confirm("Are you sure you want to end this match?")) {
          if (state.usingDatabase) await updateMatchStatusInDatabase(state.currentMatch.id, "Completed");
          state.currentMatch.status = "Completed";
+         showMatchResultSummary("Match ended by scorer.");
          state.currentMatch = null;
          state.currentInnings = null;
          document.querySelector("#scoringControls").style.opacity = "0.5";
@@ -5266,6 +5733,18 @@
       });
     });
 
+    const profileRoleSelect = document.querySelector("#profileRoleSelect");
+    if (profileRoleSelect) {
+      profileRoleSelect.addEventListener("change", () => {
+        saveUserRole(profileRoleSelect.value);
+        const msg = document.querySelector("#profileMessage");
+        if (msg) {
+          msg.textContent = `Role saved as ${roleLabel(profileRoleSelect.value)} for this browser.`;
+          msg.className = "form-message success";
+        }
+      });
+    }
+
     const showBtn = document.querySelector("#showLoginBtn");
     if (showBtn) {
       showBtn.addEventListener("click", () => {
@@ -5435,6 +5914,10 @@
         const teamName = quickAddForm.dataset.teamName;
         const nameIn = quickAddForm.querySelector(".player-name-in");
         const roleIn = quickAddForm.querySelector(".player-role-in");
+        const ageIn = quickAddForm.querySelector(".player-age-in");
+        const battingIn = quickAddForm.querySelector(".player-batting-in");
+        const bowlingIn = quickAddForm.querySelector(".player-bowling-in");
+        const photoIn = quickAddForm.querySelector(".player-photo-in");
         
         const name = nameIn.value.trim();
         const role = roleIn.value;
@@ -5457,9 +5940,27 @@
           if (state.usingDatabase) {
             const newPlayer = await createPlayerInDatabase(player);
             state.players.push(newPlayer);
+            savePlayerMeta(newPlayer.id, {
+              age: ageIn?.value || "",
+              batting: battingIn?.value || "",
+              bowling: bowlingIn?.value || "",
+              photo: photoIn?.value || ""
+            });
           } else {
-            state.players.push({ id: Date.now(), ...player, runs: 0, wickets: 0 });
+            const localPlayer = { id: Date.now(), ...player, runs: 0, wickets: 0 };
+            state.players.push(localPlayer);
+            savePlayerMeta(localPlayer.id, {
+              age: ageIn?.value || "",
+              batting: battingIn?.value || "",
+              bowling: bowlingIn?.value || "",
+              photo: photoIn?.value || ""
+            });
           }
+          nameIn.value = "";
+          if (ageIn) ageIn.value = "";
+          if (battingIn) battingIn.value = "";
+          if (bowlingIn) bowlingIn.value = "";
+          if (photoIn) photoIn.value = "";
           renderTeams();
         } catch (e) {
           alert("Error adding player: " + e.message);
