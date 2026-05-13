@@ -1454,11 +1454,11 @@
 
       <section class="page" id="tournaments">
         <div class="sub-nav" style="margin-bottom: 24px; display: flex; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 12px; overflow-x: auto;">
-          <button class="btn ghost sub-nav-btn" data-tourney-sub="active">Active Tournaments</button>
-          <button class="btn ghost sub-nav-btn" data-tourney-sub="my" data-admin-only>My Tournaments</button>
-          <button class="btn ghost sub-nav-btn" data-tourney-sub="create" data-admin-only>Create Tournament</button>
+          <button class="btn primary sub-nav-btn active" data-tourney-sub="active">Active Tournaments</button>
+          <button class="btn ghost sub-nav-btn" data-tourney-sub="my">My Tournaments</button>
+          <button class="btn ghost sub-nav-btn" data-tourney-sub="create">Create Tournament</button>
           <button class="btn ghost sub-nav-btn" data-tourney-sub="series">Manage Series</button>
-          <button class="btn ghost sub-nav-btn" data-tourney-sub="applications" data-admin-only>Applications</button>
+          <button class="btn ghost sub-nav-btn" data-tourney-sub="applications">Applications</button>
         </div>
 
         <div id="tourney-sub-active" class="tourney-sub-page active">
@@ -1493,7 +1493,12 @@
         </div>
 
         <div id="tourney-sub-create" class="tourney-sub-page">
-           <section class="panel" style="max-width: 600px; margin: 0 auto;">
+           <div id="createTourneyLoginPrompt" class="card" style="max-width: 600px; margin: 0 auto; text-align: center; padding: 40px;">
+              <h3>Organize a Tournament</h3>
+              <p class="muted">Please login to your account to create and manage full competitions.</p>
+              <button class="btn primary" onclick="document.querySelector('#showLoginBtn').click()" style="margin-top: 16px;">Go to Login</button>
+           </div>
+           <section id="createTourneyFormSection" class="panel" style="max-width: 600px; margin: 0 auto; display: none;">
               <div class="panel-head">
                 <h2>New Tournament</h2>
                 <span>Create a full competition</span>
@@ -1555,7 +1560,12 @@
         </div>
 
         <div id="tourney-sub-my" class="tourney-sub-page">
-            <section class="panel">
+            <div id="myTourneyLoginPrompt" class="card" style="text-align: center; padding: 40px;">
+              <h3>My Management</h3>
+              <p class="muted">Login to see tournaments you are currently organizing.</p>
+              <button class="btn primary" onclick="document.querySelector('#showLoginBtn').click()" style="margin-top: 16px;">Go to Login</button>
+            </div>
+            <section id="myTourneyListSection" class="panel" style="display: none;">
               <div class="panel-head">
                 <h2>My Managed Tournaments</h2>
                 <span id="myTournamentCount">0 managed</span>
@@ -1748,6 +1758,21 @@
       renderPlayers();
       renderRequests();
       renderTournaments();
+
+      // Show/Hide sub-page login prompts
+      const createPrompt = document.querySelector("#createTourneyLoginPrompt");
+      const createSection = document.querySelector("#createTourneyFormSection");
+      if (createPrompt && createSection) {
+        createPrompt.style.display = user ? "none" : "block";
+        createSection.style.display = user ? "block" : "none";
+      }
+
+      const myPrompt = document.querySelector("#myTourneyLoginPrompt");
+      const mySection = document.querySelector("#myTourneyListSection");
+      if (myPrompt && mySection) {
+        myPrompt.style.display = user ? "none" : "block";
+        mySection.style.display = user ? "block" : "none";
+      }
     }
 
     async function handleLogin(email, password) {
