@@ -1694,18 +1694,6 @@
       return false;
     };
 
-    async function requestNotificationPermission() {
-      if (!("Notification" in window)) return;
-      try {
-        const permission = await Notification.requestPermission();
-        const btn = document.querySelector("#notifyBtn");
-        if (permission === "granted" && btn) {
-          btn.textContent = "🔕";
-          new Notification("PakScorer Elite", { body: "Real-time match alerts enabled!" });
-        }
-      } catch (e) { console.warn("Notifications blocked"); }
-    }
-
     let supabase;
     try {
       supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -1749,10 +1737,10 @@
       applications: [],
       series: [],
       score: {
-        runs: 87,
-        wickets: 3,
-        legalBalls: 64,
-        target: 164,
+        runs: 0,
+        wickets: 0,
+        legalBalls: 0,
+        target: 0,
         battingTeam: "Pak Lions",
         bowlingTeam: "Lahore Kings",
         currentBowler: "Umar Khan",
@@ -1851,9 +1839,9 @@
       const mobileProfileBtn = document.querySelector("#mobileProfileBtn");
 
       if (user) {
-        adminProfile.style.display = "block";
-        showLoginBtn.style.display = "none";
-        adminEmail.textContent = user.email;
+        if (adminProfile) adminProfile.style.display = "block";
+        if (showLoginBtn) showLoginBtn.style.display = "none";
+        if (adminEmail) adminEmail.textContent = user.email;
         if (isAdmin()) {
           document.body.classList.add("is-admin");
         } else {
@@ -1861,17 +1849,21 @@
         }
         if (mobileProfileBtn) {
           mobileProfileBtn.classList.add("logged-in");
-          document.querySelector("#mobileProfileLabel").textContent = "Logout";
-          document.querySelector("#mobileProfileIcon").innerHTML = "&#10006;"; /* X icon */
+          const label = document.querySelector("#mobileProfileLabel");
+          const icon = document.querySelector("#mobileProfileIcon");
+          if (label) label.textContent = "Logout";
+          if (icon) icon.innerHTML = "&#10006;"; /* X icon */
         }
       } else {
-        adminProfile.style.display = "none";
-        showLoginBtn.style.display = "block";
+        if (adminProfile) adminProfile.style.display = "none";
+        if (showLoginBtn) showLoginBtn.style.display = "block";
         document.body.classList.remove("is-admin");
         if (mobileProfileBtn) {
           mobileProfileBtn.classList.remove("logged-in");
-          document.querySelector("#mobileProfileLabel").textContent = "Profile";
-          document.querySelector("#mobileProfileIcon").innerHTML = "&#128100;"; /* User icon */
+          const label = document.querySelector("#mobileProfileLabel");
+          const icon = document.querySelector("#mobileProfileIcon");
+          if (label) label.textContent = "Profile";
+          if (icon) icon.innerHTML = "&#128100;"; /* User icon */
         }
       }
       
@@ -2161,6 +2153,7 @@
             <td>${econ}</td>
             <td><button class="btn ghost danger" style="padding: 2px 6px; font-size: 0.65rem;" data-delete-player="${p.id}">Delete</button></td>
           </tr>
+        `;
         }).join("");
       }
       const countEl = document.querySelector("#playerCount");
@@ -3253,30 +3246,35 @@
         tournamentListEl.innerHTML = cards.join("");
       }
 
-      document.querySelector("#applicationCountDisplay").textContent = `${state.applications.length} team${state.applications.length !== 1 ? "s" : ""}`;
-      document.querySelector("#applicationList").innerHTML = state.applications.length ? state.applications.map((application, index) => {
-        const tournament = state.tournaments.find(t => t.id === application.tournamentId);
-        return `
-          <li>
-            <strong>${application.team}${application.tournamentName ? ` <span style="color:var(--muted);font-size:0.82rem;font-weight:600;">· ${application.tournamentName}</span>` : ""}</strong>
-            <span>
-              <span class="tag ${application.status === "Approved" ? "green" : application.status === "Rejected" ? "red" : "gold"}">${application.status}</span>
-              <span data-admin-only>
-                ${application.status === "Pending" ? `
-                  <select id="group-assign-${application.id}" style="font-size: 0.7rem; padding: 2px 4px; background: var(--surface); color: white; border: 1px solid var(--line); margin-left: 8px;">
-                     <option value="A">Group A</option>
-                     <option value="B">Group B</option>
-                     <option value="C">Group C</option>
-                     <option value="D">Group D</option>
-                  </select>
-                  <button class="btn ghost" onclick="approveWithGroup('${application.id}', '${index}')" style="margin-left: 8px;">Approve</button>
-                  <button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem; margin-left: 8px;" data-reject-app="${application.id}">Reject</button>
-                ` : ""}
+      const appCountEl = document.querySelector("#applicationCountDisplay");
+      if (appCountEl) appCountEl.textContent = `${state.applications.length} team${state.applications.length !== 1 ? "s" : ""}`;
+      
+      const appListEl = document.querySelector("#applicationList");
+      if (appListEl) {
+        appListEl.innerHTML = state.applications.length ? state.applications.map((application, index) => {
+          const tournament = state.tournaments.find(t => t.id === application.tournamentId);
+          return `
+            <li>
+              <strong>${application.team}${application.tournamentName ? ` <span style="color:var(--muted);font-size:0.82rem;font-weight:600;">· ${application.tournamentName}</span>` : ""}</strong>
+              <span>
+                <span class="tag ${application.status === "Approved" ? "green" : application.status === "Rejected" ? "red" : "gold"}">${application.status}</span>
+                <span data-admin-only>
+                  ${application.status === "Pending" ? `
+                    <select id="group-assign-${application.id}" style="font-size: 0.7rem; padding: 2px 4px; background: var(--surface); color: white; border: 1px solid var(--line); margin-left: 8px;">
+                       <option value="A">Group A</option>
+                       <option value="B">Group B</option>
+                       <option value="C">Group C</option>
+                       <option value="D">Group D</option>
+                    </select>
+                    <button class="btn ghost" onclick="approveWithGroup('${application.id}', '${index}')" style="margin-left: 8px;">Approve</button>
+                    <button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem; margin-left: 8px;" data-reject-app="${application.id}">Reject</button>
+                  ` : ""}
+                </span>
               </span>
-            </span>
-          </li>
-        `;
-      }).join("") : `<li><strong>No applications yet</strong><span>Teams apply after tournaments are created</span></li>`;
+            </li>
+          `;
+        }).join("") : `<li><strong>No applications yet</strong><span>Teams apply after tournaments are created</span></li>`;
+      }
       
       renderTournamentSelects();
       renderMyTournaments();
@@ -3572,8 +3570,11 @@
         const eventClass = ball === "4" || ball === "6" ? "boundary" : ball === "W" || ball === "Nb" ? "danger" : "";
         return `<span class="ball-chip ${isLatest ? eventClass : ""}">${ball}</span>`;
       }).join("");
-      document.querySelector("#lastBalls").innerHTML = balls;
-      document.querySelector("#commentary").innerHTML = score.history.slice(0, 6).map((item) => `
+      const lastBallsEl = document.querySelector("#lastBalls");
+      if (lastBallsEl) lastBallsEl.innerHTML = balls;
+
+      const commEl = document.querySelector("#commentary");
+      if (commEl) commEl.innerHTML = score.history.slice(0, 6).map((item) => `
         <li><strong>${item.label}</strong><span>${item.text}</span></li>
       `).join("");
     }
@@ -3592,8 +3593,10 @@
 
     async function renderPublicLiveView() {
       if (!state.usingDatabase) {
-        document.querySelector("#publicLiveCount").textContent = "Local mode (Supabase unavailable)";
-        document.querySelector("#publicDashboardGrid").innerHTML = `<div class="card"><p class="muted">Live view requires database connection.</p></div>`;
+        const liveCount = document.querySelector("#publicLiveCount");
+        const grid = document.querySelector("#publicDashboardGrid");
+        if (liveCount) liveCount.textContent = "Local mode (Supabase unavailable)";
+        if (grid) grid.innerHTML = `<div class="card"><p class="muted">Live view requires database connection.</p></div>`;
         return;
       }
 
@@ -3604,10 +3607,12 @@
         }
 
         const matches = await loadLiveMatchesWithInningsFromDatabase();
-        document.querySelector("#publicLiveCount").textContent = `${matches.length} active match${matches.length !== 1 ? 'es' : ''}`;
+        const liveCount = document.querySelector("#publicLiveCount");
+        const grid = document.querySelector("#publicDashboardGrid");
+        if (liveCount) liveCount.textContent = `${matches.length} active match${matches.length !== 1 ? 'es' : ''}`;
         
         if (matches.length === 0) {
-          document.querySelector("#publicDashboardGrid").innerHTML = `
+          if (grid) grid.innerHTML = `
             <div class="card" style="text-align:center; padding: 48px 24px; border-style: dashed;">
               <h3 style="margin-bottom: 8px;">No live matches right now</h3>
               <p class="muted">Check back later when a match starts.</p>
@@ -3616,7 +3621,7 @@
           return;
         }
 
-        document.querySelector("#publicDashboardGrid").innerHTML = matches.map(match => {
+        if (grid) grid.innerHTML = matches.map(match => {
           let currentInnings = null;
           if (match.innings && match.innings.length > 0) {
             currentInnings = match.innings.reduce((prev, current) => (prev.innings_number > current.innings_number) ? prev : current);
@@ -3638,7 +3643,8 @@
         }).join("");
       } catch (error) {
         console.error("Failed to fetch live matches", error);
-        document.querySelector("#publicLiveCount").textContent = "Error loading matches";
+        const liveCount = document.querySelector("#publicLiveCount");
+        if (liveCount) liveCount.textContent = "Error loading matches";
       }
     }
 
@@ -4297,7 +4303,8 @@
       const overs = Number(document.querySelector("#newTournamentOvers").value || 20);
       const venue = document.querySelector("#newTournamentVenue").value.trim() || "Multiple venues";
       const startDate = document.querySelector("#newTournamentStart").value || null;
-      const endDate = document.querySelector("#newTournamentEnd").value || null;
+      const endDate = document.querySelector("#newTournamentEnd")?.value || null;
+      const groupCount = Number(document.querySelector("#newTournamentGroups")?.value || 1);
 
       message.className = "form-message";
 
@@ -4861,7 +4868,6 @@
         });
       }
     }
-    }
 
     document.querySelectorAll("#authTabs button").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -4955,6 +4961,7 @@
         }
       }
     });
+    }
 
     // Initial Auth Check
     if (supabase && supabase.auth) {

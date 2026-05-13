@@ -19,7 +19,8 @@ create unique index if not exists teams_name_unique_ci
 on public.teams (lower(trim(name)));
 
 alter table public.teams
-  add column if not exists logo_url text;
+  add column if not exists logo_url text,
+  add column if not exists user_id uuid references auth.users(id);
 
 -- Team players
 create table if not exists public.players (
@@ -48,7 +49,12 @@ alter table public.players
   add column if not exists batting_style text,
   add column if not exists bowling_style text,
   add column if not exists is_captain boolean not null default false,
-  add column if not exists is_wicketkeeper boolean not null default false;
+  add column if not exists is_wicketkeeper boolean not null default false,
+  add column if not exists balls_faced integer not null default 0,
+  add column if not exists innings_played integer not null default 0,
+  add column if not exists runs_conceded integer not null default 0,
+  add column if not exists balls_bowled integer not null default 0,
+  add column if not exists user_id uuid references auth.users(id);
 
 -- Team-to-team match requests
 create table if not exists public.match_requests (
@@ -75,6 +81,10 @@ on public.match_requests (to_team_id);
 
 create index if not exists match_requests_status_idx
 on public.match_requests (status);
+
+alter table public.match_requests
+  add column if not exists match_time time,
+  add column if not exists user_id uuid references auth.users(id);
 
 -- Matches are created from accepted requests or tournament fixtures
 create table if not exists public.matches (
@@ -107,6 +117,10 @@ on public.matches (team_b_id);
 
 create index if not exists matches_status_idx
 on public.matches (status);
+
+alter table public.matches
+  add column if not exists match_time time,
+  add column if not exists user_id uuid references auth.users(id);
 
 -- Playing XI for match setup
 create table if not exists public.match_players (
@@ -193,6 +207,10 @@ create table if not exists public.tournaments (
 create unique index if not exists tournaments_name_unique_ci
 on public.tournaments (lower(trim(name)));
 
+alter table public.tournaments
+  add column if not exists group_count integer not null default 1,
+  add column if not exists user_id uuid references auth.users(id);
+
 do $$
 begin
   if not exists (
@@ -220,6 +238,9 @@ create table if not exists public.tournament_applications (
 
 create unique index if not exists tournament_applications_unique_team
 on public.tournament_applications (tournament_id, team_id);
+
+alter table public.tournament_applications
+  add column if not exists group_id text;
 
 create table if not exists public.tournament_teams (
   id uuid primary key default gen_random_uuid(),
@@ -372,6 +393,9 @@ begin
 
     execute format('drop policy if exists "Prototype update %1$s" on public.%1$I', table_name);
     execute format('create policy "Prototype update %1$s" on public.%1$I for update to anon using (true) with check (true)', table_name);
+
+    execute format('drop policy if exists "Prototype delete %1$s" on public.%1$I', table_name);
+    execute format('create policy "Prototype delete %1$s" on public.%1$I for delete to anon using (true)', table_name);
   end loop;
 end $$;
 
@@ -389,4 +413,3 @@ begin;
     public.players,
     public.series;
 commit;
-
