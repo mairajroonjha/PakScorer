@@ -2160,6 +2160,9 @@
       tournaments: [],
       applications: [],
       series: [],
+      teamAdmins: [],
+      tournamentAdmins: [],
+      matchScorers: [],
       selectedTournamentId: null,
       score: {
         runs: 0,
@@ -2416,8 +2419,11 @@
       if (!match) return [];
       const localIds = localStorage.getItem(`pakscorer_match_scorers_${match.id}`);
       const saved = localIds ? localIds.split(",").filter(Boolean) : [];
+      const dbIds = state.matchScorers
+        .filter(row => String(row.matchId) === String(match.id))
+        .map(row => String(row.userId));
       const fromRecord = [match.scorerId, match.scorer_id].filter(Boolean).map(String);
-      return [...new Set([...saved, ...fromRecord])];
+      return [...new Set([...saved, ...dbIds, ...fromRecord])];
     }
 
     function isAssignedScorer(match) {
@@ -2428,14 +2434,16 @@
     function canManageTeam(team) {
       if (!state.user || !team) return false;
       const admins = getLocalList("team_admins", team.id);
+      const dbAdmin = state.teamAdmins.some(row => String(row.teamId) === String(team.id) && (String(row.userId) === String(state.user.id) || row.email === state.user.email));
       const ownerOverride = localStorage.getItem(`pakscorer_team_owner_${team.id}`);
-      return isSuperAdmin() || isOwner(team) || ownerOverride === state.user.email || admins.includes(state.user.email);
+      return isSuperAdmin() || isOwner(team) || dbAdmin || ownerOverride === state.user.email || admins.includes(state.user.email);
     }
 
     function canManageTournament(tournament) {
       if (!state.user || !tournament) return false;
       const admins = getLocalList("tournament_admins", tournament.id);
-      return isSuperAdmin() || isOwner(tournament) || admins.includes(state.user.email);
+      const dbAdmin = state.tournamentAdmins.some(row => String(row.tournamentId) === String(tournament.id) && (String(row.userId) === String(state.user.id) || row.email === state.user.email));
+      return isSuperAdmin() || isOwner(tournament) || dbAdmin || admins.includes(state.user.email);
     }
 
     function canManageMatch(match) {
@@ -2936,6 +2944,7 @@
       await loadPlayersFromDatabase();
       await loadMatchRequestsFromDatabase();
       await loadMatchesFromDatabase();
+      await loadAdminAssignmentsFromDatabase();
     }
 
     async function loadPlayersFromDatabase() {
@@ -3004,6 +3013,98 @@
       }));
 
       renderMatches();
+    }
+
+    async function loadAdminAssignmentsFromDatabase() {
+      if (!state.usingDatabase) return;
+      try {
+        const [{ data: teamAdmins, error: teamError }, { data: tournamentAdmins, error: tournamentError }, { data: matchScorers, error: scorerError }] = await Promise.all([
+          supabase.from("team_admins").select("id,team_id,user_id,email,role"),
+          supabase.from("tournament_admins").select("id,tournament_id,user_id,email,role"),
+          supabase.from("match_scorers").select("id,match_id,user_id,email,assigned_by")
+        ]);
+
+        if (!teamError) {
+          state.teamAdmins = (teamAdmins || []).map(row => ({
+            id: row.id,
+            teamId: row.team_id,
+            userId: row.user_id,
+            email: row.email,
+            role: row.role
+          }));
+        }
+        if (!tournamentError) {
+          state.tournamentAdmins = (tournamentAdmins || []).map(row => ({
+            id: row.id,
+            tournamentId: row.tournament_id,
+            userId: row.user_id,
+            email: row.email,
+            role: row.role
+          }));
+        }
+        if (!scorerError) {
+          state.matchScorers = (matchScorers || []).map(row => ({
+            id: row.id,
+            matchId: row.match_id,
+            userId: row.user_id,
+            email: row.email,
+            assignedBy: row.assigned_by
+          }));
+        }
+      } catch (error) {
+        console.warn("Admin assignment tables unavailable:", error.message);
+      }
+    }
+
+    async function saveTeamAdminAssignment(teamId, email) {
+      if (state.usingDatabase) {
+        const { error } = await supabase.from("team_admins").insert({
+          team_id: teamId,
+          email,
+          role: "co_admin",
+          invited_by: state.user?.id || null
+        });
+        if (error) throw error;
+        await loadAdminAssignmentsFromDatabase();
+      } else {
+        const admins = getLocalList("team_admins", teamId);
+        admins.push(email);
+        saveLocalList("team_admins", teamId, admins);
+      }
+    }
+
+    async function saveTournamentAdminAssignment(tournamentId, email) {
+      if (state.usingDatabase) {
+        const { error } = await supabase.from("tournament_admins").insert({
+          tournament_id: tournamentId,
+          email,
+          role: "co_admin",
+          invited_by: state.user?.id || null
+        });
+        if (error) throw error;
+        await loadAdminAssignmentsFromDatabase();
+      } else {
+        const admins = getLocalList("tournament_admins", tournamentId);
+        admins.push(email);
+        saveLocalList("tournament_admins", tournamentId, admins);
+      }
+    }
+
+    async function saveMatchScorerAssignment(matchId, userId, email = null) {
+      if (state.usingDatabase) {
+        const { error } = await supabase.from("match_scorers").insert({
+          match_id: matchId,
+          user_id: userId || null,
+          email,
+          assigned_by: state.user?.id || null
+        });
+        if (error) throw error;
+        await loadAdminAssignmentsFromDatabase();
+      } else {
+        const current = getAssignedScorerIds({ id: matchId });
+        if (userId && !current.includes(String(userId))) current.push(String(userId));
+        localStorage.setItem(`pakscorer_match_scorers_${matchId}`, current.join(","));
+      }
     }
 
     async function loadTournamentsFromDatabase() {
@@ -5137,14 +5238,18 @@
 
       if (state.usingDatabase) {
         try {
-          state.teams.push(await createTeamInDatabase(team));
+          const newTeam = await createTeamInDatabase(team);
+          state.teams.push(newTeam);
+          if (state.user) await saveTeamAdminAssignment(newTeam.id, state.user.email);
         } catch (error) {
           message.textContent = error.code === "23505" ? "This team already exists in the database." : "Could not save team to Supabase.";
           message.classList.add("error");
           return;
         }
       } else {
-        state.teams.push({ id: Date.now(), ...team });
+        const localTeam = { id: Date.now(), ...team };
+        state.teams.push(localTeam);
+        if (state.user) await saveTeamAdminAssignment(localTeam.id, state.user.email);
       }
 
       renderTeams();
@@ -5465,14 +5570,18 @@
 
       if (state.usingDatabase) {
         try {
-          state.tournaments.unshift(await createTournamentInDatabase(tournament));
+          const newTournament = await createTournamentInDatabase(tournament);
+          state.tournaments.unshift(newTournament);
+          if (state.user) await saveTournamentAdminAssignment(newTournament.id, state.user.email);
         } catch (error) {
           message.textContent = error.code === "23505" ? "This tournament already exists in the database." : "Could not save tournament to Supabase.";
           message.classList.add("error");
           return;
         }
       } else {
-        state.tournaments.unshift({ id: Date.now(), ...tournament });
+        const localTournament = { id: Date.now(), ...tournament };
+        state.tournaments.unshift(localTournament);
+        if (state.user) await saveTournamentAdminAssignment(localTournament.id, state.user.email);
       }
 
       renderTournaments();
@@ -5939,12 +6048,15 @@
         if (!canManageTeam(team)) return;
         const email = prompt("Enter the email of the team co-admin:");
         if (!email) return;
-        const admins = getLocalList("team_admins", team.id);
-        admins.push(email.trim());
-        saveLocalList("team_admins", team.id, admins);
-        addRoleHistory("Team admin invited", `${email} invited to ${team.name}`);
-        alert("Team co-admin invitation saved locally.");
-        renderProfile();
+        try {
+          await saveTeamAdminAssignment(team.id, email.trim());
+          addRoleHistory("Team admin invited", `${email} invited to ${team.name}`);
+          alert(state.usingDatabase ? "Team co-admin saved in Supabase." : "Team co-admin invitation saved locally.");
+          renderProfile();
+          renderTeams();
+        } catch (error) {
+          alert("Could not save team admin: " + error.message);
+        }
         return;
       }
 
@@ -5968,18 +6080,20 @@
         if (!canManageTournament(tournament)) return;
         const email = prompt("Enter the email of the tournament co-admin:");
         if (!email) return;
-        const admins = getLocalList("tournament_admins", tournament.id);
-        admins.push(email.trim());
-        saveLocalList("tournament_admins", tournament.id, admins);
-        addRoleHistory("Tournament co-admin invited", `${email} invited to ${tournament.name}`);
-        alert("Tournament co-admin invitation saved locally.");
-        renderProfile();
-        renderTournaments();
+        try {
+          await saveTournamentAdminAssignment(tournament.id, email.trim());
+          addRoleHistory("Tournament co-admin invited", `${email} invited to ${tournament.name}`);
+          alert(state.usingDatabase ? "Tournament co-admin saved in Supabase." : "Tournament co-admin invitation saved locally.");
+          renderProfile();
+          renderTournaments();
+        } catch (error) {
+          alert("Could not save tournament admin: " + error.message);
+        }
         return;
       }
     });
 
-    document.querySelector(".main").addEventListener("change", (event) => {
+    document.querySelector(".main").addEventListener("change", async (event) => {
       const scorerSelect = event.target.closest("[data-assign-scorer]");
       if (scorerSelect) {
         const matchId = scorerSelect.dataset.assignScorer;
@@ -5987,13 +6101,15 @@
         const match = state.matches.find(m => String(m.id) === String(matchId));
         if (!match || !userId || !canManageMatch(match)) return;
 
-        const current = getAssignedScorerIds(match);
-        if (!current.includes(String(userId))) current.push(String(userId));
-        localStorage.setItem(`pakscorer_match_scorers_${match.id}`, current.join(","));
-        alert("Scorer assigned for this match.");
-        renderMatches();
-        renderProfile();
-        updateAuthUI();
+        try {
+          await saveMatchScorerAssignment(match.id, userId);
+          alert(state.usingDatabase ? "Scorer assigned in Supabase." : "Scorer assigned for this match.");
+          renderMatches();
+          renderProfile();
+          updateAuthUI();
+        } catch (error) {
+          alert("Could not assign scorer: " + error.message);
+        }
         return;
       }
 

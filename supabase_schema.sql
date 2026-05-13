@@ -345,6 +345,63 @@ create table if not exists public.series (
 -- Add series_id to matches
 alter table public.matches add column if not exists series_id uuid references public.series(id) on delete set null;
 
+-- Object-based admin roles
+create table if not exists public.team_admins (
+  id uuid primary key default gen_random_uuid(),
+  team_id uuid not null references public.teams(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete cascade,
+  email text,
+  role text not null default 'co_admin' check (role in ('owner', 'co_admin')),
+  invited_by uuid references auth.users(id),
+  created_at timestamptz not null default now(),
+  constraint team_admin_identity check (user_id is not null or email is not null)
+);
+
+create unique index if not exists team_admins_team_user_unique
+on public.team_admins (team_id, user_id)
+where user_id is not null;
+
+create unique index if not exists team_admins_team_email_unique
+on public.team_admins (team_id, lower(email))
+where email is not null;
+
+create table if not exists public.tournament_admins (
+  id uuid primary key default gen_random_uuid(),
+  tournament_id uuid not null references public.tournaments(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete cascade,
+  email text,
+  role text not null default 'co_admin' check (role in ('owner', 'co_admin')),
+  invited_by uuid references auth.users(id),
+  created_at timestamptz not null default now(),
+  constraint tournament_admin_identity check (user_id is not null or email is not null)
+);
+
+create unique index if not exists tournament_admins_tournament_user_unique
+on public.tournament_admins (tournament_id, user_id)
+where user_id is not null;
+
+create unique index if not exists tournament_admins_tournament_email_unique
+on public.tournament_admins (tournament_id, lower(email))
+where email is not null;
+
+create table if not exists public.match_scorers (
+  id uuid primary key default gen_random_uuid(),
+  match_id uuid not null references public.matches(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete cascade,
+  email text,
+  assigned_by uuid references auth.users(id),
+  created_at timestamptz not null default now(),
+  constraint match_scorer_identity check (user_id is not null or email is not null)
+);
+
+create unique index if not exists match_scorers_match_user_unique
+on public.match_scorers (match_id, user_id)
+where user_id is not null;
+
+create unique index if not exists match_scorers_match_email_unique
+on public.match_scorers (match_id, lower(email))
+where email is not null;
+
 -- Row level security for browser prototype.
 -- Later, replace insert/update/delete policies with authenticated role-based policies.
 alter table public.teams enable row level security;
@@ -362,6 +419,9 @@ alter table public.points_table enable row level security;
 alter table public.player_stats enable row level security;
 alter table public.team_stats enable row level security;
 alter table public.series enable row level security;
+alter table public.team_admins enable row level security;
+alter table public.tournament_admins enable row level security;
+alter table public.match_scorers enable row level security;
 
 do $$
 declare
@@ -382,20 +442,23 @@ begin
     'points_table',
     'player_stats',
     'team_stats',
-    'series'
+    'series',
+    'team_admins',
+    'tournament_admins',
+    'match_scorers'
   ]
   loop
     execute format('drop policy if exists "Prototype read %1$s" on public.%1$I', table_name);
-    execute format('create policy "Prototype read %1$s" on public.%1$I for select to anon using (true)', table_name);
+    execute format('create policy "Prototype read %1$s" on public.%1$I for select to anon, authenticated using (true)', table_name);
 
     execute format('drop policy if exists "Prototype insert %1$s" on public.%1$I', table_name);
-    execute format('create policy "Prototype insert %1$s" on public.%1$I for insert to anon with check (true)', table_name);
+    execute format('create policy "Prototype insert %1$s" on public.%1$I for insert to anon, authenticated with check (true)', table_name);
 
     execute format('drop policy if exists "Prototype update %1$s" on public.%1$I', table_name);
-    execute format('create policy "Prototype update %1$s" on public.%1$I for update to anon using (true) with check (true)', table_name);
+    execute format('create policy "Prototype update %1$s" on public.%1$I for update to anon, authenticated using (true) with check (true)', table_name);
 
     execute format('drop policy if exists "Prototype delete %1$s" on public.%1$I', table_name);
-    execute format('create policy "Prototype delete %1$s" on public.%1$I for delete to anon using (true)', table_name);
+    execute format('create policy "Prototype delete %1$s" on public.%1$I for delete to anon, authenticated using (true)', table_name);
   end loop;
 end $$;
 
