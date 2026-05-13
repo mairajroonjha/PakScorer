@@ -993,7 +993,7 @@
         color: var(--green);
       }
       
-      /* Auth Tabs for Mobile */
+      /* Auth Tabs */
       .auth-tabs {
         display: flex;
         gap: 8px;
@@ -1004,17 +1004,25 @@
       
       .auth-tabs button {
         flex: 1;
-        padding: 8px;
-        font-size: 0.9rem;
-        font-weight: 700;
+        padding: 12px;
+        font-size: 1rem;
+        font-weight: 900;
         color: var(--muted);
-        border-bottom: 2px solid transparent;
-        transition: color 0.2s, border-color 0.2s;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
       }
       
       .auth-tabs button.active {
         color: var(--cyan);
         border-color: var(--cyan);
+        background: rgba(0, 242, 255, 0.05);
+      }
+      
+      .auth-tabs button:hover:not(.active) {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.05);
       }
 
       /* Give the main content padding so it isn't hidden behind the bar */
@@ -1131,12 +1139,10 @@
           <strong id="adminEmail" style="font-size: 0.85rem; word-break: break-all; display: block;">admin@pakscorer.com</strong>
           <button class="btn ghost" id="logoutBtn" style="padding: 4px 0; font-size: 0.75rem; color: var(--red); justify-content: flex-start; min-height: auto;">Logout</button>
         </div>
-        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-          <button class="btn primary" id="showLoginBtn" style="flex: 1;">Admin Login</button>
+        <div style="display: flex; gap: 8px; margin-bottom: 0;">
+          <button class="btn primary" id="showLoginBtn" style="flex: 1; padding: 12px; font-weight: 900; letter-spacing: 0.02em;">Login / Sign Up</button>
           <button class="btn ghost" id="notifyBtn" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%;" title="Enable Notifications">🔔</button>
         </div>
-        <span>Live match</span>
-        <strong id="miniScore">87/3</strong>
       </div>
     </aside>
 
@@ -1162,21 +1168,24 @@
 
         <h2 id="authModalTitle" style="text-align: center; margin-bottom: 8px;">Admin Access</h2>
         <p id="authModalSubtitle" class="muted" style="text-align: center; margin-bottom: 24px;">Enter your credentials to unlock management tools.</p>
-        <form id="loginForm" class="form-grid">
+        <form id="loginForm" class="form-grid" style="grid-template-columns: 1fr;">
           <label>
             Email address
-            <input type="email" id="loginEmail" placeholder="admin@example.com" required>
+            <input type="email" id="loginEmail" placeholder="name@example.com" required>
           </label>
           <label>
             Password
             <input type="password" id="loginPassword" placeholder="••••••••" required>
           </label>
           <div style="display: grid; gap: 10px; margin-top: 10px;">
-            <button class="btn primary" type="submit" id="authSubmitBtn">Unlock Dashboard</button>
+            <button class="btn primary" type="submit" id="authSubmitBtn" style="height: 50px; font-size: 1rem;">Unlock Dashboard</button>
             <button class="btn ghost" type="button" id="closeLogin">Return to Viewer Mode</button>
           </div>
         </form>
         <p id="loginMessage" class="form-message" style="margin-top: 16px; text-align: center;"></p>
+        <div style="text-align: center; margin-top: 16px; border-top: 1px solid var(--line); padding-top: 16px;">
+          <p id="authTogglePrompt" class="muted" style="font-size: 0.85rem;">Don't have an account? <a href="#" id="authToggleButton" style="color: var(--cyan); font-weight: 800; text-decoration: none;">Sign Up</a></p>
+        </div>
       </div>
     </div>
 
@@ -4880,11 +4889,19 @@
         if(title) title.textContent = "Create Account";
         if(subtitle) subtitle.textContent = "Sign up to manage your own tournaments and teams.";
         if(submitBtn) submitBtn.textContent = "Create Account";
+        document.querySelector("#authTogglePrompt").innerHTML = `Already have an account? <a href="#" id="authToggleButton" style="color: var(--cyan); font-weight: 800; text-decoration: none;">Login</a>`;
       } else {
         if(title) title.textContent = "Admin Access";
         if(subtitle) subtitle.textContent = "Enter your credentials to unlock management tools.";
         if(submitBtn) submitBtn.textContent = "Unlock Dashboard";
+        document.querySelector("#authTogglePrompt").innerHTML = `Don't have an account? <a href="#" id="authToggleButton" style="color: var(--cyan); font-weight: 800; text-decoration: none;">Sign Up</a>`;
       }
+      
+      // Re-attach listener to the new dynamic link
+      document.querySelector("#authToggleButton").addEventListener("click", (e) => {
+        e.preventDefault();
+        setAuthMode(authMode === 'login' ? 'signup' : 'login');
+      });
     }
 
     document.querySelectorAll("#authTabs button").forEach(btn => {
