@@ -1541,6 +1541,17 @@
                 <h3 id="profileEmail">Not logged in</h3>
                 <p class="muted" id="profileUserId">Login to manage your teams and matches.</p>
               </div>
+              <form id="profileForm" class="grid">
+                <div class="form-grid">
+                  <label>Name <input id="profileName" placeholder="Your name"></label>
+                  <label>Phone <input id="profilePhone" placeholder="+92..."></label>
+                </div>
+                <div class="form-grid">
+                  <label>City <input id="profileCity" placeholder="Your city"></label>
+                  <label>Avatar URL <input id="profileAvatar" placeholder="https://..."></label>
+                </div>
+                <button class="btn primary" type="submit">Save Profile</button>
+              </form>
               <div class="card">
                 <span class="muted">How roles work</span>
                 <p class="muted" style="margin-top: 8px;">Roles are earned from what this account owns or is assigned to. Viewers are default. Team creators become team admins, tournament creators become tournament admins, and scorers are assigned per match.</p>
@@ -1552,6 +1563,10 @@
                 <div class="card"><span class="muted">Global access</span><h3 id="profileGlobalRole">Viewer</h3></div>
               </div>
               <p class="form-message" id="profileMessage" aria-live="polite"></p>
+              <div class="card">
+                <span class="muted">Role History & Invitations</span>
+                <ul class="feed" id="profileRoleHistory" style="margin-top: 10px;"></ul>
+              </div>
             </div>
           </section>
 
@@ -1727,6 +1742,14 @@
                   <button class="btn primary" id="confirmBowler" type="button">Set Bowler</button>
                 </label>
               </div>
+              <div class="form-grid" style="margin-top: 12px;">
+                <label>Striker
+                  <select id="strikerSelect"></select>
+                </label>
+                <label>Non-striker
+                  <select id="nonStrikerSelect"></select>
+                </label>
+              </div>
 
               <div class="ball-buttons" style="margin-top: 16px;">
                 <button class="btn" data-ball="0">0</button>
@@ -1737,8 +1760,22 @@
                 <button class="btn primary" data-ball="6">6</button>
                 <button class="btn" data-extra="Wd">Wd</button>
                 <button class="btn" data-extra="Nb">Nb</button>
+                <select id="noBallBatRuns" title="Runs off bat on no-ball">
+                  <option value="0">Nb + 0 bat</option>
+                  <option value="1">Nb + 1 bat</option>
+                  <option value="2">Nb + 2 bat</option>
+                  <option value="3">Nb + 3 bat</option>
+                  <option value="4">Nb + 4 bat</option>
+                  <option value="6">Nb + 6 bat</option>
+                </select>
                 <button class="btn" data-extra="B">B</button>
                 <button class="btn" data-extra="Lb">Lb</button>
+                <select id="wicketRunsSelect" title="Runs completed on wicket">
+                  <option value="0">W + 0 runs</option>
+                  <option value="1">W + 1 run</option>
+                  <option value="2">W + 2 runs</option>
+                  <option value="3">W + 3 runs</option>
+                </select>
                 <select id="wicketTypeSelect" title="Wicket type">
                   <option value="bowled">Bowled</option>
                   <option value="caught">Caught</option>
@@ -1871,6 +1908,7 @@
                     <div id="publicDetailExtras" class="grid" style="gap: 6px; margin-top: 10px;"></div>
                   </div>
                 </div>
+                <button class="btn ghost" id="sharePublicMatchBtn" style="margin-top: 16px;">Copy Share Link</button>
               </div>
             </section>
           </div>
@@ -2136,6 +2174,7 @@
         needsBowler: false,
         striker: "Ali Raza",
         nonStriker: "Hamza Shah",
+        previousBowler: "",
         batterStats: {},
         bowlerStats: {},
         extras: { wides: 0, noBalls: 0, byes: 0, legByes: 0 },
@@ -2387,11 +2426,16 @@
     }
 
     function canManageTeam(team) {
-      return isSuperAdmin() || isOwner(team);
+      if (!state.user || !team) return false;
+      const admins = getLocalList("team_admins", team.id);
+      const ownerOverride = localStorage.getItem(`pakscorer_team_owner_${team.id}`);
+      return isSuperAdmin() || isOwner(team) || ownerOverride === state.user.email || admins.includes(state.user.email);
     }
 
     function canManageTournament(tournament) {
-      return isSuperAdmin() || isOwner(tournament);
+      if (!state.user || !tournament) return false;
+      const admins = getLocalList("tournament_admins", tournament.id);
+      return isSuperAdmin() || isOwner(tournament) || admins.includes(state.user.email);
     }
 
     function canManageMatch(match) {
@@ -2437,13 +2481,23 @@
       const userIdEl = document.querySelector("#profileUserId");
       const roleBadge = document.querySelector("#profileRoleBadge");
       const accessEl = document.querySelector("#profileRoleAccess");
+      const historyEl = document.querySelector("#profileRoleHistory");
       const myTeams = getMyTeams();
       const myTournaments = getMyTournaments();
       const scoringMatches = getAssignedScoringMatches();
+      const profile = getUserProfile();
 
       if (emailEl) emailEl.textContent = state.user?.email || "Not logged in";
       if (userIdEl) userIdEl.textContent = state.user ? `User ID: ${state.user.id}` : "Login to manage teams, tournaments, and scoring.";
       if (roleBadge) roleBadge.textContent = primaryRoleLabel();
+      const profileName = document.querySelector("#profileName");
+      const profilePhone = document.querySelector("#profilePhone");
+      const profileCity = document.querySelector("#profileCity");
+      const profileAvatar = document.querySelector("#profileAvatar");
+      if (profileName) profileName.value = profile.name || "";
+      if (profilePhone) profilePhone.value = profile.phone || "";
+      if (profileCity) profileCity.value = profile.city || "";
+      if (profileAvatar) profileAvatar.value = profile.avatar || "";
       safeSetText("#profileTeamAdminCount", myTeams.length);
       safeSetText("#profileTournamentAdminCount", myTournaments.length);
       safeSetText("#profileScorerCount", scoringMatches.length);
@@ -2458,6 +2512,50 @@
       if (accessEl) {
         accessEl.innerHTML = access.map(item => `<li><strong>${item}</strong><span>${primaryRoleLabel()}</span></li>`).join("");
       }
+      if (historyEl) {
+        const history = getRoleHistory();
+        historyEl.innerHTML = history.length ? history.slice(-8).reverse().map(item => `<li><strong>${item.title}</strong><span>${item.detail}</span></li>`).join("") : `<li><strong>No invitations yet</strong><span>Team and scorer invites will appear here.</span></li>`;
+      }
+    }
+
+    function storageKey(name) {
+      return state.user ? `pakscorer_${name}_${state.user.id}` : `pakscorer_${name}_guest`;
+    }
+
+    function getUserProfile() {
+      try {
+        return JSON.parse(localStorage.getItem(storageKey("profile")) || "{}");
+      } catch {
+        return {};
+      }
+    }
+
+    function saveUserProfile(profile) {
+      localStorage.setItem(storageKey("profile"), JSON.stringify(profile));
+      addRoleHistory("Profile updated", profile.city ? `City: ${profile.city}` : "Basic profile saved");
+    }
+
+    function getRoleHistory() {
+      try {
+        return JSON.parse(localStorage.getItem(storageKey("role_history")) || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    function addRoleHistory(title, detail) {
+      if (!state.user) return;
+      const history = getRoleHistory();
+      history.push({ title, detail, at: new Date().toISOString() });
+      localStorage.setItem(storageKey("role_history"), JSON.stringify(history.slice(-30)));
+    }
+
+    function getLocalList(name, id) {
+      return (localStorage.getItem(`pakscorer_${name}_${id}`) || "").split(",").map(v => v.trim()).filter(Boolean);
+    }
+
+    function saveLocalList(name, id, list) {
+      localStorage.setItem(`pakscorer_${name}_${id}`, [...new Set(list.filter(Boolean))].join(","));
     }
 
     function isOwner(item) {
@@ -2745,7 +2843,7 @@
 
         return `
           <article class="card team-card" style="display: flex; flex-direction: column;">
-            <div class="team-top">
+            <div class="team-top" data-public-team="${team.id}" style="cursor:pointer;">
               <div class="avatar">${initials(team.name)}</div>
               <div>
                 <h3>${team.name}</h3>
@@ -2759,6 +2857,9 @@
             <div class="actions" style="margin-top: auto; padding-top: 12px;">
               <span class="tag green">${team.record}</span>
               <span class="tag">Captain: ${team.captain}</span>
+              <button class="btn ghost" style="padding: 2px 6px; font-size: 0.65rem;" data-public-team="${team.id}">Details</button>
+              ${owner || admin ? `<button class="btn ghost" style="padding: 2px 6px; font-size: 0.65rem;" data-invite-team-admin="${team.id}">Invite Admin</button>` : ""}
+              ${owner || admin ? `<button class="btn ghost" style="padding: 2px 6px; font-size: 0.65rem;" data-transfer-team="${team.id}">Transfer</button>` : ""}
               ${owner || admin ? `<button class="btn ghost danger" style="padding: 2px 6px; font-size: 0.65rem;" data-delete-team="${team.id}">Delete</button>` : ""}
             </div>
           </article>
@@ -3322,10 +3423,22 @@
       if (!select) return;
 
       const bowlers = bowlingTeamPlayers();
-      select.innerHTML = bowlers.map((player) => `<option>${player.name}</option>`).join("");
+      select.innerHTML = bowlers.map((player) => `<option ${player.name === state.score.previousBowler ? "disabled" : ""}>${player.name}${player.name === state.score.previousBowler ? " (previous over)" : ""}</option>`).join("");
 
       const currentIndex = bowlers.findIndex((player) => player.name === state.score.currentBowler);
       select.selectedIndex = currentIndex >= 0 ? currentIndex : 0;
+    }
+
+    function renderBatterSelects() {
+      const strikerEl = document.querySelector("#strikerSelect");
+      const nonStrikerEl = document.querySelector("#nonStrikerSelect");
+      if (!strikerEl || !nonStrikerEl) return;
+      const batters = battingTeamPlayers();
+      const options = batters.length ? batters.map(p => `<option value="${p.name}">${p.name}</option>`).join("") : `<option>${state.score.battingTeam}</option>`;
+      strikerEl.innerHTML = options;
+      nonStrikerEl.innerHTML = options;
+      strikerEl.value = state.score.striker;
+      nonStrikerEl.value = state.score.nonStriker;
     }
 
     function renderTournamentSelects() {
@@ -3394,6 +3507,8 @@
             ${scorerIds.length ? `<span class="muted" style="font-size:0.75rem;">${scorerIds.length} scorer assigned</span>` : ""}
           </div>
           <div style="display: flex; gap: 8px; align-items:center; flex-wrap:wrap;">
+            ${canManage ? `<input type="date" data-match-date-edit="${match.id}" value="${match.matchDate || ""}" style="max-width: 150px; padding: 4px 8px; font-size: 0.75rem;">` : ""}
+            ${canManage ? `<input type="time" data-match-time-edit="${match.id}" value="${match.matchTime || ""}" style="max-width: 120px; padding: 4px 8px; font-size: 0.75rem;">` : ""}
             ${canManage ? `<select data-assign-scorer="${match.id}" style="max-width: 180px; padding: 4px 8px; font-size: 0.75rem;"><option value="">Assign scorer</option>${state.players.map(p => `<option value="${p.user_id || ""}">${p.name}</option>`).join("")}</select>` : ""}
             ${canManage ? `<button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem;" data-delete-match="${match.id}">Delete</button>` : ""}
           </div>
@@ -3929,6 +4044,7 @@
                 ${canManageTournament(tournament) && state.applications.filter(a => a.tournamentId === tournament.id && a.status === "Approved").length >= 2 && tournamentMatches.length === 0 ? `
                   <button class="btn primary" style="padding: 4px 10px; font-size: 0.8rem;" data-generate-fixtures="${tournament.id}">Generate Fixtures</button>
                 ` : ""}
+                ${canManageTournament(tournament) ? `<button class="btn ghost" style="padding: 4px 8px; font-size: 0.75rem;" data-invite-tournament-admin="${tournament.id}">Invite Co-admin</button>` : ""}
                 ${canManageTournament(tournament) ? `<button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem;" data-delete-tournament="${tournament.id}">Delete Tournament</button>` : ""}
                 ${!isOwner(tournament) && state.user && !state.applications.some(a => String(a.tournamentId) === String(tournament.id) && String(a.teamId) === String(state.user.id)) ? `
                   <button class="btn ghost" style="padding: 4px 10px; font-size: 0.8rem;" data-apply-to="${tournament.id}">Apply to Join</button>
@@ -4346,6 +4462,7 @@
       if (commEl) commEl.innerHTML = score.history.slice(0, 6).map((item) => `
         <li><strong>${item.label}</strong><span>${item.text}</span></li>
       `).join("");
+      renderBatterSelects();
       renderScoreBreakdowns();
     }
 
@@ -4386,7 +4503,7 @@
       if (teamsEl) {
         teamsEl.innerHTML = state.teams.length ? state.teams.slice(0, 8).map(team => {
           const players = state.players.filter(p => p.team === team.name).length;
-          return `<li><strong>${team.name}</strong><span>${team.city} - ${players} players - Captain ${team.captain}</span></li>`;
+          return `<li data-public-team="${team.id}" style="cursor:pointer;"><strong>${team.name}</strong><span>${team.city} - ${players} players - Captain ${team.captain}</span></li>`;
         }).join("") : `<li><strong>No teams yet</strong><span>Teams will appear after registration.</span></li>`;
       }
 
@@ -4457,6 +4574,7 @@
 
     async function renderPublicMatchDetail(matchId) {
       try {
+        window.location.hash = `match-${matchId}`;
         const { data: match, error: matchError } = await supabase
           .from("matches")
           .select("team_a, team_b, status")
@@ -4600,6 +4718,7 @@
         wickets: score.wickets,
         legalBalls: score.legalBalls,
         currentBowler: score.currentBowler,
+        previousBowler: score.previousBowler,
         lastEventType: score.lastEventType,
         needsBowler: score.needsBowler,
         striker: score.striker,
@@ -4619,6 +4738,7 @@
       score.wickets = snapshot.wickets;
       score.legalBalls = snapshot.legalBalls;
       score.currentBowler = snapshot.currentBowler;
+      score.previousBowler = snapshot.previousBowler || "";
       score.lastEventType = snapshot.lastEventType;
       score.needsBowler = snapshot.needsBowler;
       score.striker = snapshot.striker;
@@ -4643,6 +4763,7 @@
       if (score.legalBalls === 0 || score.legalBalls % 6 !== 0) return;
 
       const finishedOver = oversText(score.legalBalls);
+      score.previousBowler = score.currentBowler;
       score.needsBowler = true;
       rotateStrike();
       renderBowlerSelect();
@@ -4682,6 +4803,16 @@
           over: oversText(score.legalBalls),
           text: `${strikerName} ${wicketType.replace("_", " ")}`
         });
+        const nextBatter = battingTeamPlayers().find(player => {
+          const stat = score.batterStats[player.name];
+          return player.name !== score.nonStriker && (!stat || !stat.out);
+        });
+        if (nextBatter && score.wickets < 10) {
+          score.striker = nextBatter.name;
+          ensureBatter(score.striker);
+          document.querySelector("#overNotice").textContent = `Select/confirm new batter: ${score.striker}.`;
+          document.querySelector("#overNotice").className = "form-message success";
+        }
       }
       score.last.push(label);
       score.lastEventType = isWicket ? "danger" : label === "4" || label === "6" ? "boundary" : "normal";
@@ -4722,7 +4853,7 @@
       }
     }
 
-    async function addExtra(label) {
+    async function addExtra(label, batRuns = 0) {
       if (state.score.needsBowler) {
         const notice = document.querySelector("#overNotice");
         notice.textContent = "Select the next bowler before scoring the next ball.";
@@ -4736,21 +4867,24 @@
       ensureBatter(score.striker);
       ensureBowler();
       const strikerName = score.striker;
-      score.runs += 1;
+      const extraRuns = 1;
+      const totalRuns = extraRuns + (label === "Nb" ? batRuns : 0);
+      score.runs += totalRuns;
       if (isLegalExtra) score.legalBalls += 1;
       if (label === "Wd") score.extras.wides += 1;
       if (label === "Nb") score.extras.noBalls += 1;
       if (label === "B") score.extras.byes += 1;
       if (label === "Lb") score.extras.legByes += 1;
-      score.bowlerStats[score.currentBowler].runs += label === "B" || label === "Lb" ? 0 : 1;
+      if (label === "Nb") score.batterStats[strikerName].runs += batRuns;
+      score.bowlerStats[score.currentBowler].runs += label === "B" || label === "Lb" ? 0 : totalRuns;
       if (isLegalExtra) {
         score.batterStats[strikerName].balls += 1;
         score.bowlerStats[score.currentBowler].legalBalls += 1;
       }
       score.last.push(label);
       score.lastEventType = label === "Nb" ? "danger" : "normal";
-      score.history.unshift({ label: oversText(score.legalBalls), text: `${label} extra added.` });
-      if (isLegalExtra) rotateStrike();
+      score.history.unshift({ label: oversText(score.legalBalls), text: `${label} extra added${batRuns ? ` with ${batRuns} off the bat` : ""}.` });
+      if ((isLegalExtra || label === "Nb") && (label === "Nb" ? batRuns : 1) % 2 === 1) rotateStrike();
       if (isLegalExtra) askNextBowler();
       animatePublicScore(score.lastEventType);
       checkInningsStatus();
@@ -4766,8 +4900,8 @@
             ball_in_over: isLegalExtra ? ((score.legalBalls - 1) % 6) + 1 : (score.legalBalls % 6) + 1,
             batter_name: strikerName,
             bowler_name: score.currentBowler,
-            runs_bat: 0,
-            runs_extra: 1,
+            runs_bat: label === "Nb" ? batRuns : 0,
+            runs_extra: extraRuns,
             extra_type: extraType,
             is_legal: isLegalExtra,
             is_wicket: false,
@@ -4845,6 +4979,7 @@
       state.score.battingTeam = newBattingTeam;
       state.score.bowlingTeam = newBowlingTeam;
       state.score.currentBowler = bowlingTeamPlayers()[0]?.name || state.score.currentBowler;
+      state.score.previousBowler = "";
       state.score.last = [];
       state.score.history = [{ label: "Target", text: `${newBattingTeam} needs ${target} runs to win.` }];
       state.score.undoStack = [];
@@ -4891,6 +5026,60 @@
       document.querySelector("#scoringControls").style.pointerEvents = "none";
       document.querySelector("#activeMatchStatus").textContent = "Match Completed";
       renderMatches();
+    }
+
+    function renderPublicTeamDetail(teamId) {
+      const team = state.teams.find(t => String(t.id) === String(teamId));
+      if (!team) return;
+      const players = state.players.filter(p => p.team === team.name);
+      const content = document.querySelector("#highlightsContent");
+      const modal = document.querySelector("#matchSummaryModal");
+      if (!content || !modal) return;
+      content.innerHTML = `
+        <div style="padding: 28px; background:#050a0f;">
+          <span class="tag green">Team Profile</span>
+          <h2 style="margin: 14px 0 6px;">${team.name}</h2>
+          <p class="muted">${team.city} - Captain ${team.captain} - ${team.record}</p>
+          <div class="grid cols-2" style="margin-top: 18px;">
+            ${players.length ? players.map(player => {
+              const meta = getPlayerMeta(player.id);
+              return `<article class="card" data-public-player="${player.id}" style="cursor:pointer;">
+                <div style="display:flex; gap:10px; align-items:center;">
+                  ${meta.photo ? `<img src="${meta.photo}" alt="${player.name}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;">` : `<div class="avatar">${initials(player.name)}</div>`}
+                  <div><h3>${player.name}</h3><p class="muted">${player.role}${meta.age ? ` - ${meta.age} yrs` : ""}</p></div>
+                </div>
+                <p class="muted">${meta.batting || "Batting style"} / ${meta.bowling || "Bowling style"}</p>
+              </article>`;
+            }).join("") : `<div class="card">No players added yet.</div>`}
+          </div>
+        </div>
+      `;
+      modal.style.display = "flex";
+    }
+
+    function renderPublicPlayerDetail(playerId) {
+      const player = state.players.find(p => String(p.id) === String(playerId));
+      if (!player) return;
+      const meta = getPlayerMeta(player.id);
+      const content = document.querySelector("#highlightsContent");
+      const modal = document.querySelector("#matchSummaryModal");
+      if (!content || !modal) return;
+      content.innerHTML = `
+        <div style="padding: 28px; background:#050a0f;">
+          <span class="tag">Player Profile</span>
+          <div style="display:flex; gap:14px; align-items:center; margin-top: 14px;">
+            ${meta.photo ? `<img src="${meta.photo}" alt="${player.name}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;">` : `<div class="avatar" style="width:72px;height:72px;">${initials(player.name)}</div>`}
+            <div><h2 style="margin:0;">${player.name}</h2><p class="muted">${player.team} - ${player.role}</p></div>
+          </div>
+          <div class="grid cols-3" style="margin-top: 18px;">
+            <div class="card"><span class="muted">Runs</span><h3>${player.runs || 0}</h3></div>
+            <div class="card"><span class="muted">Wickets</span><h3>${player.wickets || 0}</h3></div>
+            <div class="card"><span class="muted">Age</span><h3>${meta.age || "N/A"}</h3></div>
+          </div>
+          <p class="muted" style="margin-top: 14px;">${meta.batting || "Batting style not set"} / ${meta.bowling || "Bowling style not set"}</p>
+        </div>
+      `;
+      modal.style.display = "flex";
     }
 
     function showMatchResultSummary(resultText) {
@@ -5133,8 +5322,11 @@
       const button = event.target.closest("button");
       if (!button || button.id === "undoBall") return;
       if (button.dataset.ball) addLegalBall(button.dataset.ball, Number(button.dataset.ball));
-      if (button.dataset.extra) addExtra(button.dataset.extra);
-      if (button.dataset.wicket) addLegalBall("W", 0, true);
+      if (button.dataset.extra) {
+        const batRuns = button.dataset.extra === "Nb" ? Number(document.querySelector("#noBallBatRuns")?.value || 0) : 0;
+        addExtra(button.dataset.extra, batRuns);
+      }
+      if (button.dataset.wicket) addLegalBall("W", Number(document.querySelector("#wicketRunsSelect")?.value || 0), true);
     });
 
     document.querySelector("#undoBall").addEventListener("click", async () => {
@@ -5177,6 +5369,11 @@
         notice.className = "form-message error";
         return;
       }
+      if (bowler === score.previousBowler && bowlingTeamPlayers().length > 1) {
+        notice.textContent = `${bowler} bowled the previous over. Select a different bowler.`;
+        notice.className = "form-message error";
+        return;
+      }
 
       score.currentBowler = bowler;
       score.needsBowler = false;
@@ -5184,6 +5381,26 @@
       notice.textContent = `${bowler} confirmed as next bowler.`;
       notice.className = "form-message success";
       renderScore();
+    });
+
+    ["#strikerSelect", "#nonStrikerSelect"].forEach(selector => {
+      const el = document.querySelector(selector);
+      if (el) {
+        el.addEventListener("change", () => {
+          const striker = document.querySelector("#strikerSelect").value;
+          const nonStriker = document.querySelector("#nonStrikerSelect").value;
+          if (striker === nonStriker) {
+            document.querySelector("#overNotice").textContent = "Striker and non-striker must be different players.";
+            document.querySelector("#overNotice").className = "form-message error";
+            return;
+          }
+          state.score.striker = striker;
+          state.score.nonStriker = nonStriker;
+          ensureBatter(striker);
+          ensureBatter(nonStriker);
+          renderScore();
+        });
+      }
     });
 
     document.querySelector("#applicationList").addEventListener("click", async (event) => {
@@ -5410,6 +5627,7 @@
           state.score.bowlingTeam = innings.bowling_team;
           state.score.target = innings.target || 0;
           state.score.currentBowler = bowlingTeamPlayers()[0]?.name || state.score.currentBowler;
+          state.score.previousBowler = "";
           resetInningsScoreExtras();
           state.score.last = balls.slice(-6).map(b => b.is_wicket ? "W" : b.extra_type ? (b.extra_type==="Wide"?"Wd":b.extra_type==="No Ball"?"Nb":b.extra_type==="Bye"?"B":"Lb") : b.runs_bat.toString());
           state.score.history = balls.slice(-10).reverse().map(b => ({
@@ -5480,6 +5698,17 @@
       renderPublicMatchDetail(publicActiveMatchId);
     });
 
+    document.querySelector("#sharePublicMatchBtn").addEventListener("click", async () => {
+      if (!publicActiveMatchId) return;
+      const url = `${window.location.origin}${window.location.pathname}#match-${publicActiveMatchId}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        alert("Share link copied.");
+      } catch {
+        prompt("Copy this match link:", url);
+      }
+    });
+
     document.querySelector("#backToPublicGridBtn").addEventListener("click", () => {
       publicActiveMatchId = null;
       document.querySelector("#publicDetailContainer").style.display = "none";
@@ -5495,6 +5724,18 @@
         document.querySelector("[data-page='public']").click();
         publicActiveMatchId = id;
         renderPublicMatchDetail(id);
+        return;
+      }
+
+      const publicTeamBtn = event.target.closest("[data-public-team]");
+      if (publicTeamBtn) {
+        renderPublicTeamDetail(publicTeamBtn.dataset.publicTeam);
+        return;
+      }
+
+      const publicPlayerBtn = event.target.closest("[data-public-player]");
+      if (publicPlayerBtn) {
+        renderPublicPlayerDetail(publicPlayerBtn.dataset.publicPlayer);
         return;
       }
 
@@ -5691,24 +5932,109 @@
         }
         return;
       }
+
+      button = event.target.closest("[data-invite-team-admin]");
+      if (button) {
+        const team = state.teams.find(t => String(t.id) === String(button.dataset.inviteTeamAdmin));
+        if (!canManageTeam(team)) return;
+        const email = prompt("Enter the email of the team co-admin:");
+        if (!email) return;
+        const admins = getLocalList("team_admins", team.id);
+        admins.push(email.trim());
+        saveLocalList("team_admins", team.id, admins);
+        addRoleHistory("Team admin invited", `${email} invited to ${team.name}`);
+        alert("Team co-admin invitation saved locally.");
+        renderProfile();
+        return;
+      }
+
+      button = event.target.closest("[data-transfer-team]");
+      if (button) {
+        const team = state.teams.find(t => String(t.id) === String(button.dataset.transferTeam));
+        if (!canManageTeam(team)) return;
+        const email = prompt("Transfer this team locally to email:");
+        if (!email) return;
+        localStorage.setItem(`pakscorer_team_owner_${team.id}`, email.trim());
+        addRoleHistory("Team transfer started", `${team.name} transfer target: ${email}`);
+        alert("Team transfer saved locally. Supabase owner transfer still needs backend support.");
+        renderProfile();
+        renderTeams();
+        return;
+      }
+
+      button = event.target.closest("[data-invite-tournament-admin]");
+      if (button) {
+        const tournament = state.tournaments.find(t => String(t.id) === String(button.dataset.inviteTournamentAdmin));
+        if (!canManageTournament(tournament)) return;
+        const email = prompt("Enter the email of the tournament co-admin:");
+        if (!email) return;
+        const admins = getLocalList("tournament_admins", tournament.id);
+        admins.push(email.trim());
+        saveLocalList("tournament_admins", tournament.id, admins);
+        addRoleHistory("Tournament co-admin invited", `${email} invited to ${tournament.name}`);
+        alert("Tournament co-admin invitation saved locally.");
+        renderProfile();
+        renderTournaments();
+        return;
+      }
     });
 
     document.querySelector(".main").addEventListener("change", (event) => {
       const scorerSelect = event.target.closest("[data-assign-scorer]");
-      if (!scorerSelect) return;
-      const matchId = scorerSelect.dataset.assignScorer;
-      const userId = scorerSelect.value;
-      const match = state.matches.find(m => String(m.id) === String(matchId));
-      if (!match || !userId || !canManageMatch(match)) return;
+      if (scorerSelect) {
+        const matchId = scorerSelect.dataset.assignScorer;
+        const userId = scorerSelect.value;
+        const match = state.matches.find(m => String(m.id) === String(matchId));
+        if (!match || !userId || !canManageMatch(match)) return;
 
-      const current = getAssignedScorerIds(match);
-      if (!current.includes(String(userId))) current.push(String(userId));
-      localStorage.setItem(`pakscorer_match_scorers_${match.id}`, current.join(","));
-      alert("Scorer assigned for this match.");
+        const current = getAssignedScorerIds(match);
+        if (!current.includes(String(userId))) current.push(String(userId));
+        localStorage.setItem(`pakscorer_match_scorers_${match.id}`, current.join(","));
+        alert("Scorer assigned for this match.");
+        renderMatches();
+        renderProfile();
+        updateAuthUI();
+        return;
+      }
+
+      const dateEdit = event.target.closest("[data-match-date-edit]");
+      const timeEdit = event.target.closest("[data-match-time-edit]");
+      const edit = dateEdit || timeEdit;
+      if (!edit) return;
+      const matchId = edit.dataset.matchDateEdit || edit.dataset.matchTimeEdit;
+      const match = state.matches.find(m => String(m.id) === String(matchId));
+      if (!match || !canManageMatch(match)) return;
+      if (dateEdit) match.matchDate = dateEdit.value || null;
+      if (timeEdit) match.matchTime = timeEdit.value || null;
+      if (state.usingDatabase) {
+        supabase.from("matches").update({
+          match_date: match.matchDate || null,
+          match_time: match.matchTime || null
+        }).eq("id", match.id).then(({ error }) => {
+          if (error) alert("Could not save schedule in Supabase: " + error.message);
+        });
+      }
       renderMatches();
-      renderProfile();
-      updateAuthUI();
     });
+
+    const profileForm = document.querySelector("#profileForm");
+    if (profileForm) {
+      profileForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        saveUserProfile({
+          name: document.querySelector("#profileName").value.trim(),
+          phone: document.querySelector("#profilePhone").value.trim(),
+          city: document.querySelector("#profileCity").value.trim(),
+          avatar: document.querySelector("#profileAvatar").value.trim()
+        });
+        const msg = document.querySelector("#profileMessage");
+        if (msg) {
+          msg.textContent = "Profile saved on this device.";
+          msg.className = "form-message success";
+        }
+        renderProfile();
+      });
+    }
 
     // Series Form Submission
     const seriesForm = document.querySelector("#seriesForm");
@@ -6043,6 +6369,16 @@
     renderMatches();
     renderTournaments();
     renderScore();
+    if (window.location.hash.startsWith("#match-")) {
+      const matchId = window.location.hash.replace("#match-", "");
+      setTimeout(() => {
+        document.querySelector("[data-page='public']").click();
+        publicActiveMatchId = matchId;
+        document.querySelector("#publicGridContainer").style.display = "none";
+        document.querySelector("#publicDetailContainer").style.display = "block";
+        renderPublicMatchDetail(matchId);
+      }, 300);
+    }
   </script>
 </body>
 </html>
