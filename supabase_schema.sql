@@ -352,3 +352,18 @@ begin
     execute format('create policy "Prototype update %1$s" on public.%1$I for update to anon using (true) with check (true)', table_name);
   end loop;
 end $$;
+
+-- Enable Realtime for key scoring tables
+-- Run this to allow the frontend to listen for live changes.
+begin;
+  -- Remove existing publication if it exists
+  drop publication if exists supabase_realtime;
+  
+  -- Create publication for the tables we want to track
+  create publication supabase_realtime for table 
+    public.matches, 
+    public.innings, 
+    public.balls, 
+    public.players;
+commit;
+

@@ -1607,7 +1607,6 @@
 
         if (page === "public") {
           renderPublicLiveView();
-          publicViewInterval = setInterval(renderPublicLiveView, 5000);
         }
       });
     });
@@ -2811,6 +2810,41 @@
       }
     }
 
+    function setupRealtimeSubscriptions() {
+      if (!state.usingDatabase) return;
+      console.log("Setting up Realtime subscriptions...");
+
+      supabase
+        .channel('live-scoring')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'balls' }, payload => {
+          console.log("Ball change detected", payload);
+          if (publicActiveMatchId) renderPublicMatchDetail(publicActiveMatchId);
+          if (state.currentMatch) {
+             // For the scorer, we could sync if needed, but they have local state.
+             // We'll at least refresh the matches list.
+             renderMatches();
+          }
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'innings' }, payload => {
+          console.log("Innings change detected", payload);
+          if (publicActiveMatchId) renderPublicMatchDetail(publicActiveMatchId);
+          renderPublicLiveView();
+          if (state.currentMatch && String(payload.new.match_id) === String(state.currentMatch.id)) {
+             // Sync scorer state if someone else updated it
+             state.score.runs = payload.new.runs;
+             state.score.wickets = payload.new.wickets;
+             state.score.legalBalls = payload.new.legal_balls;
+             renderScore();
+          }
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, payload => {
+          console.log("Match change detected", payload);
+          renderPublicLiveView();
+          renderMatches();
+        })
+        .subscribe();
+    }
+
     function scoreSnapshot() {
       const score = state.score;
       return {
@@ -3953,6 +3987,7 @@
 
     loadTeamsFromDatabase().then(async () => {
       if (state.usingDatabase) {
+        setupRealtimeSubscriptions();
         loadTournamentsFromDatabase().catch((error) => {
           console.warn("Supabase tournaments unavailable:", error.message);
           renderTournaments();
