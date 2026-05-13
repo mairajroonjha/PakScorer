@@ -2129,7 +2129,9 @@
 
     function renderPlayers() {
       const myPlayers = state.players.filter(p => isOwner(p));
-      document.querySelector("#playerRows").innerHTML = myPlayers.map((p) => {
+      const rowsEl = document.querySelector("#playerRows");
+      if (rowsEl) {
+        rowsEl.innerHTML = myPlayers.map((p) => {
         const sr = p.balls_faced ? ((p.runs / p.balls_faced) * 100).toFixed(1) : "0.0";
         const ave = p.innings_played ? (p.runs / p.innings_played).toFixed(1) : p.runs.toFixed(1);
         const econ = p.balls_bowled ? ((p.runs_conceded / p.balls_bowled) * 6).toFixed(2) : "0.00";
@@ -2144,10 +2146,12 @@
             <td>${econ}</td>
             <td><button class="btn ghost danger" style="padding: 2px 6px; font-size: 0.65rem;" data-delete-player="${p.id}">Delete</button></td>
           </tr>
-        `;
-      }).join("");
-      document.querySelector("#playerCount").textContent = myPlayers.length;
-      document.querySelector("#playersLabel").textContent = `${myPlayers.length} players`;
+        }).join("");
+      }
+      const countEl = document.querySelector("#playerCount");
+      if (countEl) countEl.textContent = myPlayers.length;
+      const labelEl = document.querySelector("#playersLabel");
+      if (labelEl) labelEl.textContent = `${myPlayers.length} players`;
       renderBowlerSelect();
     }
 
@@ -4028,94 +4032,12 @@
       message.classList.add("success");
     });
 
-    document.querySelector("#playerForm").addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const message = document.querySelector("#playerFormMessage");
-      const name = document.querySelector("#newPlayerName").value.trim();
-      const team = document.querySelector("#newPlayerTeam").value;
-      const role = document.querySelector("#newPlayerRole").value;
-      const normalizedName = name.toLowerCase();
-      const normalizedTeam = team.toLowerCase();
-      const alreadyExists = state.players.some((player) => (
-        player.name.trim().toLowerCase() === normalizedName &&
-        player.team.trim().toLowerCase() === normalizedTeam
-      ));
+    // Team management is now handled via the Team Form and Team Cards
 
-      message.className = "form-message";
-
-      if (!name) {
-        message.textContent = "Please enter a player name.";
-        message.classList.add("error");
-        return;
-      }
-
-      if (alreadyExists) {
-        message.textContent = "This player already exists in this team.";
-        message.classList.add("error");
-        return;
-      }
-
-      const selectedTeam = state.teams.find((item) => item.name === team);
-      
-      // Enforce ownership: only the team owner can add players
-      if (state.usingDatabase && selectedTeam && !isOwner(selectedTeam)) {
-        message.textContent = "You can only add players to your own team.";
-        message.classList.add("error");
-        return;
-      }
-      
-      const player = {
-        name,
-        team,
-        team_id: selectedTeam && typeof selectedTeam.id === "string" && selectedTeam.id.includes("-") ? selectedTeam.id : null,
-        role,
-        runs: 0,
-        wickets: 0,
-        user_id: state.user?.id || null,
-      };
-
-      message.textContent = "Saving player...";
-
-      if (state.usingDatabase) {
-        try {
-          state.players.push(await createPlayerInDatabase(player));
-        } catch (error) {
-          message.textContent = error.code === "23505" ? "This player already exists in this team in the database." : "Could not save player to Supabase.";
-          message.classList.add("error");
-          return;
-        }
-      } else {
-        state.players.push({ id: Date.now(), ...player });
-      }
-
-      renderPlayers();
-      message.textContent = `${name} added to ${team}.`;
-      message.classList.add("success");
-    });
 
     // Player delete handler
-    document.querySelector("#playerRows").addEventListener("click", async (event) => {
-      const btn = event.target.closest("[data-delete-player]");
-      if (!btn) return;
-      if (!confirm("Delete this player permanently?")) return;
-      const playerId = btn.dataset.deletePlayer;
-      btn.textContent = "...";
-      btn.disabled = true;
-      if (state.usingDatabase) {
-        try {
-          const { error } = await supabase.from("players").delete().eq("id", playerId);
-          if (error) throw error;
-          await loadPlayersFromDatabase();
-        } catch (err) {
-          alert("Could not delete player: " + err.message);
-          btn.textContent = "Delete";
-          btn.disabled = false;
-        }
-      } else {
-        state.players = state.players.filter(p => String(p.id) !== String(playerId));
-        renderPlayers();
-      }
-    });
+    // Player delete and management is now handled via the main click listener using data-attributes
+
 
     // Team delete handler
     document.querySelector("#teamList").addEventListener("click", async (event) => {
