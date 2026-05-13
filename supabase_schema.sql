@@ -304,6 +304,26 @@ create table if not exists public.team_stats (
 create unique index if not exists team_stats_unique_team
 on public.team_stats (team_id);
 
+-- Series table
+create table if not exists public.series (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  team_a_id uuid references public.teams(id) on delete cascade,
+  team_b_id uuid references public.teams(id) on delete cascade,
+  team_a_name text not null,
+  team_b_name text not null,
+  num_matches integer not null default 3,
+  overs integer not null default 20,
+  venue text not null default 'Local Ground',
+  status text not null default 'Scheduled',
+  winner_team_id uuid references public.teams(id),
+  user_id uuid references auth.users(id),
+  created_at timestamptz not null default now()
+);
+
+-- Add series_id to matches
+alter table public.matches add column if not exists series_id uuid references public.series(id) on delete set null;
+
 -- Row level security for browser prototype.
 -- Later, replace insert/update/delete policies with authenticated role-based policies.
 alter table public.teams enable row level security;
@@ -320,6 +340,7 @@ alter table public.fixtures enable row level security;
 alter table public.points_table enable row level security;
 alter table public.player_stats enable row level security;
 alter table public.team_stats enable row level security;
+alter table public.series enable row level security;
 
 do $$
 declare
@@ -339,7 +360,8 @@ begin
     'fixtures',
     'points_table',
     'player_stats',
-    'team_stats'
+    'team_stats',
+    'series'
   ]
   loop
     execute format('drop policy if exists "Prototype read %1$s" on public.%1$I', table_name);
@@ -364,6 +386,7 @@ begin;
     public.matches, 
     public.innings, 
     public.balls, 
-    public.players;
+    public.players,
+    public.series;
 commit;
 

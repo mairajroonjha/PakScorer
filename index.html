@@ -252,6 +252,8 @@
       display: block;
       animation: pageIn 180ms ease;
     }
+    .tourney-sub-page { display: none; }
+    .tourney-sub-page.active { display: block; }
 
     [data-admin-only] {
       display: none !important;
@@ -1451,37 +1453,49 @@
       </section>
 
       <section class="page" id="tournaments">
-        <div class="split">
-          <section class="panel">
-            <div class="panel-head">
-              <h2>Tournaments</h2>
-              <span id="tournamentCount">0 tournaments</span>
-            </div>
-            <div class="panel-body grid" id="tournamentList"></div>
-          </section>
+        <div class="sub-nav" style="margin-bottom: 24px; display: flex; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 12px; overflow-x: auto;">
+          <button class="btn primary sub-nav-btn active" data-tourney-sub="active">Active Tournaments</button>
+          <button class="btn ghost sub-nav-btn" data-tourney-sub="create" data-admin-only>Create Tournament</button>
+          <button class="btn ghost sub-nav-btn" data-tourney-sub="series">Manage Series</button>
+          <button class="btn ghost sub-nav-btn" data-tourney-sub="applications" data-admin-only>Applications</button>
+        </div>
 
-          <div class="grid" data-admin-only style="gap:16px;">
+        <div id="tourney-sub-active" class="tourney-sub-page active">
+          <div class="split">
             <section class="panel">
               <div class="panel-head">
-                <h2>Apply to Tournament</h2>
-                <span>Register your team</span>
+                <h2>Tournaments</h2>
+                <span id="tournamentCount">0 tournaments</span>
               </div>
-              <form class="panel-body grid" id="applyForm">
-                <label>Tournament
-                  <select id="applyTournament"><option value="">-- Select tournament --</option></select>
-                </label>
-                <label>Your Team
-                  <select id="applyTeam"></select>
-                </label>
-                <p class="form-message" id="applyFormMessage" aria-live="polite"></p>
-                <button class="btn primary" type="submit">Apply Now</button>
-              </form>
+              <div class="panel-body grid" id="tournamentList"></div>
             </section>
 
-            <section class="panel">
+            <div class="grid" style="gap:16px;">
+              <section class="panel">
+                <div class="panel-head">
+                  <h2>Apply to Tournament</h2>
+                  <span>Register your team</span>
+                </div>
+                <form class="panel-body grid" id="applyForm">
+                  <label>Tournament
+                    <select id="applyTournament"><option value="">-- Select tournament --</option></select>
+                  </label>
+                  <label>Your Team
+                    <select id="applyTeam"></select>
+                  </label>
+                  <p class="form-message" id="applyFormMessage" aria-live="polite"></p>
+                  <button class="btn primary" type="submit">Apply Now</button>
+                </form>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <div id="tourney-sub-create" class="tourney-sub-page">
+           <section class="panel" style="max-width: 600px; margin: 0 auto;">
               <div class="panel-head">
-                <h2>Create Tournament</h2>
-                <span>New competition</span>
+                <h2>New Tournament</h2>
+                <span>Create a full competition</span>
               </div>
               <form class="panel-body grid" id="tournamentForm">
                 <label>Tournament Name <input id="newTournamentName" value="Punjab Super Cup" /></label>
@@ -1505,18 +1519,50 @@
                 <button class="btn primary" type="submit">Create Tournament</button>
               </form>
             </section>
+        </div>
 
+        <div id="tourney-sub-series" class="tourney-sub-page">
+           <div class="split">
+             <section class="panel">
+                <div class="panel-head">
+                  <h2>Active Series</h2>
+                  <span id="seriesCount">0 series</span>
+                </div>
+                <div class="panel-body grid" id="seriesList"></div>
+             </section>
+             
+             <section class="panel">
+                <div class="panel-head">
+                  <h2>Create New Series</h2>
+                  <span>Team vs Team series</span>
+                </div>
+                <form class="panel-body grid" id="seriesForm">
+                   <label>Series Name <input id="newSeriesName" value="Lions vs Kings Derby" /></label>
+                   <div class="form-grid">
+                     <label>Team A <select id="seriesTeamA"></select></label>
+                     <label>Team B <select id="seriesTeamB"></select></label>
+                   </div>
+                   <div class="form-grid">
+                     <label>No. of Matches <input id="seriesMatches" type="number" value="3" min="1" max="11" /></label>
+                     <label>Overs <input id="seriesOvers" type="number" value="20" min="1" max="50" /></label>
+                   </div>
+                   <label>Venue <input id="seriesVenue" value="National Stadium" /></label>
+                   <button class="btn primary" type="submit">Generate Series</button>
+                </form>
+             </section>
+           </div>
+        </div>
 
+        <div id="tourney-sub-applications" class="tourney-sub-page">
             <section class="panel">
               <div class="panel-head">
-                <h2>Applications</h2>
-                <span id="applicationCount">0 teams</span>
+                <h2>Pending Applications</h2>
+                <span id="applicationCountDisplay">0 teams</span>
               </div>
               <div class="panel-body">
                 <ul class="feed" id="applicationList"></ul>
               </div>
             </section>
-          </div>
         </div>
       </section>
     </main>
@@ -1563,6 +1609,7 @@
       ],
       tournaments: [],
       applications: [],
+      series: [],
       score: {
         runs: 87,
         wickets: 3,
@@ -1619,14 +1666,21 @@
     // Sub-navigation logic for Teams
     document.querySelectorAll(".sub-nav-btn").forEach(btn => {
       btn.addEventListener("click", () => {
-        const sub = btn.dataset.sub;
-        document.querySelectorAll(".sub-nav-btn").forEach(b => b.classList.replace("primary", "ghost"));
-        document.querySelectorAll(".sub-nav-btn").forEach(b => b.classList.remove("active"));
+        const subNav = btn.closest(".sub-nav");
+        subNav.querySelectorAll(".sub-nav-btn").forEach(b => {
+          b.classList.replace("primary", "ghost");
+          b.classList.remove("active");
+        });
         btn.classList.replace("ghost", "primary");
         btn.classList.add("active");
+
+        const parentPage = btn.closest(".page");
+        const subPageType = btn.dataset.sub ? "sub" : "tourney-sub";
+        const subId = btn.dataset.sub || btn.dataset.tourneySub;
         
-        document.querySelectorAll(".sub-page").forEach(p => p.classList.remove("active"));
-        document.querySelector(`#sub-${sub}`).classList.add("active");
+        parentPage.querySelectorAll(".sub-page, .tourney-sub-page").forEach(p => p.classList.remove("active"));
+        const target = document.getElementById(`${subPageType}-${subId}`);
+        if (target) target.classList.add("active");
       });
     });
 
@@ -1702,6 +1756,11 @@
     function isOwner(item) {
       if (!state.user || !item || !item.user_id) return false;
       return String(item.user_id) === String(state.user.id);
+    }
+
+    function getMyTeams() {
+      if (!state.user) return [];
+      return state.teams.filter(t => String(t.user_id) === String(state.user.id));
     }
 
     function initials(name) {
@@ -1928,7 +1987,47 @@
 
       state.tournaments = data;
       await loadApplicationsFromDatabase();
+      await loadSeriesFromDatabase();
       renderTournaments();
+      renderHomeTournaments();
+    }
+
+    async function loadSeriesFromDatabase() {
+      if (!state.usingDatabase) return;
+      const { data, error } = await supabase
+        .from("series")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) {
+        console.error("Error loading series:", error.message);
+        return;
+      }
+      state.series = data || [];
+      renderSeries();
+    }
+
+    async function createSeriesInDatabase(seriesData) {
+      if (!state.usingDatabase) return;
+      const { data, error } = await supabase
+        .from("series")
+        .insert({
+          name: seriesData.name,
+          team_a_id: seriesData.teamAId,
+          team_b_id: seriesData.teamBId,
+          team_a_name: seriesData.teamAName,
+          team_b_name: seriesData.teamBName,
+          num_matches: seriesData.numMatches,
+          overs: seriesData.overs,
+          venue: seriesData.venue,
+          status: "Scheduled",
+          user_id: state.user?.id
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
     }
 
     async function loadApplicationsFromDatabase() {
@@ -2074,9 +2173,10 @@
           match_date: request.matchDate || null,
           match_time: request.matchTime || null,
           tournament_id: request.tournamentId || null,
+          series_id: request.seriesId || null,
           user_id: state.user?.id
         })
-        .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date,match_time,tournament_id,user_id")
+        .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date,match_time,tournament_id,series_id,user_id")
         .single();
 
       if (error) throw error;
@@ -2582,7 +2682,7 @@
                     <span><strong>${m.teamA}</strong> vs <strong>${m.teamB}</strong></span>
                     <div style="display:flex; gap: 8px; align-items: center;">
                       <span class="tag ${m.status === 'Live' ? 'green' : m.status === 'Completed' ? 'cyan' : ''}" style="font-size: 0.75rem;">${m.status}</span>
-                      ${isOwner(match) || isOwner(tournament) ? `<button class="btn ghost danger" data-admin-only style="padding: 2px 6px; font-size: 0.65rem;" data-delete-match="${m.id}">Delete</button>` : ""}
+                      ${isOwner(m) || isOwner(tournament) ? `<button class="btn ghost danger" data-admin-only style="padding: 2px 6px; font-size: 0.65rem;" data-delete-match="${m.id}">Delete</button>` : ""}
                     </div>
                   </li>
                 `).join("")}
@@ -2629,6 +2729,9 @@
                   <button class="btn primary" style="padding: 4px 10px; font-size: 0.8rem;" data-generate-fixtures="${tournament.id}">Generate Fixtures</button>
                 ` : ""}
                 ${isOwner(tournament) ? `<button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem;" data-delete-tournament="${tournament.id}">Delete Tournament</button>` : ""}
+                ${!isOwner(tournament) && state.user && !state.applications.some(a => String(a.tournamentId) === String(tournament.id) && String(a.teamId) === String(state.user.id)) ? `
+                  <button class="btn ghost" style="padding: 4px 10px; font-size: 0.8rem;" data-apply-to="${tournament.id}">Apply to Join</button>
+                ` : ""}
               </div>
             </article>
           `;
@@ -2644,7 +2747,10 @@
             <strong>${application.team}${application.tournamentName ? ` <span style="color:var(--muted);font-size:0.82rem;font-weight:600;">· ${application.tournamentName}</span>` : ""}</strong>
             <span>
               <span class="tag ${application.status === "Approved" ? "green" : application.status === "Rejected" ? "red" : "gold"}">${application.status}</span>
-              ${application.status === "Pending" && isOwner(tournament) ? `<button class="btn ghost" data-application="${index}" data-app-id="${application.id || ""}" style="margin-left: 8px;">Approve</button>` : ""}
+              ${application.status === "Pending" && isOwner(tournament) ? `
+                <button class="btn ghost" data-application="${index}" data-app-id="${application.id || ""}" style="margin-left: 8px;">Approve</button>
+                <button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem; margin-left: 8px;" data-reject-app="${application.id}">Reject</button>
+              ` : ""}
             </span>
           </li>
         `;
@@ -2676,11 +2782,11 @@
       try {
         const promises = pairings.map(pair => {
           const match = {
-            team_a_id: pair[0].id,
-            team_b_id: pair[1].id,
-            team_a: pair[0].name,
-            team_b: pair[1].name,
-            tournament_id: tournamentId,
+            fromTeamId: pair[0].id,
+            toTeamId: pair[1].id,
+            from: pair[0].name,
+            to: pair[1].name,
+            tournamentId: tournamentId,
             venue: tournament.venue || "Tournament Ground",
             overs: tournament.overs || 20,
             status: "Scheduled",
@@ -2702,11 +2808,59 @@
         renderMatches();
         alert("Fixtures generated successfully!");
       } catch (error) {
-        alert("Error generating fixtures: " + error.message);
       }
     }
 
-    // Home Page Tournaments
+    function renderSeries() {
+      const count = state.series.length;
+      safeSetText("#seriesCount", `${count} series`);
+      const seriesListEl = document.querySelector("#seriesList");
+      if (!seriesListEl) return;
+
+      if (!count) {
+        seriesListEl.innerHTML = `<div class="card">No series created yet.</div>`;
+      } else {
+        seriesListEl.innerHTML = state.series.map(s => {
+          const seriesMatches = state.matches.filter(m => m.series_id === s.id);
+          return `
+            <article class="card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <h3 style="margin: 0;">${s.name}</h3>
+                  <p class="muted" style="margin: 4px 0;">${s.num_matches} Matches · ${s.overs} Overs</p>
+                </div>
+                <span class="tag ${s.status === 'Live' ? 'green' : s.status === 'Completed' ? 'cyan' : 'gold'}">${s.status}</span>
+              </div>
+              <p style="font-weight: 700; margin: 8px 0;">${s.team_a_name} vs ${s.team_b_name}</p>
+              <div style="margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px;">
+                 <p class="muted" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase;">Matches</p>
+                 <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                    ${seriesMatches.map((m, idx) => `
+                      <li style="font-size: 0.85rem; display: flex; justify-content: space-between; background: rgba(255,255,255,0.02); padding: 6px 10px; border-radius: 6px;">
+                        <span>Match ${idx + 1}</span>
+                        <span class="tag ${m.status === 'Live' ? 'green' : m.status === 'Completed' ? 'cyan' : ''}" style="font-size: 0.7rem;">${m.status}</span>
+                      </li>
+                    `).join("")}
+                 </ul>
+              </div>
+              ${isOwner(s) ? `<button class="btn ghost danger" style="margin-top: 12px; font-size: 0.7rem; align-self: flex-end;" data-delete-series="${s.id}">Delete Series</button>` : ""}
+            </article>
+          `;
+        }).join("");
+      }
+      
+      const teamSelects = ["#seriesTeamA", "#seriesTeamB"];
+      teamSelects.forEach(selId => {
+         const el = document.querySelector(selId);
+         if (el) {
+            const currentVal = el.value;
+            el.innerHTML = '<option value="">-- Select Team --</option>' + state.teams.map(t => `<option value="${t.id}">${t.name}</option>`).join("");
+            el.value = currentVal;
+         }
+      });
+    }
+
+    function renderHomeTournaments() {
       const runningTournaments = state.tournaments.filter(t => t.status !== "Completed");
       safeSetText("#activeTournamentCount", `${runningTournaments.length} active`);
       const homeTourneyEl = document.querySelector("#homeTournaments");
@@ -3579,72 +3733,52 @@
       message.classList.add("success");
     });
 
+    async function applyToTournament(tournamentId, teamId, teamName) {
+      if (state.usingDatabase) {
+        await createApplicationInDatabase({
+          tournament_id: tournamentId,
+          team_id: teamId,
+          team: teamName,
+          status: "Pending"
+        });
+        await loadApplicationsFromDatabase();
+      } else {
+        state.applications.push({
+          id: Date.now(),
+          tournamentId,
+          teamId,
+          team: teamName,
+          status: "Pending",
+          tournamentName: state.tournaments.find(t => t.id === tournamentId)?.name
+        });
+      }
+      renderTournaments();
+    }
+
     document.querySelector("#applyForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       const message = document.querySelector("#applyFormMessage");
       const tournamentId = document.querySelector("#applyTournament").value;
       const teamId = document.querySelector("#applyTeam").value;
 
-      message.className = "form-message";
-
       if (!tournamentId || !teamId) {
+        message.className = "form-message error";
         message.textContent = "Please select a tournament and a team.";
-        message.classList.add("error");
         return;
       }
 
-      const tournament = state.tournaments.find((t) => t.id === tournamentId);
-      const team = state.teams.find((t) => t.id === teamId);
-
-      if (!tournament || !team) {
-        message.textContent = "Invalid tournament or team selection.";
-        message.classList.add("error");
-        return;
+      try {
+        const team = state.teams.find(t => String(t.id) === String(teamId));
+        await applyToTournament(tournamentId, teamId, team.name);
+        message.className = "form-message success";
+        message.textContent = "Application submitted successfully!";
+        document.querySelector("#applyForm").reset();
+      } catch (error) {
+        message.className = "form-message error";
+        message.textContent = "Error: " + error.message;
       }
-
-      const alreadyApplied = state.applications.some(
-        (app) => app.tournamentId === tournamentId && app.teamId === teamId
-      );
-
-      if (alreadyApplied) {
-        message.textContent = "This team has already applied to this tournament.";
-        message.classList.add("error");
-        return;
-      }
-
-      const application = {
-        tournament_id: tournamentId,
-        team_id: teamId,
-        team: team.name,
-        status: "Pending"
-      };
-
-      message.textContent = "Submitting application...";
-
-      if (state.usingDatabase) {
-        try {
-          const newApp = await createApplicationInDatabase(application);
-          state.applications.unshift(newApp);
-        } catch (error) {
-          message.textContent = error.code === "23505" ? "This application already exists." : "Could not save application to Supabase.";
-          message.classList.add("error");
-          return;
-        }
-      } else {
-        state.applications.unshift({
-          id: Date.now(),
-          tournamentId,
-          teamId,
-          team: team.name,
-          status: "Pending",
-          tournamentName: tournament.name
-        });
-      }
-
-      renderTournaments();
-      message.textContent = `Application submitted for ${team.name}.`;
-      message.classList.add("success");
     });
+
 
     document.querySelector("#scoringMatchSelect").addEventListener("change", (event) => {
       const matchId = event.target.value;
@@ -3946,7 +4080,119 @@
         button.disabled = false;
         return;
       }
+
+      // REJECT APPLICATION
+      button = event.target.closest("[data-reject-app]");
+      if (button) {
+        const appId = button.dataset.rejectApp;
+        if (confirm("Reject this application?")) {
+          try {
+            if (state.usingDatabase) {
+               await supabase.from("tournament_applications").delete().eq("id", appId);
+               await loadApplicationsFromDatabase();
+            } else {
+               state.applications = state.applications.filter(a => String(a.id) !== String(appId));
+            }
+            renderTournaments();
+          } catch (e) { alert("Error rejecting app: " + e.message); }
+        }
+        return;
+      }
+
+      // DELETE SERIES
+      button = event.target.closest("[data-delete-series]");
+      if (button) {
+        const seriesId = button.dataset.deleteSeries;
+        if (confirm("Delete this series and all its matches?")) {
+          try {
+            if (state.usingDatabase) {
+               await supabase.from("series").delete().eq("id", seriesId);
+               await loadSeriesFromDatabase();
+               await loadMatchesFromDatabase();
+            } else {
+               state.series = state.series.filter(s => String(s.id) !== String(seriesId));
+               state.matches = state.matches.filter(m => String(m.seriesId) !== String(seriesId));
+            }
+            renderSeries();
+            renderMatches();
+          } catch (e) { alert("Error deleting series: " + e.message); }
+        }
+        return;
+      }
+
+      // APPLY TO JOIN (From card)
+      button = event.target.closest("[data-apply-to]");
+      if (button) {
+        const tourneyId = button.dataset.applyTo;
+        const myTeams = getMyTeams();
+        if (myTeams.length === 0) {
+          alert("You need to create a team first!");
+        } else {
+          try {
+            await applyToTournament(tourneyId, myTeams[0].id, myTeams[0].name);
+            alert("Application submitted with your team: " + myTeams[0].name);
+          } catch (e) { alert("Error applying: " + e.message); }
+        }
+        return;
+      }
     });
+
+    // Series Form Submission
+    const seriesForm = document.querySelector("#seriesForm");
+    if (seriesForm) {
+      seriesForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = seriesForm.querySelector("button");
+        btn.disabled = true;
+        btn.textContent = "Generating...";
+
+        const name = document.querySelector("#newSeriesName").value;
+        const teamAId = document.querySelector("#seriesTeamA").value;
+        const teamBId = document.querySelector("#seriesTeamB").value;
+        const numMatches = parseInt(document.querySelector("#seriesMatches").value);
+        const overs = parseInt(document.querySelector("#seriesOvers").value);
+        const venue = document.querySelector("#seriesVenue").value;
+
+        if (!teamAId || !teamBId || teamAId === teamBId) {
+          alert("Please select two different teams.");
+          btn.disabled = false;
+          btn.textContent = "Generate Series";
+          return;
+        }
+
+        try {
+          const teamAName = state.teams.find(t => String(t.id) === String(teamAId))?.name;
+          const teamBName = state.teams.find(t => String(t.id) === String(teamBId))?.name;
+
+          const series = await createSeriesInDatabase({
+            name, teamAId, teamBId, teamAName, teamBName, numMatches, overs, venue
+          });
+
+          for (let i = 1; i <= numMatches; i++) {
+             await createMatchInDatabase({
+               fromTeamId: teamAId,
+               toTeamId: teamBId,
+               from: teamAName,
+               to: teamBName,
+               seriesId: series.id,
+               venue: venue,
+               overs: overs,
+               status: "Scheduled"
+             });
+          }
+
+          await loadSeriesFromDatabase();
+          await loadMatchesFromDatabase();
+          alert(`${numMatches} matches generated for ${name}!`);
+          seriesForm.reset();
+        } catch (error) {
+          alert("Error creating series: " + error.message);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Generate Series";
+        }
+      });
+    }
 
     // Auth Event Listeners
     let authMode = 'login'; // 'login' or 'signup'
