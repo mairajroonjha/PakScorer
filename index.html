@@ -1113,8 +1113,8 @@
       <nav class="nav" aria-label="Main navigation">
         <button class="active" data-page="home"><span class="nav-icon">H</span>Home</button>
         <button data-page="teams"><span class="nav-icon">T</span>Teams</button>
-        <button data-page="requests"><span class="nav-icon">R</span>Requests</button>
-        <button data-page="scoring"><span class="nav-icon">S</span>Scoring</button>
+        <button data-page="requests" data-admin-only><span class="nav-icon">R</span>Requests</button>
+        <button data-page="scoring" data-admin-only><span class="nav-icon">S</span>Scoring</button>
         <button data-page="tournaments"><span class="nav-icon">🏆</span>Tournaments</button>
         <button data-page="public"><span class="nav-icon">L</span>Live View</button>
 
@@ -1251,7 +1251,7 @@
       <section class="page" id="teams">
         <div class="sub-nav" style="display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid var(--line); padding-bottom: 12px;">
           <button class="btn primary btn-sm sub-nav-btn active" data-sub="profiles">Team Profiles</button>
-          <button class="btn ghost btn-sm sub-nav-btn" data-sub="create">Create New Team</button>
+          <button class="btn ghost btn-sm sub-nav-btn" data-sub="create" data-admin-only>Create New Team</button>
           <button class="btn ghost btn-sm sub-nav-btn" data-sub="fixtures">Scheduled Matches</button>
         </div>
 
@@ -1812,7 +1812,11 @@
         adminProfile.style.display = "block";
         showLoginBtn.style.display = "none";
         adminEmail.textContent = user.email;
-        document.body.classList.add("is-admin");
+        if (isAdmin()) {
+          document.body.classList.add("is-admin");
+        } else {
+          document.body.classList.remove("is-admin");
+        }
         if (mobileProfileBtn) {
           mobileProfileBtn.classList.add("logged-in");
           document.querySelector("#mobileProfileLabel").textContent = "Logout";
@@ -1829,9 +1833,12 @@
         }
       }
       
-      const restrictedPages = ["teams", "requests", "scoring"];
+      const restrictedPages = ["requests", "scoring"];
       document.querySelectorAll(".nav button").forEach(btn => {
-        if (restrictedPages.includes(btn.dataset.page)) {
+        const page = btn.dataset.page;
+        if (restrictedPages.includes(page)) {
+          btn.style.display = isAdmin() ? "flex" : "none";
+        } else if (page === "teams") {
           btn.style.display = user ? "flex" : "none";
         }
       });
@@ -1844,7 +1851,7 @@
 
       // Hide/Show admin-only elements
       document.querySelectorAll("[data-admin-only]").forEach(el => {
-        el.style.display = user ? "" : "none";
+        el.style.display = isAdmin() ? "" : "none";
       });
 
       // Special handling for tournament sub-nav buttons
@@ -1893,9 +1900,24 @@
       updateAuthUI();
     }
 
+    function isAdmin() {
+      if (!state.user) return false;
+      const email = state.user.email || "";
+      return email === "admin@pakscorer.com" || (state.user.app_metadata && state.user.app_metadata.role === "admin");
+    }
+
     function isOwner(item) {
       if (!state.user || !item || !item.user_id) return false;
       return String(item.user_id) === String(state.user.id);
+    }
+
+    function isRegisteredWith(team) {
+      if (!state.user) return false;
+      // Check if user is a player in this team
+      return state.players.some(p => 
+        String(p.team_id) === String(team.id) && 
+        String(p.user_id) === String(state.user.id)
+      );
     }
 
     async function captureElementAsImage(elementId, fileName) {
@@ -1993,9 +2015,18 @@
     }
 
     function renderTeams() {
-      const myTeams = state.teams.filter(t => isOwner(t));
-      document.querySelector("#teamList").innerHTML = myTeams.map((team) => {
+      let visibleTeams;
+      if (isAdmin()) {
+        visibleTeams = state.teams;
+      } else {
+        visibleTeams = state.teams.filter(t => isOwner(t) || isRegisteredWith(t));
+      }
+      
+      document.querySelector("#teamList").innerHTML = visibleTeams.map((team) => {
         const teamPlayers = state.players.filter(p => p.team === team.name);
+        const owner = isOwner(team);
+        const admin = isAdmin();
+        
         const rosterHtml = teamPlayers.length ? `
           <div class="team-roster" style="margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px;">
             <p style="font-size: 0.75rem; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.05em;">Squad (${teamPlayers.length})</p>
@@ -2003,12 +2034,25 @@
               ${teamPlayers.map(p => `
                 <li style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 4px 8px; border-radius: 6px;">
                   <span style="font-size: 0.82rem;"><strong>${p.name}</strong> <small class="muted">(${p.role})</small></span>
-                  <button class="btn ghost danger" style="padding: 2px 4px; font-size: 0.6rem;" data-delete-player="${p.id}">Remove</button>
+                  ${owner || admin ? `<button class="btn ghost danger" style="padding: 2px 4px; font-size: 0.6rem;" data-delete-player="${p.id}">Remove</button>` : ""}
                 </li>
               `).join("")}
             </ul>
           </div>
         ` : `<p class="muted" style="font-size: 0.75rem; margin-top: 12px;">No players added yet</p>`;
+
+        const managementTools = (owner || admin) ? `
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line);">
+              <p style="font-size: 0.7rem; color: var(--gold); font-weight: 800; text-transform: uppercase; margin-bottom: 6px;">Quick Add Player</p>
+              <form class="quick-add-player" data-team-name="${team.name}" style="display: flex; gap: 4px;">
+                <input type="text" placeholder="Name" class="player-name-in" style="flex: 1; font-size: 0.8rem; padding: 4px 8px;" required>
+                <select class="player-role-in" style="font-size: 0.8rem; padding: 4px;">
+                  <option>Batter</option><option>Bowler</option><option>All-rounder</option><option>WK</option>
+                </select>
+                <button class="btn primary btn-sm" type="submit">+</button>
+              </form>
+            </div>
+        ` : "";
 
         return `
           <article class="card team-card" style="display: flex; flex-direction: column;">
@@ -2021,30 +2065,21 @@
             </div>
             
             ${rosterHtml}
-
-            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line);">
-              <p style="font-size: 0.7rem; color: var(--gold); font-weight: 800; text-transform: uppercase; margin-bottom: 6px;">Quick Add Player</p>
-              <form class="quick-add-player" data-team-name="${team.name}" style="display: flex; gap: 4px;">
-                <input type="text" placeholder="Name" class="player-name-in" style="flex: 1; font-size: 0.8rem; padding: 4px 8px;" required>
-                <select class="player-role-in" style="font-size: 0.8rem; padding: 4px;">
-                  <option>Batter</option><option>Bowler</option><option>All-rounder</option><option>WK</option>
-                </select>
-                <button class="btn primary btn-sm" type="submit">+</button>
-              </form>
-            </div>
+            ${managementTools}
 
             <div class="actions" style="margin-top: auto; padding-top: 12px;">
               <span class="tag green">${team.record}</span>
               <span class="tag">Captain: ${team.captain}</span>
-              <button class="btn ghost danger" style="padding: 2px 6px; font-size: 0.65rem;" data-delete-team="${team.id}">Delete</button>
+              ${owner || admin ? `<button class="btn ghost danger" style="padding: 2px 6px; font-size: 0.65rem;" data-delete-team="${team.id}">Delete</button>` : ""}
             </div>
           </article>
         `;
       }).join("");
-      document.querySelector("#teamCount").textContent = myTeams.length;
-      document.querySelector("#teamsLabel").textContent = `${myTeams.length} teams`;
+      document.querySelector("#teamCount").textContent = visibleTeams.length;
+      document.querySelector("#teamsLabel").textContent = `${visibleTeams.length} teams`;
       renderTeamSelects();
     }
+
 
     function renderTeamSelects() {
       const myTeams = state.teams.filter(t => isOwner(t));
