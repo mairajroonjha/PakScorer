@@ -1128,10 +1128,13 @@
       <div class="sidebar-footer">
         <div id="adminProfile" style="display: none; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line);">
           <span style="font-size: 0.7rem; color: var(--cyan); text-transform: uppercase; font-weight: 800;">Logged in as</span>
-          <strong id="adminEmail" style="font-size: 0.85rem; word-break: break-all;">admin@pakscorer.com</strong>
+          <strong id="adminEmail" style="font-size: 0.85rem; word-break: break-all; display: block;">admin@pakscorer.com</strong>
           <button class="btn ghost" id="logoutBtn" style="padding: 4px 0; font-size: 0.75rem; color: var(--red); justify-content: flex-start; min-height: auto;">Logout</button>
         </div>
-        <button class="btn primary" id="showLoginBtn" style="width: 100%; margin-bottom: 12px;">Admin Login</button>
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+          <button class="btn primary" id="showLoginBtn" style="flex: 1;">Admin Login</button>
+          <button class="btn ghost" id="notifyBtn" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%;" title="Enable Notifications">🔔</button>
+        </div>
         <span>Live match</span>
         <strong id="miniScore">87/3</strong>
       </div>
@@ -3503,21 +3506,42 @@
       }
     }
 
+    function sendLocalNotification(title, body) {
+      if (!("Notification" in window)) return;
+      if (Notification.permission === "granted") {
+        new Notification(title, { 
+          body, 
+          icon: "https://vkgvqqvxkxvqvxkvqxkv.supabase.co/storage/v1/object/public/assets/cricket-ball.png" // Placeholder or app icon
+        });
+      }
+    }
+
+    async function requestNotificationPermission() {
+      if (!("Notification" in window)) return alert("This browser does not support notifications.");
+      const permission = await Notification.requestPermission();
+      const btn = document.querySelector("#notifyBtn");
+      if (permission === "granted") {
+        if (btn) btn.textContent = "🔕";
+        sendLocalNotification("Notifications Enabled", "You will now receive live match updates!");
+      }
+    }
+
     function setupRealtimeSubscriptions() {
       if (!state.usingDatabase) return;
       console.log("Setting up Realtime subscriptions...");
 
       supabase
         .channel('live-scoring')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'balls' }, payload => {
-          console.log("Ball change detected", payload);
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'balls' }, payload => {
+          console.log("Ball inserted", payload);
           if (publicActiveMatchId) renderPublicMatchDetail(publicActiveMatchId);
-          if (state.currentMatch) {
-             renderMatches();
+          
+          if (payload.new.is_wicket) {
+             const match = state.matches.find(m => String(m.id) === String(payload.new.match_id));
+             sendLocalNotification("🎾 WICKET!", `${payload.new.batter_name} is OUT! ${match ? `(${match.teamA} vs ${match.teamB})` : ""}`);
           }
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'innings' }, payload => {
-          console.log("Innings change detected", payload);
           if (publicActiveMatchId) renderPublicMatchDetail(publicActiveMatchId);
           renderPublicLiveView();
           if (state.currentMatch && String(payload.new.match_id) === String(state.currentMatch.id)) {
@@ -3527,10 +3551,19 @@
              renderScore();
           }
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, payload => {
-          console.log("Match change detected", payload);
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches' }, payload => {
+          console.log("Match updated", payload);
           renderPublicLiveView();
           renderMatches();
+
+          // Match Started
+          if (payload.new.status === 'Live' && payload.old.status !== 'Live') {
+             sendLocalNotification("🏏 Match Started!", `${payload.new.team_a} vs ${payload.new.team_b} is now LIVE!`);
+          }
+          // Match Completed
+          if (payload.new.status === 'Completed' && payload.old.status !== 'Completed') {
+             sendLocalNotification("🏆 Match Completed!", `${payload.new.team_a} vs ${payload.new.team_b}: ${payload.new.result_text}`);
+          }
         })
         .subscribe();
     }
@@ -4795,6 +4828,11 @@
       }
       updateAuthUI();
     });
+
+    document.querySelector("#notifyBtn").addEventListener("click", requestNotificationPermission);
+    if (Notification.permission === "granted") {
+      document.querySelector("#notifyBtn").textContent = "🔕";
+    }
 
     loadTeamsFromDatabase().then(async () => {
       if (state.usingDatabase) {
