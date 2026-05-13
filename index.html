@@ -1456,6 +1456,7 @@
         <div class="sub-nav" style="margin-bottom: 24px; display: flex; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 12px; overflow-x: auto;">
           <button class="btn primary sub-nav-btn active" data-tourney-sub="active">Active Tournaments</button>
           <button class="btn ghost sub-nav-btn" data-tourney-sub="standings">Standings</button>
+          <button class="btn ghost sub-nav-btn" data-tourney-sub="stats">Stats</button>
           <button class="btn ghost sub-nav-btn" data-tourney-sub="my">My Tournaments</button>
           <button class="btn ghost sub-nav-btn" data-tourney-sub="create">Create Tournament</button>
           <button class="btn ghost sub-nav-btn" data-tourney-sub="series">Manage Series</button>
@@ -1499,8 +1500,20 @@
                 <h2>Tournament Standings</h2>
                 <select id="standingsTournamentSelect" style="max-width: 250px; background: var(--bg-card); color: white; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px;"></select>
               </div>
-              <div class="panel-body" id="standingsTableContainer">
-                 <!-- Points table will be rendered here -->
+              <div id="standingsTableContainer" class="panel-body"></div>
+            </section>
+        </div>
+
+        <div id="tourney-sub-stats" class="tourney-sub-page">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Player Leaderboards</h2>
+                <select id="statsTournamentSelect" style="max-width: 250px; background: var(--bg-card); color: white; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px;"></select>
+              </div>
+              <div class="panel-body">
+                <div id="statsContainer" class="grid cols-2" style="gap: 24px;">
+                   <!-- Stats cards will be rendered here -->
+                </div>
               </div>
             </section>
         </div>
@@ -1717,6 +1730,7 @@
         if (target) target.classList.add("active");
 
         if (subId === "standings") renderStandingsUI();
+        if (subId === "stats") renderTournamentStatsUI();
       });
     });
 
@@ -2042,6 +2056,7 @@
       renderTournaments();
       renderMyTournaments();
       renderStandingsUI();
+      renderTournamentStatsUI();
       renderHomeTournaments();
     }
 
@@ -2675,7 +2690,7 @@
       const { data: matches, error } = await supabase
         .from("matches")
         .select("id")
-        .eq("tournamentId", tournamentId)
+        .eq("tournament_id", tournamentId)
         .eq("status", "Completed");
       
       if (error || !matches.length) return { batsmen: [], bowlers: [] };
@@ -2692,31 +2707,132 @@
       const bowlers = {};
 
       balls.forEach(ball => {
-        // Batting
+        // Batting stats
         if (!batsmen[ball.batter_name]) {
-          batsmen[ball.batter_name] = { name: ball.batter_name, runs: 0, balls: 0 };
+          batsmen[ball.batter_name] = { name: ball.batter_name, runs: 0, balls: 0, fours: 0, sixes: 0 };
         }
-        batsmen[ball.batter_name].runs += ball.runs_batter;
-        if (!ball.is_wide) batsmen[ball.batter_name].balls += 1;
+        batsmen[ball.batter_name].runs += (ball.runs_bat || 0);
+        if (ball.extra_type !== 'Wide') batsmen[ball.batter_name].balls += 1;
+        if (ball.runs_bat === 4) batsmen[ball.batter_name].fours += 1;
+        if (ball.runs_bat === 6) batsmen[ball.batter_name].sixes += 1;
 
-        // Bowling
+        // Bowling stats
         if (!bowlers[ball.bowler_name]) {
-          bowlers[ball.bowler_name] = { name: ball.bowler_name, wickets: 0, runs: 0, overs: 0, legal_balls: 0 };
+          bowlers[ball.bowler_name] = { name: ball.bowler_name, wickets: 0, runs: 0, legal_balls: 0 };
         }
-        if (ball.is_wicket && ball.wicket_type !== "run_out") bowlers[ball.bowler_name].wickets += 1;
-        bowlers[ball.bowler_name].runs += ball.runs_total;
-        if (!ball.is_wide && !ball.is_no_ball) bowlers[ball.bowler_name].legal_balls += 1;
+        if (ball.is_wicket && ball.wicket_type !== 'run_out') bowlers[ball.bowler_name].wickets += 1;
+        bowlers[ball.bowler_name].runs += (ball.runs_bat || 0) + (ball.extra_type === 'Wide' || ball.extra_type === 'No Ball' ? (ball.runs_extra || 0) : 0);
+        if (ball.extra_type !== 'Wide' && ball.extra_type !== 'No Ball') bowlers[ball.bowler_name].legal_balls += 1;
       });
 
       const topBatsmen = Object.values(batsmen)
-        .sort((a, b) => b.runs - a.runs)
-        .slice(0, 5);
+        .map(b => ({ ...b, sr: b.balls > 0 ? ((b.runs / b.balls) * 100).toFixed(1) : "0.0" }))
+        .sort((a, b) => b.runs - a.runs || b.sr - a.sr)
+        .slice(0, 10);
 
       const topBowlers = Object.values(bowlers)
-        .sort((a, b) => b.wickets - a.wickets || a.runs - b.runs)
-        .slice(0, 5);
+        .map(b => ({ ...b, econ: b.legal_balls > 0 ? (b.runs / (b.legal_balls / 6)).toFixed(2) : "0.00" }))
+        .sort((a, b) => b.wickets - a.wickets || a.econ - b.econ)
+        .slice(0, 10);
 
       return { batsmen: topBatsmen, bowlers: topBowlers };
+    }
+
+    async function renderTournamentStatsUI() {
+      const select = document.querySelector("#statsTournamentSelect");
+      const container = document.querySelector("#statsContainer");
+      if (!select || !container) return;
+
+      if (select.innerHTML === "") {
+        select.innerHTML = '<option value="">-- Select Tournament --</option>' + 
+          state.tournaments.map(t => `<option value="${t.id}">${t.name}</option>`).join("");
+        select.addEventListener("change", renderTournamentStatsUI);
+      }
+
+      const tourneyId = select.value;
+      if (!tourneyId) {
+        container.innerHTML = `<div class="card" style="grid-column: span 2; text-align:center; padding: 40px;">Select a tournament to view player leaderboards.</div>`;
+        return;
+      }
+
+      container.innerHTML = `<div style="grid-column: span 2; text-align:center; padding: 40px;"><div class="loader" style="margin:0 auto;"></div><p class="muted">Aggregating player stats...</p></div>`;
+
+      const stats = await calculateTournamentStats(tourneyId);
+
+      if (!stats.batsmen.length && !stats.bowlers.length) {
+        container.innerHTML = `<div class="card" style="grid-column: span 2; text-align:center; padding: 40px;">No match data available for this tournament yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="card" style="padding: 0; overflow: hidden; border: 1px solid var(--gold);">
+          <div style="background: linear-gradient(to right, var(--gold), #f39c12); color: #000; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+             <h3 style="margin:0; font-size: 1rem;">ORANGE CAP (Top Scorers)</h3>
+             <i class="icon">🏏</i>
+          </div>
+          <div style="padding: 12px;">
+             <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                <thead>
+                   <tr style="text-align: left; color: var(--muted); font-size: 0.7rem;">
+                      <th style="padding: 8px;">PLAYER</th>
+                      <th style="padding: 8px; text-align: center;">RUNS</th>
+                      <th style="padding: 8px; text-align: center;">SR</th>
+                      <th style="padding: 8px; text-align: center;">4s/6s</th>
+                   </tr>
+                </thead>
+                <tbody>
+                   ${stats.batsmen.map((b, i) => `
+                      <tr style="border-bottom: 1px solid var(--line);">
+                         <td style="padding: 10px 8px;">
+                            <div style="display:flex; align-items:center; gap: 8px;">
+                               <span style="font-weight:900; color:var(--gold); width:15px;">${i+1}</span>
+                               <strong>${b.name}</strong>
+                            </div>
+                         </td>
+                         <td style="padding: 10px 8px; text-align: center; font-weight: 800; color: var(--gold);">${b.runs}</td>
+                         <td style="padding: 10px 8px; text-align: center;" class="muted">${b.sr}</td>
+                         <td style="padding: 10px 8px; text-align: center;" class="muted">${b.fours}/${b.sixes}</td>
+                      </tr>
+                   `).join("")}
+                </tbody>
+             </table>
+          </div>
+        </div>
+
+        <div class="card" style="padding: 0; overflow: hidden; border: 1px solid var(--cyan);">
+          <div style="background: linear-gradient(to right, var(--cyan), #2980b9); color: #fff; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+             <h3 style="margin:0; font-size: 1rem;">PURPLE CAP (Top Wicket Takers)</h3>
+             <i class="icon">🎾</i>
+          </div>
+          <div style="padding: 12px;">
+             <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                <thead>
+                   <tr style="text-align: left; color: var(--muted); font-size: 0.7rem;">
+                      <th style="padding: 8px;">PLAYER</th>
+                      <th style="padding: 8px; text-align: center;">WKTS</th>
+                      <th style="padding: 8px; text-align: center;">ECON</th>
+                      <th style="padding: 8px; text-align: center;">RUNS</th>
+                   </tr>
+                </thead>
+                <tbody>
+                   ${stats.bowlers.map((b, i) => `
+                      <tr style="border-bottom: 1px solid var(--line);">
+                         <td style="padding: 10px 8px;">
+                            <div style="display:flex; align-items:center; gap: 8px;">
+                               <span style="font-weight:900; color:var(--cyan); width:15px;">${i+1}</span>
+                               <strong>${b.name}</strong>
+                            </div>
+                         </td>
+                         <td style="padding: 10px 8px; text-align: center; font-weight: 800; color: var(--cyan);">${b.wickets}</td>
+                         <td style="padding: 10px 8px; text-align: center;" class="muted">${b.econ}</td>
+                         <td style="padding: 10px 8px; text-align: center;" class="muted">${b.runs}</td>
+                      </tr>
+                   `).join("")}
+                </tbody>
+             </table>
+          </div>
+        </div>
+      `;
     }
 
     async function renderTournaments() {
