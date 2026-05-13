@@ -1683,11 +1683,12 @@
     
     // Global Error Handler for debugging
     window.onerror = function(msg, url, lineNo, columnNo, error) {
-      console.error(error);
+      console.error("PakScorer Error:", msg, "at line:", lineNo, error);
       const status = document.querySelector("#liveStatus");
+      const pill = document.querySelector(".status-pill");
       if (status) {
-        status.textContent = "Script Error: " + msg.split(":")[0];
-        document.querySelector(".status-pill").classList.add("warning");
+        status.textContent = "Error at line " + lineNo + ": " + msg.split(":")[0].replace("Uncaught ","");
+        if (pill) pill.classList.add("warning");
       }
       return false;
     };
@@ -4993,38 +4994,52 @@
     });
 
     // Initial Auth Check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        state.user = session.user;
-      }
+    if (supabase && supabase.auth) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          state.user = session.user;
+        }
+        updateAuthUI();
+      }).catch(err => {
+        console.warn("Session check failed", err);
+        updateAuthUI();
+      });
+    } else {
       updateAuthUI();
-    });
+    }
 
     document.querySelector("#notifyBtn").addEventListener("click", requestNotificationPermission);
     if (Notification.permission === "granted") {
       document.querySelector("#notifyBtn").textContent = "🔕";
     }
 
-    loadTeamsFromDatabase().then(async () => {
-      if (state.usingDatabase) {
-        setupRealtimeSubscriptions();
-        loadTournamentsFromDatabase().catch((error) => {
-          console.warn("Supabase tournaments unavailable:", error.message);
-          renderTournaments();
-        });
-      }
-    }).catch((error) => {
+    if (supabase) {
+      loadTeamsFromDatabase().then(async () => {
+        if (state.usingDatabase) {
+          setupRealtimeSubscriptions();
+          loadTournamentsFromDatabase().catch((error) => {
+            console.warn("Supabase tournaments unavailable:", error.message);
+            renderTournaments();
+          });
+        }
+      }).catch((error) => {
+        state.usingDatabase = false;
+        setDatabaseStatus("fallback", "Database Offline");
+        const loginBtn = document.querySelector("#showLoginBtn");
+        if (loginBtn) {
+          loginBtn.textContent = "Login (Local Mode)";
+          loginBtn.style.background = "linear-gradient(135deg, #666, #444)";
+        }
+        renderTeams();
+        console.warn("Supabase connection failed:", error.message);
+        renderTournaments();
+      });
+    } else {
       state.usingDatabase = false;
-      setDatabaseStatus("fallback", "Database Offline");
-      const loginBtn = document.querySelector("#showLoginBtn");
-      if (loginBtn) {
-        loginBtn.textContent = "Login (Local Mode)";
-        loginBtn.style.background = "linear-gradient(135deg, #666, #444)";
-      }
+      setDatabaseStatus("fallback", "Library Error");
       renderTeams();
-      console.warn("Supabase connection failed:", error.message);
       renderTournaments();
-    });
+    }
     document.addEventListener("submit", async (event) => {
       const quickAddForm = event.target.closest(".quick-add-player");
       if (quickAddForm) {
