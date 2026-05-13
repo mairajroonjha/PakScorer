@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   <style>
     :root {
       --bg: #050a0f;
@@ -1498,7 +1499,10 @@
             <section class="panel">
               <div class="panel-head">
                 <h2>Tournament Standings</h2>
-                <select id="standingsTournamentSelect" style="max-width: 250px; background: var(--bg-card); color: white; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px;"></select>
+                <div style="display:flex; gap: 8px; align-items: center;">
+                  <button class="btn ghost" style="font-size: 0.75rem; padding: 4px 10px;" onclick="captureElementAsImage('standingsTableContainer', 'PointsTable')">Download Image</button>
+                  <select id="standingsTournamentSelect" style="max-width: 250px; background: var(--bg-card); color: white; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px;"></select>
+                </div>
               </div>
               <div id="standingsTableContainer" class="panel-body"></div>
             </section>
@@ -1508,7 +1512,10 @@
             <section class="panel">
               <div class="panel-head">
                 <h2>Player Leaderboards</h2>
-                <select id="statsTournamentSelect" style="max-width: 250px; background: var(--bg-card); color: white; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px;"></select>
+                <div style="display:flex; gap: 8px; align-items: center;">
+                  <button class="btn ghost" style="font-size: 0.75rem; padding: 4px 10px;" onclick="captureElementAsImage('statsContainer', 'PlayerStats')">Download Image</button>
+                  <select id="statsTournamentSelect" style="max-width: 250px; background: var(--bg-card); color: white; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px;"></select>
+                </div>
               </div>
               <div class="panel-body">
                 <div id="statsContainer" class="grid cols-2" style="gap: 24px;">
@@ -1821,6 +1828,63 @@
     function isOwner(item) {
       if (!state.user || !item || !item.user_id) return false;
       return String(item.user_id) === String(state.user.id);
+    }
+
+    async function captureElementAsImage(elementId, fileName) {
+      const element = document.getElementById(elementId);
+      if (!element) return;
+
+      const btn = event ? event.currentTarget : null;
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Processing...";
+      }
+
+      try {
+        // Add temporary branding header
+        const posterHeader = document.createElement("div");
+        posterHeader.id = "temp-poster-header";
+        posterHeader.innerHTML = `
+          <div style="background: linear-gradient(135deg, #00ffa3 0%, #00f2ff 100%); color: #050a0f; padding: 24px; text-align: center; border-radius: 12px 12px 0 0; margin-bottom: 0; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+            <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: -0.02em; text-transform: uppercase;">PAKSCORER ELITE</h1>
+            <p style="margin: 4px 0 0; font-size: 14px; opacity: 0.8; font-weight: 600;">Tournament Highlights & Live Standings</p>
+          </div>
+        `;
+        
+        // Ensure element has a solid background and padding for the shot
+        const originalBg = element.style.background;
+        const originalPadding = element.style.padding;
+        
+        element.style.background = "#050a0f";
+        element.style.padding = "0"; // Header will handle top padding
+        element.prepend(posterHeader);
+
+        const canvas = await html2canvas(element, {
+          backgroundColor: "#050a0f",
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          allowTaint: true
+        });
+
+        // Cleanup
+        element.removeChild(posterHeader);
+        element.style.background = originalBg;
+        element.style.padding = originalPadding;
+
+        const link = document.createElement('a');
+        link.download = `${fileName}_${Date.now()}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      } catch (err) {
+        console.error("Capture failed:", err);
+        alert("Could not generate image. Make sure you are on a modern browser.");
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "Download Image";
+        }
+      }
     }
 
     function getMyTeams() {
