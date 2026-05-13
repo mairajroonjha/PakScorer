@@ -1169,6 +1169,15 @@
         <h2 id="authModalTitle" style="text-align: center; margin-bottom: 8px;">Admin Access</h2>
         <p id="authModalSubtitle" class="muted" style="text-align: center; margin-bottom: 24px;">Enter your credentials to unlock management tools.</p>
         <form id="loginForm" class="form-grid" style="grid-template-columns: 1fr;">
+          <button class="btn ghost" type="button" id="googleLoginBtn" style="height: 50px; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <span style="width: 22px; height: 22px; border-radius: 50%; background: white; color: #111; display: inline-flex; align-items: center; justify-content: center; font-weight: 900;">G</span>
+            Continue with Google
+          </button>
+          <div style="display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em;">
+            <span style="height: 1px; flex: 1; background: var(--line);"></span>
+            <span>Email</span>
+            <span style="height: 1px; flex: 1; background: var(--line);"></span>
+          </div>
           <label>
             Email address
             <input type="email" id="loginEmail" placeholder="name@example.com" required>
@@ -1930,6 +1939,21 @@
       state.user = data.user;
       updateAuthUI();
       return data;
+    }
+
+    async function handleGoogleLogin() {
+      if (!supabase || !supabase.auth) {
+        throw new Error("Supabase is not connected.");
+      }
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + window.location.pathname
+        }
+      });
+
+      if (error) throw error;
     }
 
     async function handleLogout() {
@@ -5025,6 +5049,30 @@
     if (logoutBtnEl) {
       logoutBtnEl.addEventListener("click", () => {
         handleLogout();
+      });
+    }
+
+    const googleLoginBtn = document.querySelector("#googleLoginBtn");
+    if (googleLoginBtn) {
+      googleLoginBtn.addEventListener("click", async () => {
+        const msg = document.querySelector("#loginMessage");
+        googleLoginBtn.disabled = true;
+        googleLoginBtn.textContent = "Opening Google...";
+        if (msg) {
+          msg.textContent = "";
+          msg.className = "form-message";
+        }
+
+        try {
+          await handleGoogleLogin();
+        } catch (error) {
+          if (msg) {
+            msg.textContent = "Google login failed: " + error.message;
+            msg.className = "form-message error";
+          }
+          googleLoginBtn.disabled = false;
+          googleLoginBtn.innerHTML = `<span style="width: 22px; height: 22px; border-radius: 50%; background: white; color: #111; display: inline-flex; align-items: center; justify-content: center; font-weight: 900;">G</span> Continue with Google`;
+        }
       });
     }
 
