@@ -1488,10 +1488,10 @@
           <button class="btn primary sub-nav-btn active" data-tourney-sub="active">Active Tournaments</button>
           <button class="btn ghost sub-nav-btn" data-tourney-sub="standings">Standings</button>
           <button class="btn ghost sub-nav-btn" data-tourney-sub="stats">Stats</button>
-          <button class="btn ghost sub-nav-btn" data-tourney-sub="my">My Tournaments</button>
-          <button class="btn ghost sub-nav-btn" data-tourney-sub="create">Create Tournament</button>
-          <button class="btn ghost sub-nav-btn" data-tourney-sub="series">Manage Series</button>
-          <button class="btn ghost sub-nav-btn" data-tourney-sub="applications">Applications</button>
+          <button class="btn ghost sub-nav-btn" data-tourney-sub="my" data-admin-only>My Tournaments</button>
+          <button class="btn ghost sub-nav-btn" data-tourney-sub="create" data-admin-only>Create Tournament</button>
+          <button class="btn ghost sub-nav-btn" data-tourney-sub="series" data-admin-only>Manage Series</button>
+          <button class="btn ghost sub-nav-btn" data-tourney-sub="applications" data-admin-only>Applications</button>
         </div>
 
         <div id="tourney-sub-active" class="tourney-sub-page active">
@@ -1842,10 +1842,19 @@
         document.querySelector("[data-page='home']").click();
       }
 
-      // Hide/Show admin-only elements (like create forms on public pages)
+      // Hide/Show admin-only elements
       document.querySelectorAll("[data-admin-only]").forEach(el => {
         el.style.display = user ? "" : "none";
       });
+
+      // Special handling for tournament sub-nav buttons
+      if (!user) {
+         // If a guest is on a restricted sub-page, move them to 'active'
+         const activeSubBtn = document.querySelector(".sub-nav-btn.active");
+         if (activeSubBtn && activeSubBtn.dataset.adminOnly !== undefined) {
+            document.querySelector("[data-tourney-sub='active']").click();
+         }
+      }
 
       // Trigger re-renders to show/hide owner-only buttons
       renderMatches();
@@ -2650,7 +2659,9 @@
             <span class="muted" style="font-size:0.75rem;">${match.status} · ${match.overs} overs · ${match.venue}</span>
             ${dateTime ? `<span style="color:var(--cyan);font-size:0.82rem;font-weight:800;">${dateTime}</span>` : ""}
           </div>
-          ${isOwner(match) ? `<button class="btn ghost danger" data-admin-only style="padding: 4px 8px; font-size: 0.75rem;" data-delete-match="${match.id}">Delete</button>` : ""}
+          <div style="display: flex; gap: 8px;">
+            <button class="btn ghost danger" data-admin-only style="padding: 4px 8px; font-size: 0.75rem;" data-delete-match="${match.id}">Delete</button>
+          </div>
         </li>
       `;
       }).join("") : `<li><strong>No scheduled matches yet</strong>${state.user ? '<span>Accept a request to create one</span>' : ''}</li>`;
@@ -2662,7 +2673,10 @@
             <strong>${match.teamA} vs ${match.teamB}</strong>
             <span class="muted" style="font-size:0.75rem;">${match.status} · ${match.venue}</span>
           </div>
-          ${isOwner(match) ? `<button class="btn ghost danger" data-admin-only style="padding: 4px 8px; font-size: 0.75rem;" data-delete-match="${match.id}">Delete</button>` : ""}
+          <div style="display: flex; gap: 8px;">
+             ${match.status === "Completed" ? `<button class="btn ghost" style="font-size: 0.75rem; padding: 4px 8px;" onclick="renderMatchSummary('${match.id}')">Highlights</button>` : ""}
+             <button class="btn ghost danger" data-admin-only style="padding: 4px 8px; font-size: 0.75rem;" data-delete-match="${match.id}">Delete</button>
+          </div>
         </li>
       `).join("") : `<li><strong>No match history</strong></li>`;
 
@@ -2735,6 +2749,92 @@
       } else {
         btn.textContent = "Start Match";
       }
+    }
+
+    async function renderMatchSummary(matchId) {
+       const match = state.matches.find(m => String(m.id) === String(matchId));
+       if (!match) return;
+
+       const modal = document.querySelector("#matchSummaryModal");
+       const content = document.querySelector("#highlightsContent");
+       if (!modal || !content) return;
+
+       modal.style.display = "flex";
+       content.innerHTML = `<div style="padding: 40px; text-align: center;"><div class="loader" style="margin: 0 auto;"></div><p class="muted">Generating highlights...</p></div>`;
+
+       // Load stats for this match
+       const { data: innings, error: innErr } = await supabase.from("innings").select("*").eq("match_id", match.id);
+       const { data: balls, error: ballErr } = await supabase.from("balls").select("*").eq("match_id", match.id);
+       
+       if (innErr || ballErr) {
+          content.innerHTML = `<div style="padding: 40px; text-align: center;">Error loading match data.</div>`;
+          return;
+       }
+
+       // Calculate top performers
+       const batters = {};
+       const bowlers = {};
+       balls.forEach(b => {
+          if (!batters[b.batter_name]) batters[b.batter_name] = { name: b.batter_name, runs: 0, balls: 0 };
+          batters[b.batter_name].runs += (b.runs_bat || 0);
+          if (b.extra_type !== 'Wide') batters[b.batter_name].balls += 1;
+
+          if (!bowlers[b.bowler_name]) bowlers[b.bowler_name] = { name: b.bowler_name, wickets: 0, runs: 0 };
+          if (b.is_wicket && b.wicket_type !== 'run_out') bowlers[b.bowler_name].wickets += 1;
+          bowlers[b.bowler_name].runs += (b.runs_bat || 0) + (b.extra_type === 'Wide' || b.extra_type === 'No Ball' ? (b.runs_extra || 0) : 0);
+       });
+
+       const topBatter = Object.values(batters).sort((a,b) => b.runs - a.runs)[0];
+       const topBowler = Object.values(bowlers).sort((a,b) => b.wickets - a.wickets || a.runs - b.runs)[0];
+
+       const inn1 = innings.find(i => i.innings_number === 1);
+       const inn2 = innings.find(i => i.innings_number === 2);
+
+       content.innerHTML = `
+          <div style="background: linear-gradient(135deg, #050a0f 0%, #111f2c 100%); padding: 0; min-height: 400px; color: white;">
+             <div style="background: linear-gradient(to right, #00ffa3, #00f2ff); padding: 30px; text-align: center; color: #000;">
+                <h1 style="margin: 0; font-size: 28px; font-weight: 900;">MATCH HIGHLIGHTS</h1>
+                <p style="margin: 4px 0 0; font-weight: 600; opacity: 0.8; text-transform: uppercase;">${match.venue} · ${match.match_date || "LIVE"}</p>
+             </div>
+
+             <div style="padding: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; border: 1px solid var(--line);">
+                   <div style="text-align: center; flex: 1;">
+                      <h2 style="margin: 0; font-size: 1.1rem; color: var(--muted); text-transform: uppercase;">${match.teamA}</h2>
+                      <div style="font-size: 1.8rem; font-weight: 900; color: white;">${inn1 ? inn1.runs : 0}/${inn1 ? inn1.wickets : 0}</div>
+                      <div class="muted" style="font-size: 0.75rem;">${inn1 ? (inn1.legal_balls / 6).toFixed(1) : 0} Overs</div>
+                   </div>
+                   <div style="padding: 0 20px; font-weight: 900; color: var(--gold); font-size: 1rem;">VS</div>
+                   <div style="text-align: center; flex: 1;">
+                      <h2 style="margin: 0; font-size: 1.1rem; color: var(--muted); text-transform: uppercase;">${match.teamB}</h2>
+                      <div style="font-size: 1.8rem; font-weight: 900; color: white;">${inn2 ? inn2.runs : 0}/${inn2 ? inn2.wickets : 0}</div>
+                      <div class="muted" style="font-size: 0.75rem;">${inn2 ? (inn2.legal_balls / 6).toFixed(1) : 0} Overs</div>
+                   </div>
+                </div>
+
+                <div style="background: rgba(0,255,163,0.1); padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 24px; border: 1px solid var(--green);">
+                   <h3 style="margin: 0; color: var(--green); font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">${match.result_text || "Match Completed"}</h3>
+                </div>
+
+                <div class="grid cols-2" style="gap: 16px;">
+                   <div class="card" style="background: rgba(255,255,255,0.03); border: 1px solid var(--gold); padding: 16px;">
+                      <div style="color: var(--gold); font-size: 0.7rem; font-weight: 900; margin-bottom: 6px; text-transform: uppercase;">Top Batter 🏏</div>
+                      <div style="font-size: 1rem; font-weight: 800;">${topBatter ? topBatter.name : "N/A"}</div>
+                      <div style="font-size: 1.3rem; font-weight: 900; color: var(--gold); margin-top: 4px;">${topBatter ? topBatter.runs : 0} <span style="font-size: 0.75rem; font-weight: 400; color: var(--muted);">Runs (${topBatter ? topBatter.balls : 0})</span></div>
+                   </div>
+                   <div class="card" style="background: rgba(255,255,255,0.03); border: 1px solid var(--cyan); padding: 16px;">
+                      <div style="color: var(--cyan); font-size: 0.7rem; font-weight: 900; margin-bottom: 6px; text-transform: uppercase;">Top Bowler 🎾</div>
+                      <div style="font-size: 1rem; font-weight: 800;">${topBowler ? topBowler.name : "N/A"}</div>
+                      <div style="font-size: 1.3rem; font-weight: 900; color: var(--cyan); margin-top: 4px;">${topBowler ? topBowler.wickets : 0} <span style="font-size: 0.75rem; font-weight: 400; color: var(--muted);">Wickets</span></div>
+                   </div>
+                </div>
+                
+                <div style="margin-top: 24px; text-align: center; opacity: 0.4; font-size: 0.6rem; letter-spacing: 2px;">
+                   POWERED BY PAKSCORER ELITE
+                </div>
+             </div>
+          </div>
+       `;
     }
 
     async function calculateStandings(tournamentId, groupFilter = "All") {
@@ -3080,16 +3180,18 @@
             <strong>${application.team}${application.tournamentName ? ` <span style="color:var(--muted);font-size:0.82rem;font-weight:600;">· ${application.tournamentName}</span>` : ""}</strong>
             <span>
               <span class="tag ${application.status === "Approved" ? "green" : application.status === "Rejected" ? "red" : "gold"}">${application.status}</span>
-              ${application.status === "Pending" && isOwner(tournament) ? `
-                <select id="group-assign-${application.id}" style="font-size: 0.7rem; padding: 2px 4px; background: var(--surface); color: white; border: 1px solid var(--line); margin-left: 8px;">
-                   <option value="A">Group A</option>
-                   <option value="B">Group B</option>
-                   <option value="C">Group C</option>
-                   <option value="D">Group D</option>
-                </select>
-                <button class="btn ghost" onclick="approveWithGroup('${application.id}', '${index}')" style="margin-left: 8px;">Approve</button>
-                <button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem; margin-left: 8px;" data-reject-app="${application.id}">Reject</button>
-              ` : ""}
+              <span data-admin-only>
+                ${application.status === "Pending" ? `
+                  <select id="group-assign-${application.id}" style="font-size: 0.7rem; padding: 2px 4px; background: var(--surface); color: white; border: 1px solid var(--line); margin-left: 8px;">
+                     <option value="A">Group A</option>
+                     <option value="B">Group B</option>
+                     <option value="C">Group C</option>
+                     <option value="D">Group D</option>
+                  </select>
+                  <button class="btn ghost" onclick="approveWithGroup('${application.id}', '${index}')" style="margin-left: 8px;">Approve</button>
+                  <button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem; margin-left: 8px;" data-reject-app="${application.id}">Reject</button>
+                ` : ""}
+              </span>
             </span>
           </li>
         `;
