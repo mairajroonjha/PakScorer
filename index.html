@@ -1328,14 +1328,23 @@
               <label>Select Match
                 <select id="scoringMatchSelect"><option value="">-- Select a match --</option></select>
               </label>
-              <div style="display:flex; gap:8px; flex-wrap: wrap;">
-                <button class="btn primary" id="startMatchBtn" style="flex: 1; min-width: 140px;">Start/Resume</button>
-                <button class="btn" id="cancelMatchBtn" style="flex: 1;">Cancel</button>
-                <button class="btn danger" id="endMatchBtn" style="flex: 1;">End Match</button>
+              
+              <div id="squadSetup" style="display: none; flex-direction: column; gap: 20px; margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--line);">
+                 <h3>Select Playing XI</h3>
+                 <div class="grid cols-2" style="gap: 20px;">
+                    <div id="teamASquad" class="card" style="padding: 12px;">
+                       <h4 id="teamANameHeader">Team A</h4>
+                       <div id="teamAList" style="display: flex; flex-direction: column; gap: 4px; margin-top: 10px; max-height: 300px; overflow-y: auto;"></div>
+                    </div>
+                    <div id="teamBSquad" class="card" style="padding: 12px;">
+                       <h4 id="teamBNameHeader">Team B</h4>
+                       <div id="teamBList" style="display: flex; flex-direction: column; gap: 4px; margin-top: 10px; max-height: 300px; overflow-y: auto;"></div>
+                    </div>
+                 </div>
+                 <p class="muted" style="font-size: 0.8rem;">Select the players for each team to proceed.</p>
               </div>
-            </div>
-            
-            <div id="tossSetup" class="form-grid" style="display: none; padding-top: 16px; border-top: 1px solid var(--border);">
+
+              <div id="tossSetup" class="form-grid" style="display: none; padding-top: 16px; border-top: 1px solid var(--border);">
               <label>Toss Winner
                 <select id="tossWinnerSelect">
                   <option value="">-- Select Winner --</option>
@@ -1348,6 +1357,14 @@
                 </select>
               </label>
             </div>
+
+              <div style="display:flex; gap:8px; flex-wrap: wrap;">
+                <button class="btn primary" id="startMatchBtn" style="flex: 1; min-width: 140px;">Start/Resume</button>
+                <button class="btn" id="cancelMatchBtn" style="flex: 1;">Cancel</button>
+                <button class="btn danger" id="endMatchBtn" style="flex: 1;">End Match</button>
+              </div>
+            </div>
+            
           </div>
         </section>
 
@@ -2306,7 +2323,7 @@
           match_time: request.matchTime || null,
           tournament_id: request.tournamentId || null,
           series_id: request.seriesId || null,
-          user_id: state.user?.id
+          user_id: state.user?.id || null
         })
         .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date,match_time,tournament_id,series_id,user_id")
         .single();
@@ -2912,7 +2929,7 @@
       } else {
         const cards = await Promise.all(state.tournaments.map(async (tournament) => {
           const tournamentMatches = state.matches.filter(m => m.tournamentId === tournament.id);
-          const standings = calculateStandings(tournament.id);
+          const standings = await calculateStandings(tournament.id);
 
           const standingsHtml = standings.length ? `
             <div style="margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px;">
@@ -3010,7 +3027,7 @@
         tournamentListEl.innerHTML = cards.join("");
       }
 
-      document.querySelector("#applicationCount").textContent = `${state.applications.length} team${state.applications.length !== 1 ? "s" : ""}`;
+      document.querySelector("#applicationCountDisplay").textContent = `${state.applications.length} team${state.applications.length !== 1 ? "s" : ""}`;
       document.querySelector("#applicationList").innerHTML = state.applications.length ? state.applications.map((application, index) => {
         const tournament = state.tournaments.find(t => t.id === application.tournamentId);
         return `
@@ -3149,6 +3166,32 @@
       }
     }
 
+    async function renderSquadSelector(match) {
+      const squadSetup = document.querySelector("#squadSetup");
+      const teamAList = document.querySelector("#teamAList");
+      const teamBList = document.querySelector("#teamBList");
+      
+      document.querySelector("#teamANameHeader").textContent = match.teamA;
+      document.querySelector("#teamBNameHeader").textContent = match.teamB;
+      
+      squadSetup.style.display = "flex";
+      teamAList.innerHTML = "Loading...";
+      teamBList.innerHTML = "Loading...";
+
+      const pA = state.players.filter(p => String(p.team_id) === String(match.teamAId));
+      const pB = state.players.filter(p => String(p.team_id) === String(match.teamBId));
+
+      const renderPlayerRow = (p) => `
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; padding: 4px; cursor: pointer;">
+           <input type="checkbox" name="playingXI" data-player-id="${p.id}" data-team-id="${p.team_id}" checked />
+           ${p.name}
+        </label>
+      `;
+
+      teamAList.innerHTML = pA.length ? pA.map(renderPlayerRow).join("") : "No players found";
+      teamBList.innerHTML = pB.length ? pB.map(renderPlayerRow).join("") : "No players found";
+    }
+
     async function generateTournamentFixtures(tournamentId) {
       const approvedApps = state.applications.filter(app => app.tournamentId === tournamentId && app.status === "Approved");
       if (approvedApps.length < 2) {
@@ -3180,7 +3223,7 @@
             venue: tournament.venue || "Tournament Ground",
             overs: tournament.overs || 20,
             status: "Scheduled",
-            user_id: state.user?.id
+            user_id: state.user?.id || null
           };
           
           if (state.usingDatabase) {
@@ -3198,6 +3241,7 @@
         renderMatches();
         alert("Fixtures generated successfully!");
       } catch (error) {
+        console.error("Fixture generation failed", error);
       }
     }
 
@@ -3423,8 +3467,6 @@
           console.log("Ball change detected", payload);
           if (publicActiveMatchId) renderPublicMatchDetail(publicActiveMatchId);
           if (state.currentMatch) {
-             // For the scorer, we could sync if needed, but they have local state.
-             // We'll at least refresh the matches list.
              renderMatches();
           }
         })
@@ -3433,7 +3475,6 @@
           if (publicActiveMatchId) renderPublicMatchDetail(publicActiveMatchId);
           renderPublicLiveView();
           if (state.currentMatch && String(payload.new.match_id) === String(state.currentMatch.id)) {
-             // Sync scorer state if someone else updated it
              state.score.runs = payload.new.runs;
              state.score.wickets = payload.new.wickets;
              state.score.legalBalls = payload.new.legal_balls;
@@ -4183,8 +4224,10 @@
           <option value="${match.teamAId}">${match.teamA}</option>
           <option value="${match.teamBId}">${match.teamB}</option>
         `;
+        renderSquadSelector(match);
       } else {
         tossSetup.style.display = "none";
+        document.querySelector("#squadSetup").style.display = "none";
       }
     });
 
@@ -4204,10 +4247,24 @@
       let battingFirstId = null;
 
       if (match.status !== "Live") {
+        const selectedXI = Array.from(document.querySelectorAll("input[name='playingXI']:checked"));
+        if (selectedXI.length === 0) return alert("Please select some players for the match.");
+
         tossWinnerId = document.querySelector("#tossWinnerSelect").value;
         const tossDecision = document.querySelector("#tossDecisionSelect").value;
         
         if (!tossWinnerId) return alert("Please select the Toss Winner before starting the match.");
+
+        // Save Playing XI to database
+        if (state.usingDatabase) {
+           const matchPlayers = selectedXI.map(el => ({
+              match_id: match.id,
+              player_id: el.dataset.playerId,
+              player_name: el.parentElement.textContent.trim(),
+              team_id: el.dataset.teamId
+           }));
+           await supabase.from("match_players").insert(matchPlayers);
+        }
 
         if ((tossWinnerId === String(match.teamAId) && tossDecision === "Bat") || (tossWinnerId === String(match.teamBId) && tossDecision === "Bowl")) {
           battingFirstId = match.teamAId;
