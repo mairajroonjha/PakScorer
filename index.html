@@ -1195,7 +1195,7 @@
           <h1 id="pageTitle">Dashboard</h1>
           <p id="pageSubtitle">Foundation prototype for teams, requests, scoring, and tournaments.</p>
         </div>
-        <div class="status-pill"><span class="dot"></span><span id="liveStatus">Live prototype</span></div>
+        <div class="status-pill warning"><span class="dot"></span><span id="liveStatus">Connecting...</span></div>
       </header>
 
       <section class="page active" id="home">
@@ -1680,7 +1680,24 @@
 
     const SUPABASE_URL = "https://sbmraxcazwsmcyyavqjv.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_aWDK6-aSBreRPSU5Qp9kRw_A-IuRT3x";
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // Global Error Handler for debugging
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+      console.error(error);
+      const status = document.querySelector("#liveStatus");
+      if (status) {
+        status.textContent = "Script Error: " + msg.split(":")[0];
+        document.querySelector(".status-pill").classList.add("warning");
+      }
+      return false;
+    };
+
+    let supabase;
+    try {
+      supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch (e) {
+      console.error("Supabase Init Error:", e);
+    }
 
     const pages = {
       home: ["Home", "Your central hub for local cricket activity."],
