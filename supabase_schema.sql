@@ -4,6 +4,19 @@
 
 create extension if not exists pgcrypto;
 
+-- Auth profile data shown after login
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  display_name text not null default 'PakScorer User',
+  phone text,
+  city text,
+  avatar_url text,
+  bio text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 -- Core teams
 create table if not exists public.teams (
   id uuid primary key default gen_random_uuid(),
@@ -20,7 +33,10 @@ on public.teams (lower(trim(name)));
 
 alter table public.teams
   add column if not exists logo_url text,
-  add column if not exists user_id uuid references auth.users(id);
+  add column if not exists user_id uuid references auth.users(id),
+  add column if not exists deleted_at timestamptz,
+  add column if not exists founded_date date,
+  add column if not exists description text;
 
 -- Team players
 create table if not exists public.players (
@@ -50,6 +66,9 @@ alter table public.players
   add column if not exists bowling_style text,
   add column if not exists is_captain boolean not null default false,
   add column if not exists is_wicketkeeper boolean not null default false,
+  add column if not exists photo_url text,
+  add column if not exists age integer,
+  add column if not exists deleted_at timestamptz,
   add column if not exists balls_faced integer not null default 0,
   add column if not exists innings_played integer not null default 0,
   add column if not exists runs_conceded integer not null default 0,
@@ -120,7 +139,11 @@ on public.matches (status);
 
 alter table public.matches
   add column if not exists match_time time,
-  add column if not exists user_id uuid references auth.users(id);
+  add column if not exists user_id uuid references auth.users(id),
+  add column if not exists match_days integer default 1,
+  add column if not exists innings_per_team integer default 1 check (innings_per_team in (1, 2)),
+  add column if not exists is_tape_ball boolean default false,
+  add column if not exists format text default 'T20';
 
 -- Playing XI for match setup
 create table if not exists public.match_players (
@@ -157,6 +180,16 @@ create table if not exists public.innings (
 
 create unique index if not exists innings_match_number_unique
 on public.innings (match_id, innings_number);
+
+alter table public.innings drop constraint if exists innings_innings_number_check;
+alter table public.innings
+  add constraint innings_innings_number_check check (innings_number between 1 and 4);
+
+alter table public.innings
+  add column if not exists current_striker_id uuid references public.players(id),
+  add column if not exists current_non_striker_id uuid references public.players(id),
+  add column if not exists current_bowler_id uuid references public.players(id),
+  add column if not exists free_hit_next boolean default false;
 
 -- Ball-by-ball scoring source of truth
 create table if not exists public.balls (
@@ -402,8 +435,22 @@ create unique index if not exists match_scorers_match_email_unique
 on public.match_scorers (match_id, lower(email))
 where email is not null;
 
+-- In-app notifications
+create table if not exists public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  type text not null,
+  payload jsonb not null default '{}'::jsonb,
+  read_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists notifications_user_read_idx
+on public.notifications (user_id, read_at);
+
 -- Row level security for browser prototype.
 -- Later, replace insert/update/delete policies with authenticated role-based policies.
+alter table public.profiles enable row level security;
 alter table public.teams enable row level security;
 alter table public.players enable row level security;
 alter table public.match_requests enable row level security;
@@ -422,12 +469,14 @@ alter table public.series enable row level security;
 alter table public.team_admins enable row level security;
 alter table public.tournament_admins enable row level security;
 alter table public.match_scorers enable row level security;
+alter table public.notifications enable row level security;
 
 do $$
 declare
   table_name text;
 begin
   foreach table_name in array array[
+    'profiles',
     'teams',
     'players',
     'match_requests',
@@ -445,7 +494,8 @@ begin
     'series',
     'team_admins',
     'tournament_admins',
-    'match_scorers'
+    'match_scorers',
+    'notifications'
   ]
   loop
     execute format('drop policy if exists "Prototype read %1$s" on public.%1$I', table_name);

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -279,20 +279,20 @@
     .is-authenticated [data-auth-only] {
       display: flex !important;
     }
-    
+
     .is-admin [data-admin-only] {
       display: block !important;
     }
-    
+
     .is-admin .grid[data-admin-only] {
       display: grid !important;
     }
-    
+
     .is-admin button[data-admin-only],
     .is-admin .btn[data-admin-only] {
       display: inline-flex !important;
     }
-    
+
     .is-admin li[data-admin-only],
     .is-admin .feed li[data-admin-only] {
       display: flex !important;
@@ -887,7 +887,7 @@
       }
     }
 
-    /* ── Tablet: sidebar collapses above content ── */
+    /* â”€â”€ Tablet: sidebar collapses above content â”€â”€ */
     @media (max-width: 1040px) {
       .split,
       .grid.cols-2,
@@ -896,7 +896,7 @@
       }
     }
 
-    /* ── Mobile: sidebar becomes a fixed bottom tab bar ── */
+    /* â”€â”€ Mobile: sidebar becomes a fixed bottom tab bar â”€â”€ */
     @media (max-width: 768px) {
       .app {
         display: block; /* single column, sidebar goes fixed */
@@ -969,7 +969,7 @@
         transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, color 0.2s;
         transform-style: preserve-3d;
       }
-      
+
       /* Make sure text doesn't overflow container */
       .nav button span:not(.nav-icon),
       #mobileProfileLabel {
@@ -987,7 +987,7 @@
       /* Active styling */
       .nav button:hover,
       .nav button.active {
-        background: rgba(0, 242, 255, 0.1); 
+        background: rgba(0, 242, 255, 0.1);
         color: var(--cyan);
       }
 
@@ -1015,7 +1015,7 @@
         color: var(--cyan);
         cursor: pointer;
       }
-      
+
       #mobileProfileBtn:hover { background: rgba(0,242,255,0.08); }
       #mobileProfileBtn .nav-icon {
         background: transparent;
@@ -1028,7 +1028,7 @@
         background: transparent;
         color: var(--green);
       }
-      
+
       /* Auth Tabs */
       .auth-tabs {
         display: flex;
@@ -1037,7 +1037,7 @@
         border-bottom: 1px solid var(--line);
         padding-bottom: 8px;
       }
-      
+
       .auth-tabs button {
         flex: 1;
         padding: 12px;
@@ -1049,13 +1049,13 @@
         text-transform: uppercase;
         letter-spacing: 0.05em;
       }
-      
+
       .auth-tabs button.active {
         color: var(--cyan);
         border-color: var(--cyan);
         background: rgba(0, 242, 255, 0.05);
       }
-      
+
       .auth-tabs button:hover:not(.active) {
         color: var(--text);
         background: rgba(255, 255, 255, 0.05);
@@ -1082,7 +1082,7 @@
       }
 
       .form-grid { grid-template-columns: 1fr; }
-      
+
       /* Fix Scoring Button Overflow */
       #scoring .panel-body .form-grid div[style*="display:flex"] {
         flex-wrap: wrap;
@@ -1385,7 +1385,7 @@
         <button data-page="profile" data-auth-only><span class="nav-icon">P</span>Profile</button>
         <button data-page="requests" data-admin-only><span class="nav-icon">R</span>Requests</button>
         <button data-page="scoring" data-admin-only><span class="nav-icon">S</span>Scoring</button>
-        <button data-page="tournaments"><span class="nav-icon">🏆</span>Tournaments</button>
+        <button data-page="tournaments"><span class="nav-icon">ðŸ†</span>Tournaments</button>
         <button data-page="public"><span class="nav-icon">L</span>Live View</button>
 
         <!-- Mobile-only Profile tab in the bottom bar -->
@@ -1403,7 +1403,7 @@
         </div>
         <div style="display: flex; gap: 8px; margin-bottom: 0; position: relative; z-index: 100;">
           <button class="btn primary" id="showLoginBtn" style="flex: 1; padding: 12px; font-weight: 900; letter-spacing: 0.02em; cursor: pointer !important; pointer-events: auto !important;">Login / Sign Up</button>
-          <button class="btn ghost" id="notifyBtn" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%;" title="Enable Notifications">🔔</button>
+          <button class="btn ghost" id="notifyBtn" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%;" title="Enable Notifications">ðŸ””</button>
         </div>
       </div>
     </aside>
@@ -1411,7 +1411,7 @@
     <!-- Login/Sign Up Modal -->
     <div id="matchSummaryModal" class="modal" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 100;">
            <div class="modal-content" style="max-width: 600px; padding: 0; background: var(--bg); overflow: hidden; position: relative; border-radius: 20px;">
-              <button class="btn ghost" style="position: absolute; top: 10px; right: 10px; z-index: 10; border-radius: 50%; width: 40px; height: 40px; padding: 0;" onclick="document.querySelector('#matchSummaryModal').style.display='none'">✕</button>
+              <button class="btn ghost" style="position: absolute; top: 10px; right: 10px; z-index: 10; border-radius: 50%; width: 40px; height: 40px; padding: 0;" onclick="document.querySelector('#matchSummaryModal').style.display='none'">âœ•</button>
               <div id="highlightsContent"></div>
               <div style="padding: 20px; display: flex; gap: 12px; border-top: 1px solid var(--line);">
                  <button class="btn primary" style="flex: 1;" onclick="captureElementAsImage('highlightsContent', 'MatchHighlights')">Download Image</button>
@@ -1422,7 +1422,7 @@
     <div id="loginModal" class="modal-overlay" style="display: none;">
       <div class="modal-content glass">
         <div class="mark" style="margin: 0 auto 20px;">PS</div>
-        
+
         <div class="auth-tabs" id="authTabs">
           <button class="active" data-mode="login">Login</button>
           <button data-mode="signup">Sign Up</button>
@@ -1446,7 +1446,7 @@
           </label>
           <label>
             Password
-            <input type="password" id="loginPassword" placeholder="••••••••" required>
+            <input type="password" id="loginPassword" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required>
           </label>
           <div style="display: grid; gap: 10px; margin-top: 10px;">
             <button class="btn primary" type="submit" id="authSubmitBtn" style="height: 50px; font-size: 1rem;">Unlock Dashboard</button>
@@ -1457,6 +1457,24 @@
         <div style="text-align: center; margin-top: 16px; border-top: 1px solid var(--line); padding-top: 16px;">
           <p id="authTogglePrompt" class="muted" style="font-size: 0.85rem;">Don't have an account? <a href="#" id="authToggleButton" style="color: var(--cyan); font-weight: 800; text-decoration: none;">Sign Up</a></p>
         </div>
+      </div>
+    </div>
+
+    <div id="editTeamModal" class="modal-overlay" style="display: none;">
+      <div class="modal-content glass">
+        <h2 style="text-align: center; margin-bottom: 24px;">Edit Team Details</h2>
+        <form id="editTeamForm" class="grid">
+          <input type="hidden" id="editTeamId">
+          <label>Team Name <input id="editTeamName" required></label>
+          <label>City <input id="editTeamCity" required></label>
+          <label>Captain <input id="editTeamCaptain" required></label>
+          <label>Logo URL <input id="editTeamLogo" placeholder="https://..."></label>
+          <div class="grid cols-2" style="margin-top: 10px;">
+            <button class="btn primary" type="submit">Save Changes</button>
+            <button class="btn ghost" type="button" onclick="document.getElementById('editTeamModal').style.display='none'">Cancel</button>
+          </div>
+        </form>
+        <p id="editTeamMessage" class="form-message" style="margin-top: 16px; text-align: center;"></p>
       </div>
     </div>
 
@@ -1587,6 +1605,7 @@
           <button class="btn primary btn-sm sub-nav-btn active" data-sub="profiles">Team Profiles</button>
           <button class="btn ghost btn-sm sub-nav-btn" data-sub="create" data-auth-only>Create New Team</button>
           <button class="btn ghost btn-sm sub-nav-btn" data-sub="fixtures">Scheduled Matches</button>
+          <button class="btn ghost btn-sm sub-nav-btn" data-sub="admins" data-auth-only>Manage Access</button>
         </div>
 
         <div id="sub-profiles" class="sub-page active">
@@ -1625,6 +1644,46 @@
             </div>
             <div class="panel-body">
               <ul class="feed" id="scheduledMatchList"></ul>
+            </div>
+          </section>
+        </div>
+
+        <div id="sub-admins" class="sub-page">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Team Access Control</h2>
+              <span>Only the team owner can manage admins</span>
+            </div>
+            <div class="panel-body grid">
+              <label>Select Team to Manage
+                <select id="adminManageTeamSelect"><option value="">-- Select Team --</option></select>
+              </label>
+
+              <div id="teamAdminsListContainer" style="display: none; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--line);">
+                <div class="grid cols-2">
+                  <section>
+                    <h3 style="margin-bottom: 16px;">Current Admins</h3>
+                    <ul class="feed" id="teamAdminsList"></ul>
+                  </section>
+
+                  <section class="card" style="background: rgba(255,255,255,0.02);">
+                    <h3 style="margin-bottom: 16px;">Add New Admin</h3>
+                    <form id="addTeamAdminForm" class="grid">
+                      <label>Email Address
+                        <input id="newAdminEmail" type="email" placeholder="email@example.com" required>
+                      </label>
+                      <label>Role
+                        <select id="newAdminRole">
+                          <option value="co_admin">Co-Admin</option>
+                          <option value="owner">Owner</option>
+                        </select>
+                      </label>
+                      <button class="btn primary" type="submit">Invite/Add Admin</button>
+                    </form>
+                    <p class="form-message" id="adminActionMessage" style="margin-top: 12px;"></p>
+                  </section>
+                </div>
+              </div>
             </div>
           </section>
         </div>
@@ -1675,7 +1734,7 @@
               <label>Select Match
                 <select id="scoringMatchSelect"><option value="">-- Select a match --</option></select>
               </label>
-              
+
               <div id="squadSetup" style="display: none; flex-direction: column; gap: 20px; margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--line);">
                  <h3>Select Playing XI</h3>
                  <div class="grid cols-2" style="gap: 20px;">
@@ -1711,7 +1770,7 @@
                 <button class="btn danger" id="endMatchBtn" style="flex: 1;">End Match</button>
               </div>
             </div>
-            
+
           </div>
         </section>
 
@@ -1815,9 +1874,6 @@
                   <div id="fallOfWickets" class="grid" style="gap: 6px; margin-top: 10px;"></div>
                 </div>
               </div>
-            </div>
-          </section>
-        </div>
       </section>
 
       <section class="page" id="public">
@@ -2045,7 +2101,7 @@
                 </div>
                 <div class="panel-body grid" id="seriesList"></div>
              </section>
-             
+
              <section class="panel" data-admin-only>
                 <div class="panel-head">
                   <h2>Create New Series</h2>
@@ -2103,7 +2159,7 @@
 
     const SUPABASE_URL = "https://sbmraxcazwsmcyyavqjv.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNibXJheGNhendzbWN5eWF2cWp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0ODY4ODQsImV4cCI6MjA5NDA2Mjg4NH0.dSwT0K7lmk_GuFpHvSrdDd42rUv5MUTVrmJNC1E0xg0";
-    
+
     // Global Error Handler for debugging
     window.onerror = function(msg, url, lineNo, columnNo, error) {
       console.error("PakScorer Error:", msg, "at line:", lineNo, error);
@@ -2160,6 +2216,8 @@
       tournaments: [],
       applications: [],
       series: [],
+      profile: null,
+      notifications: [],
       teamAdmins: [],
       tournamentAdmins: [],
       matchScorers: [],
@@ -2205,7 +2263,7 @@
         button.classList.add("active");
         const targetPage = document.querySelector(`#${page}`);
         if (targetPage) targetPage.classList.add("active");
-        
+
         if (title) title.textContent = pages[page][0];
         if (subtitle) subtitle.textContent = pages[page][1];
 
@@ -2240,7 +2298,7 @@
         const parentPage = btn.closest(".page");
         const subPageType = btn.dataset.sub ? "sub" : "tourney-sub";
         const subId = btn.dataset.sub || btn.dataset.tourneySub;
-        
+
         parentPage.querySelectorAll(".sub-page, .tourney-sub-page").forEach(p => p.classList.remove("active"));
         const target = document.getElementById(`${subPageType}-${subId}`);
         if (target) target.classList.add("active");
@@ -2270,7 +2328,7 @@
       const adminProfile = document.querySelector("#adminProfile");
       const showLoginBtn = document.querySelector("#showLoginBtn");
       const adminEmail = document.querySelector("#adminEmail");
-      
+
       const mobileProfileBtn = document.querySelector("#mobileProfileBtn");
       document.querySelectorAll("[data-auth-only]").forEach(el => {
         el.style.display = user ? "" : "none";
@@ -2293,6 +2351,14 @@
           if (label) label.textContent = "Logout";
           if (icon) icon.innerHTML = "&#10006;"; /* X icon */
         }
+
+        // Populate team management dropdown
+        const adminSelect = document.querySelector("#adminManageTeamSelect");
+        if (adminSelect) {
+          const ownedTeams = state.teams.filter(t => isOwner(t));
+          adminSelect.innerHTML = '<option value="">-- Select Team --</option>' +
+            ownedTeams.map(t => `<option value="${t.id}">${t.name}</option>`).join("");
+        }
       } else {
         document.body.classList.remove("is-authenticated");
         if (adminProfile) adminProfile.style.display = "none";
@@ -2306,7 +2372,7 @@
           if (icon) icon.innerHTML = "&#128100;"; /* User icon */
         }
       }
-      
+
       const restrictedPages = ["requests", "scoring"];
       document.querySelectorAll(".nav button").forEach(btn => {
         const page = btn.dataset.page;
@@ -2319,7 +2385,7 @@
           btn.style.display = user ? "flex" : "none";
         }
       });
-      
+
       const activePageEl = document.querySelector(".page.active");
       const activePage = activePageEl ? activePageEl.id : "dashboard";
       if (!user && restrictedPages.includes(activePage)) {
@@ -2374,6 +2440,8 @@
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       state.user = data.user;
+      await loadProfileFromDatabase();
+      await loadNotificationsFromDatabase();
       updateAuthUI();
       return data;
     }
@@ -2396,7 +2464,10 @@
     async function handleLogout() {
       await supabase.auth.signOut();
       state.user = null;
+      state.profile = null;
+      state.notifications = [];
       updateAuthUI();
+      updateNotificationBadge();
     }
 
     function isAdmin() {
@@ -2531,6 +2602,11 @@
     }
 
     function getUserProfile() {
+      if (state.profile) return state.profile;
+      return getLocalProfile();
+    }
+
+    function getLocalProfile() {
       try {
         return JSON.parse(localStorage.getItem(storageKey("profile")) || "{}");
       } catch {
@@ -2538,9 +2614,83 @@
       }
     }
 
-    function saveUserProfile(profile) {
+    function saveLocalProfile(profile) {
       localStorage.setItem(storageKey("profile"), JSON.stringify(profile));
-      addRoleHistory("Profile updated", profile.city ? `City: ${profile.city}` : "Basic profile saved");
+    }
+
+    function mapProfileRow(row = {}) {
+      return {
+        name: row.display_name || "",
+        phone: row.phone || "",
+        city: row.city || "",
+        avatar: row.avatar_url || "",
+        bio: row.bio || "",
+        email: row.email || state.user?.email || ""
+      };
+    }
+
+    async function loadProfileFromDatabase() {
+      if (!state.user) {
+        state.profile = null;
+        return;
+      }
+
+      const fallback = getLocalProfile();
+      if (!state.usingDatabase) {
+        state.profile = fallback;
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id,email,display_name,phone,city,avatar_url,bio")
+          .eq("id", state.user.id)
+          .maybeSingle();
+
+        if (error) throw error;
+        if (data) {
+          state.profile = mapProfileRow(data);
+          saveLocalProfile(state.profile);
+          return;
+        }
+
+        const starterProfile = {
+          name: fallback.name || state.user.email?.split("@")[0] || "PakScorer User",
+          phone: fallback.phone || "",
+          city: fallback.city || "",
+          avatar: fallback.avatar || "",
+          bio: fallback.bio || "",
+          email: state.user.email || fallback.email || ""
+        };
+        await saveUserProfile(starterProfile, { silent: true });
+      } catch (error) {
+        console.warn("Profile table unavailable:", error.message);
+        state.profile = fallback;
+      }
+    }
+
+    async function saveUserProfile(profile, options = {}) {
+      state.profile = profile;
+      saveLocalProfile(profile);
+
+      if (state.user && state.usingDatabase) {
+        const { error } = await supabase.from("profiles").upsert({
+          id: state.user.id,
+          email: state.user.email || profile.email || null,
+          display_name: profile.name || state.user.email?.split("@")[0] || "PakScorer User",
+          phone: profile.phone || null,
+          city: profile.city || null,
+          avatar_url: profile.avatar || null,
+          bio: profile.bio || null,
+          updated_at: new Date().toISOString()
+        });
+        if (error) throw error;
+      }
+
+      if (!options.silent) {
+        addRoleHistory("Profile updated", profile.city ? `City: ${profile.city}` : "Basic profile saved");
+      }
     }
 
     function getRoleHistory() {
@@ -2556,6 +2706,68 @@
       const history = getRoleHistory();
       history.push({ title, detail, at: new Date().toISOString() });
       localStorage.setItem(storageKey("role_history"), JSON.stringify(history.slice(-30)));
+    }
+
+    function updateNotificationBadge() {
+      const btn = document.querySelector("#notifyBtn");
+      if (!btn) return;
+      const unread = state.notifications.filter(item => !item.read_at && !item.readAt).length;
+      btn.title = unread ? `${unread} unread notifications` : "Notifications";
+      if (unread) {
+        btn.textContent = unread > 9 ? "9+" : String(unread);
+      } else if ("Notification" in window && Notification.permission === "granted") {
+        btn.textContent = "ðŸ”•";
+      } else {
+        btn.textContent = "ðŸ””";
+      }
+    }
+
+    async function loadNotificationsFromDatabase() {
+      if (!state.user) {
+        state.notifications = [];
+        updateNotificationBadge();
+        return;
+      }
+
+      if (!state.usingDatabase) {
+        state.notifications = getRoleHistory().map(item => ({
+          type: item.title,
+          payload: { message: item.detail },
+          created_at: item.at,
+          read_at: item.at
+        }));
+        updateNotificationBadge();
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("notifications")
+          .select("id,type,payload,read_at,created_at")
+          .eq("user_id", state.user.id)
+          .order("created_at", { ascending: false })
+          .limit(20);
+        if (error) throw error;
+        state.notifications = data || [];
+      } catch (error) {
+        console.warn("Notifications table unavailable:", error.message);
+        state.notifications = [];
+      }
+      updateNotificationBadge();
+    }
+
+    async function createNotification(userId, type, payload = {}) {
+      if (!userId || !state.usingDatabase) return;
+      try {
+        const { error } = await supabase.from("notifications").insert({
+          user_id: userId,
+          type,
+          payload
+        });
+        if (error) throw error;
+      } catch (error) {
+        console.warn("Could not create notification:", error.message);
+      }
     }
 
     function getLocalList(name, id) {
@@ -2574,8 +2786,8 @@
     function isRegisteredWith(team) {
       if (!state.user) return false;
       // Check if user is a player in this team
-      return state.players.some(p => 
-        String(p.team_id) === String(team.id) && 
+      return state.players.some(p =>
+        String(p.team_id) === String(team.id) &&
         String(p.user_id) === String(state.user.id)
       );
     }
@@ -2600,11 +2812,11 @@
             <p style="margin: 4px 0 0; font-size: 14px; opacity: 0.8; font-weight: 600;">Tournament Highlights & Live Standings</p>
           </div>
         `;
-        
+
         // Ensure element has a solid background and padding for the shot
         const originalBg = element.style.background;
         const originalPadding = element.style.padding;
-        
+
         element.style.background = "#050a0f";
         element.style.padding = "0"; // Header will handle top padding
         element.prepend(posterHeader);
@@ -2807,12 +3019,12 @@
       } else {
         visibleTeams = state.teams.filter(t => isOwner(t) || isRegisteredWith(t));
       }
-      
+
       document.querySelector("#teamList").innerHTML = visibleTeams.map((team) => {
         const teamPlayers = state.players.filter(p => p.team === team.name);
         const owner = canManageTeam(team);
         const admin = isSuperAdmin();
-        
+
         const rosterHtml = teamPlayers.length ? `
           <div class="team-roster" style="margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px;">
             <p style="font-size: 0.75rem; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.05em;">Squad (${teamPlayers.length})</p>
@@ -2858,7 +3070,7 @@
                 <p>${team.city}</p>
               </div>
             </div>
-            
+
             ${rosterHtml}
             ${managementTools}
 
@@ -2866,6 +3078,7 @@
               <span class="tag green">${team.record}</span>
               <span class="tag">Captain: ${team.captain}</span>
               <button class="btn ghost" style="padding: 2px 6px; font-size: 0.65rem;" data-public-team="${team.id}">Details</button>
+              ${owner || admin ? `<button class="btn ghost" style="padding: 2px 6px; font-size: 0.65rem;" onclick="openEditTeam('${team.id}')">Edit</button>` : ""}
               ${owner || admin ? `<button class="btn ghost" style="padding: 2px 6px; font-size: 0.65rem;" data-invite-team-admin="${team.id}">Invite Admin</button>` : ""}
               ${owner || admin ? `<button class="btn ghost" style="padding: 2px 6px; font-size: 0.65rem;" data-transfer-team="${team.id}">Transfer</button>` : ""}
               ${owner || admin ? `<button class="btn ghost danger" style="padding: 2px 6px; font-size: 0.65rem;" data-delete-team="${team.id}">Delete</button>` : ""}
@@ -2886,7 +3099,7 @@
         const el = document.querySelector(selector);
         if (el) el.innerHTML = options;
       });
-      
+
       // Request 'To' can still be any team (to challenge others)
       const allOptions = state.teams.map((team) => `<option>${team.name}</option>`).join("");
       const toEl = document.querySelector("#requestTo");
@@ -2894,7 +3107,7 @@
         toEl.innerHTML = allOptions;
         toEl.selectedIndex = state.teams.length > 1 ? 1 : 0;
       }
-      
+
       renderTournamentSelects();
     }
 
@@ -2940,6 +3153,8 @@
 
       state.usingDatabase = true;
       setDatabaseStatus("connected", "Supabase connected");
+      await loadProfileFromDatabase();
+      await loadNotificationsFromDatabase();
       renderTeams();
       await loadPlayersFromDatabase();
       await loadMatchRequestsFromDatabase();
@@ -3056,12 +3271,12 @@
       }
     }
 
-    async function saveTeamAdminAssignment(teamId, email) {
+    async function saveTeamAdminAssignment(teamId, email, role = "co_admin") {
       if (state.usingDatabase) {
         const { error } = await supabase.from("team_admins").insert({
           team_id: teamId,
           email,
-          role: "co_admin",
+          role,
           invited_by: state.user?.id || null
         });
         if (error) throw error;
@@ -3070,15 +3285,16 @@
         const admins = getLocalList("team_admins", teamId);
         admins.push(email);
         saveLocalList("team_admins", teamId, admins);
+        state.teamAdmins.push({ id: Date.now(), teamId, email, role });
       }
     }
 
-    async function saveTournamentAdminAssignment(tournamentId, email) {
+    async function saveTournamentAdminAssignment(tournamentId, email, role = "co_admin") {
       if (state.usingDatabase) {
         const { error } = await supabase.from("tournament_admins").insert({
           tournament_id: tournamentId,
           email,
-          role: "co_admin",
+          role,
           invited_by: state.user?.id || null
         });
         if (error) throw error;
@@ -3087,6 +3303,7 @@
         const admins = getLocalList("tournament_admins", tournamentId);
         admins.push(email);
         saveLocalList("tournament_admins", tournamentId, admins);
+        state.tournamentAdmins.push({ id: Date.now(), tournamentId, email, role });
       }
     }
 
@@ -3131,7 +3348,7 @@
         .from("series")
         .select("*")
         .order("created_at", { ascending: false });
-      
+
       if (error) {
         console.error("Error loading series:", error.message);
         return;
@@ -3158,7 +3375,7 @@
         })
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     }
@@ -3356,7 +3573,7 @@
     async function startMatchInDatabase(id, tossWinnerId, battingFirstId) {
       const { data, error } = await supabase
         .from("matches")
-        .update({ 
+        .update({
           status: "Live",
           toss_winner_team_id: (tossWinnerId && tossWinnerId !== "null") ? tossWinnerId : null,
           batting_first_team_id: (battingFirstId && battingFirstId !== "null") ? battingFirstId : null,
@@ -3372,7 +3589,7 @@
     async function updateMatchResultInDatabase(id, winnerId, resultText) {
       const { data, error } = await supabase
         .from("matches")
-        .update({ 
+        .update({
           status: "Completed",
           winner_team_id: (winnerId && winnerId !== "null") ? winnerId : null,
           result_text: resultText,
@@ -3392,7 +3609,7 @@
         .eq("match_id", matchId);
       if (ballsError) throw ballsError;
 
-      const playerStats = {}; 
+      const playerStats = {};
 
       balls.forEach(b => {
         if (!playerStats[b.batter_name]) playerStats[b.batter_name] = { runs:0, balls:0, wickets:0, conceded:0, balls_bowled:0, innings:0 };
@@ -3590,7 +3807,7 @@
       const h = Number(hours);
       const period = h >= 12 ? "PM" : "AM";
       const display = `${h % 12 || 12}:${minutes} ${period}`;
-      return `${dateStr} · ${display}`;
+      return `${dateStr} Â· ${display}`;
     }
 
     function renderMatches() {
@@ -3603,7 +3820,7 @@
         <li style="display: flex; justify-content: space-between; align-items: center;">
           <div style="display:flex; flex-direction:column; gap: 2px;">
             <strong>${match.teamA} vs ${match.teamB}</strong>
-            <span class="muted" style="font-size:0.75rem;">${match.status} · ${match.overs} overs · ${match.venue}</span>
+            <span class="muted" style="font-size:0.75rem;">${match.status} Â· ${match.overs} overs Â· ${match.venue}</span>
             ${dateTime ? `<span style="color:var(--cyan);font-size:0.82rem;font-weight:800;">${dateTime}</span>` : ""}
             ${scorerIds.length ? `<span class="muted" style="font-size:0.75rem;">${scorerIds.length} scorer assigned</span>` : ""}
           </div>
@@ -3622,7 +3839,7 @@
         <li style="display: flex; justify-content: space-between; align-items: center;">
           <div style="display:flex; flex-direction:column; gap: 2px;">
             <strong>${match.teamA} vs ${match.teamB}</strong>
-            <span class="muted" style="font-size:0.75rem;">${match.status} · ${match.venue}</span>
+            <span class="muted" style="font-size:0.75rem;">${match.status} Â· ${match.venue}</span>
           </div>
           <div style="display: flex; gap: 8px;">
              ${match.status === "Completed" ? `<button class="btn ghost" style="font-size: 0.75rem; padding: 4px 8px;" onclick="renderMatchSummary('${match.id}')">Highlights</button>` : ""}
@@ -3634,23 +3851,23 @@
       safeSetText("#fixtureCount", `${activeMatches.length} active`);
       safeSetText("#scheduledMatchCount", `${activeMatches.length} matches`);
       safeSetText("#historyCount", `${history.length} past matches`);
-      
+
       const dashFixtures = document.querySelector("#homeFixtures");
       if (dashFixtures) {
         dashFixtures.innerHTML = activeMatches.length ? activeMatches.map(match => `
           <li class="match-card-compact" data-view-match="${match.id}" style="cursor:pointer; display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px; transition: 0.2s;">
             <div style="display:flex; flex-direction:column; gap: 2px;">
               <strong>${match.teamA} vs ${match.teamB}</strong>
-              <span class="muted" style="font-size:0.75rem;">${match.status} · ${match.overs} overs</span>
+              <span class="muted" style="font-size:0.75rem;">${match.status} Â· ${match.overs} overs</span>
             </div>
             <span class="tag ${match.status === 'Live' ? 'green' : 'gold'}" style="font-size: 0.65rem;">${match.status === 'Live' ? 'LIVE' : 'UPCOMING'}</span>
           </li>
         `).join("") : `<li><strong>No active matches</strong></li>`;
       }
-      
+
       const schedList = document.querySelector("#scheduledMatchList");
       if (schedList) schedList.innerHTML = rows;
-      
+
       const histList = document.querySelector("#matchHistoryList");
       if (histList) histList.innerHTML = historyRows;
 
@@ -3671,9 +3888,9 @@
           return `<option value="${m.id}" ${activeMatch && activeMatch.id === m.id ? "selected" : ""}>${prefix}${m.teamA} vs ${m.teamB} (${m.status})</option>`;
         })
         .join("");
-        
+
       select.innerHTML = options ? `<option value="">-- Select a match --</option>${options}` : `<option value="">No matches to score</option>`;
-      
+
       // Update Start/Resume button text
       updateStartButtonText();
     }
@@ -3694,7 +3911,7 @@
       btn.disabled = false;
       btn.style.opacity = "1";
       const match = state.matches.find(m => String(m.id) === String(matchId));
-      
+
       if (match && (match.status === "Live" || match.status === "Setup")) {
         btn.textContent = "Resume Match";
       } else {
@@ -3716,7 +3933,7 @@
        // Load stats for this match
        const { data: innings, error: innErr } = await supabase.from("innings").select("*").eq("match_id", match.id);
        const { data: balls, error: ballErr } = await supabase.from("balls").select("*").eq("match_id", match.id);
-       
+
        if (innErr || ballErr) {
           content.innerHTML = `<div style="padding: 40px; text-align: center;">Error loading match data.</div>`;
           return;
@@ -3745,7 +3962,7 @@
           <div style="background: linear-gradient(135deg, #050a0f 0%, #111f2c 100%); padding: 0; min-height: 400px; color: white;">
              <div style="background: linear-gradient(to right, #00ffa3, #00f2ff); padding: 30px; text-align: center; color: #000;">
                 <h1 style="margin: 0; font-size: 28px; font-weight: 900;">MATCH HIGHLIGHTS</h1>
-                <p style="margin: 4px 0 0; font-weight: 600; opacity: 0.8; text-transform: uppercase;">${match.venue} · ${match.match_date || "LIVE"}</p>
+                <p style="margin: 4px 0 0; font-weight: 600; opacity: 0.8; text-transform: uppercase;">${match.venue} Â· ${match.match_date || "LIVE"}</p>
              </div>
 
              <div style="padding: 30px;">
@@ -3769,17 +3986,17 @@
 
                 <div class="grid cols-2" style="gap: 16px;">
                    <div class="card" style="background: rgba(255,255,255,0.03); border: 1px solid var(--gold); padding: 16px;">
-                      <div style="color: var(--gold); font-size: 0.7rem; font-weight: 900; margin-bottom: 6px; text-transform: uppercase;">Top Batter 🏏</div>
+                      <div style="color: var(--gold); font-size: 0.7rem; font-weight: 900; margin-bottom: 6px; text-transform: uppercase;">Top Batter ðŸ</div>
                       <div style="font-size: 1rem; font-weight: 800;">${topBatter ? topBatter.name : "N/A"}</div>
                       <div style="font-size: 1.3rem; font-weight: 900; color: var(--gold); margin-top: 4px;">${topBatter ? topBatter.runs : 0} <span style="font-size: 0.75rem; font-weight: 400; color: var(--muted);">Runs (${topBatter ? topBatter.balls : 0})</span></div>
                    </div>
                    <div class="card" style="background: rgba(255,255,255,0.03); border: 1px solid var(--cyan); padding: 16px;">
-                      <div style="color: var(--cyan); font-size: 0.7rem; font-weight: 900; margin-bottom: 6px; text-transform: uppercase;">Top Bowler 🎾</div>
+                      <div style="color: var(--cyan); font-size: 0.7rem; font-weight: 900; margin-bottom: 6px; text-transform: uppercase;">Top Bowler ðŸŽ¾</div>
                       <div style="font-size: 1rem; font-weight: 800;">${topBowler ? topBowler.name : "N/A"}</div>
                       <div style="font-size: 1.3rem; font-weight: 900; color: var(--cyan); margin-top: 4px;">${topBowler ? topBowler.wickets : 0} <span style="font-size: 0.75rem; font-weight: 400; color: var(--muted);">Wickets</span></div>
                    </div>
                 </div>
-                
+
                 <div style="margin-top: 24px; text-align: center; opacity: 0.4; font-size: 0.6rem; letter-spacing: 2px;">
                    POWERED BY PAKSCORER ELITE
                 </div>
@@ -3808,7 +4025,7 @@
         }));
 
       const matches = state.matches.filter((m) => m.tournamentId === tournamentId && m.status === "Completed");
-      
+
       // For NRR, we need to fetch innings for these matches
       const { data: innings, error } = await supabase
         .from("innings")
@@ -3869,7 +4086,7 @@
         .select("id")
         .eq("tournament_id", tournamentId)
         .eq("status", "Completed");
-      
+
       if (error || !matches.length) return { batsmen: [], bowlers: [] };
 
       const matchIds = matches.map(m => m.id);
@@ -3877,7 +4094,7 @@
         .from("balls")
         .select("*")
         .in("match_id", matchIds);
-      
+
       if (ballsError) return { batsmen: [], bowlers: [] };
 
       const batsmen = {};
@@ -3921,7 +4138,7 @@
       if (!select || !container) return;
 
       if (select.innerHTML === "") {
-        select.innerHTML = '<option value="">-- Select Tournament --</option>' + 
+        select.innerHTML = '<option value="">-- Select Tournament --</option>' +
           state.tournaments.map(t => `<option value="${t.id}">${t.name}</option>`).join("");
         select.addEventListener("change", renderTournamentStatsUI);
       }
@@ -3945,7 +4162,7 @@
         <div class="card" style="padding: 0; overflow: hidden; border: 1px solid var(--gold);">
           <div style="background: linear-gradient(to right, var(--gold), #f39c12); color: #000; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
              <h3 style="margin:0; font-size: 1rem;">ORANGE CAP (Top Scorers)</h3>
-             <i class="icon">🏏</i>
+             <i class="icon">ðŸ</i>
           </div>
           <div style="padding: 12px;">
              <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
@@ -3979,7 +4196,7 @@
         <div class="card" style="padding: 0; overflow: hidden; border: 1px solid var(--cyan);">
           <div style="background: linear-gradient(to right, var(--cyan), #2980b9); color: #fff; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
              <h3 style="margin:0; font-size: 1rem;">PURPLE CAP (Top Wicket Takers)</h3>
-             <i class="icon">🎾</i>
+             <i class="icon">ðŸŽ¾</i>
           </div>
           <div style="padding: 12px;">
              <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
@@ -4021,7 +4238,7 @@
       tournamentCountEl.textContent = `${count} tournament${count !== 1 ? "s" : ""}`;
       const applyPanel = document.querySelector("#applyTournamentPanel");
       if (applyPanel) applyPanel.style.display = state.user ? "" : "none";
-      
+
       if (!count) {
         tournamentListEl.innerHTML = `<div class="card">No tournaments created yet.</div>`;
       } else {
@@ -4129,7 +4346,7 @@
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
                   <h3 style="margin: 0;">${tournament.name}</h3>
-                  <p class="muted" style="margin: 4px 0;">${tournament.format} · ${tournament.overs || 20} overs</p>
+                  <p class="muted" style="margin: 4px 0;">${tournament.format} Â· ${tournament.overs || 20} overs</p>
                 </div>
                 <span class="tag ${statusClass}">${status}</span>
               </div>
@@ -4159,7 +4376,7 @@
 
       const appCountEl = document.querySelector("#applicationCountDisplay");
       if (appCountEl) appCountEl.textContent = `${state.applications.length} team${state.applications.length !== 1 ? "s" : ""}`;
-      
+
       const appListEl = document.querySelector("#applicationList");
       if (appListEl) {
         appListEl.innerHTML = state.applications.length ? state.applications.map((application, index) => {
@@ -4167,7 +4384,7 @@
           const canManageApp = canManageTournament(tournament);
           return `
             <li>
-              <strong>${application.team}${application.tournamentName ? ` <span style="color:var(--muted);font-size:0.82rem;font-weight:600;">· ${application.tournamentName}</span>` : ""}</strong>
+              <strong>${application.team}${application.tournamentName ? ` <span style="color:var(--muted);font-size:0.82rem;font-weight:600;">Â· ${application.tournamentName}</span>` : ""}</strong>
               <span>
                 <span class="tag ${application.status === "Approved" ? "green" : application.status === "Rejected" ? "red" : "gold"}">${application.status}</span>
                 <span>
@@ -4187,7 +4404,7 @@
           `;
         }).join("") : `<li><strong>No applications yet</strong><span>Teams apply after tournaments are created</span></li>`;
       }
-      
+
       renderTournamentSelects();
       renderMyTournaments();
     }
@@ -4200,9 +4417,9 @@
 
       // Populate select if empty
       if (select.innerHTML === "") {
-        select.innerHTML = '<option value="">-- Select Tournament --</option>' + 
+        select.innerHTML = '<option value="">-- Select Tournament --</option>' +
           state.tournaments.map(t => `<option value="${t.id}">${t.name}</option>`).join("");
-        
+
         select.addEventListener("change", renderStandingsUI);
         groupSelect.addEventListener("change", renderStandingsUI);
       }
@@ -4221,9 +4438,9 @@
         <div class="loader" style="margin: 0 auto 16px;"></div>
         <p class="muted">Calculating points and NRR...</p>
       </div>`;
-      
+
       const standings = await calculateStandings(tourneyId, groupFilter);
-      
+
       if (!standings.length) {
         container.innerHTML = `<div class="card" style="text-align:center; padding: 40px;">No approved teams found for this tournament yet.</div>`;
         return;
@@ -4294,7 +4511,7 @@
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
                   <h3 style="margin: 0;">${tournament.name}</h3>
-                  <p class="muted" style="margin: 4px 0;">${tournament.format} · ${tournament.status}</p>
+                  <p class="muted" style="margin: 4px 0;">${tournament.format} Â· ${tournament.status}</p>
                 </div>
                 <button class="btn primary" style="padding: 4px 10px; font-size: 0.8rem;" data-tourney-sub="applications">Manage</button>
               </div>
@@ -4312,10 +4529,10 @@
       const squadSetup = document.querySelector("#squadSetup");
       const teamAList = document.querySelector("#teamAList");
       const teamBList = document.querySelector("#teamBList");
-      
+
       document.querySelector("#teamANameHeader").textContent = match.teamA;
       document.querySelector("#teamBNameHeader").textContent = match.teamB;
-      
+
       squadSetup.style.display = "flex";
       teamAList.innerHTML = "Loading...";
       teamBList.innerHTML = "Loading...";
@@ -4367,7 +4584,7 @@
             status: "Scheduled",
             user_id: state.user?.id || null
           };
-          
+
           if (state.usingDatabase) {
             return createMatchInDatabase(match);
           } else {
@@ -4476,7 +4693,7 @@
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
                   <h3 style="margin: 0;">${s.name}</h3>
-                  <p class="muted" style="margin: 4px 0;">${s.num_matches} Matches · ${s.overs} Overs</p>
+                  <p class="muted" style="margin: 4px 0;">${s.num_matches} Matches Â· ${s.overs} Overs</p>
                 </div>
                 <span class="tag ${s.status === 'Live' ? 'green' : s.status === 'Completed' ? 'cyan' : 'gold'}">${s.status}</span>
               </div>
@@ -4497,7 +4714,7 @@
           `;
         }).join("");
       }
-      
+
       const teamSelects = ["#seriesTeamA", "#seriesTeamB"];
       teamSelects.forEach(selId => {
          const el = document.querySelector(selId);
@@ -4518,7 +4735,7 @@
           <li class="match-card-compact" data-view-tournament="${t.id}" style="cursor:pointer; display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px; transition: 0.2s;">
             <div style="display:flex; flex-direction:column; gap: 2px;">
               <strong>${t.name}</strong>
-              <span class="muted" style="font-size:0.75rem;">${t.format} · ${t.overs} overs</span>
+              <span class="muted" style="font-size:0.75rem;">${t.format} Â· ${t.overs} overs</span>
             </div>
             <span class="tag green" style="font-size: 0.65rem;">RUNNING</span>
           </li>
@@ -4530,10 +4747,10 @@
       const score = state.score;
       const overs = oversText(score.legalBalls);
       const runRate = score.legalBalls ? (score.runs / (score.legalBalls / 6)).toFixed(2) : "0.00";
-      
+
       const targetText = score.target > 0 ? `Target: ${score.target}` : "";
       const inningsTextLabel = state.currentInnings ? `Innings ${state.currentInnings.innings_number}` : "Scoring";
-      
+
       setupBattersForInnings();
       safeSetText("#inningsStatus", `${score.battingTeam} batting (${inningsTextLabel}) ${targetText} - ${score.striker} on strike`);
       safeSetText("#scoreRuns", score.runs);
@@ -4635,7 +4852,7 @@
         const liveCount = document.querySelector("#publicLiveCount");
         const grid = document.querySelector("#publicDashboardGrid");
         if (liveCount) liveCount.textContent = `${matches.length} active match${matches.length !== 1 ? 'es' : ''}`;
-        
+
         if (matches.length === 0) {
           if (grid) grid.innerHTML = `
             <div class="card" style="text-align:center; padding: 48px 24px; border-style: dashed;">
@@ -4656,13 +4873,13 @@
           const wickets = currentInnings ? currentInnings.wickets : 0;
           const legalBalls = currentInnings ? currentInnings.legal_balls : 0;
           const battingTeam = currentInnings ? currentInnings.batting_team : match.team_a;
-          
+
           return `
             <div class="public-score public-match-card" data-match-id="${match.id}" style="margin: 0; padding: 24px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
               <span class="tag green" style="animation: pulse 2s infinite;">LIVE</span>
               <h3 style="margin: 12px 0 4px; font-size: 1.1rem; color: var(--muted);">${match.team_a} vs ${match.team_b}</h3>
               <h2 style="font-size: 2.5rem; margin-bottom: 4px;">${battingTeam} <span style="color: var(--cyan);">${runs}/${wickets}</span></h2>
-              <p class="muted">${oversText(legalBalls)} overs · ${match.overs} over match</p>
+              <p class="muted">${oversText(legalBalls)} overs Â· ${match.overs} over match</p>
             </div>
           `;
         }).join("");
@@ -4681,7 +4898,7 @@
           .select("team_a, team_b, status")
           .eq("id", matchId)
           .single();
-        
+
         if (matchError) throw matchError;
 
         const innings = await loadInningsFromDatabase(matchId);
@@ -4695,7 +4912,7 @@
         document.querySelector("#publicDetailTeams").textContent = `${match.team_a} vs ${match.team_b}`;
         document.querySelector("#publicDetailStatus").className = match.status === "Live" ? "tag green" : "tag";
         document.querySelector("#publicDetailStatus").textContent = match.status;
-        
+
         document.querySelector("#publicDetailRuns").textContent = runs;
         document.querySelector("#publicDetailWickets").textContent = wickets;
         document.querySelector("#publicDetailOvers").textContent = oversText(legalBalls);
@@ -4753,8 +4970,8 @@
     function sendLocalNotification(title, body) {
       if (!("Notification" in window)) return;
       if (Notification.permission === "granted") {
-        new Notification(title, { 
-          body, 
+        new Notification(title, {
+          body,
           icon: "https://vkgvqqvxkxvqvxkvqxkv.supabase.co/storage/v1/object/public/assets/cricket-ball.png" // Placeholder or app icon
         });
       }
@@ -4765,7 +4982,7 @@
       const permission = await Notification.requestPermission();
       const btn = document.querySelector("#notifyBtn");
       if (permission === "granted") {
-        if (btn) btn.textContent = "🔕";
+        if (btn) btn.textContent = "ðŸ”•";
         sendLocalNotification("Notifications Enabled", "You will now receive live match updates!");
       }
     }
@@ -4779,10 +4996,10 @@
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'balls' }, payload => {
           console.log("Ball inserted", payload);
           if (publicActiveMatchId) renderPublicMatchDetail(publicActiveMatchId);
-          
+
           if (payload.new.is_wicket) {
              const match = state.matches.find(m => String(m.id) === String(payload.new.match_id));
-             sendLocalNotification("🎾 WICKET!", `${payload.new.batter_name} is OUT! ${match ? `(${match.teamA} vs ${match.teamB})` : ""}`);
+             sendLocalNotification("ðŸŽ¾ WICKET!", `${payload.new.batter_name} is OUT! ${match ? `(${match.teamA} vs ${match.teamB})` : ""}`);
           }
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'innings' }, payload => {
@@ -4802,11 +5019,11 @@
 
           // Match Started
           if (payload.new.status === 'Live' && payload.old.status !== 'Live') {
-             sendLocalNotification("🏏 Match Started!", `${payload.new.team_a} vs ${payload.new.team_b} is now LIVE!`);
+             sendLocalNotification("ðŸ Match Started!", `${payload.new.team_a} vs ${payload.new.team_b} is now LIVE!`);
           }
           // Match Completed
           if (payload.new.status === 'Completed' && payload.old.status !== 'Completed') {
-             sendLocalNotification("🏆 Match Completed!", `${payload.new.team_a} vs ${payload.new.team_b}: ${payload.new.result_text}`);
+             sendLocalNotification("ðŸ† Match Completed!", `${payload.new.team_a} vs ${payload.new.team_b}: ${payload.new.result_text}`);
           }
         })
         .subscribe();
@@ -5052,12 +5269,12 @@
       const score = state.score;
       const match = state.currentMatch;
       const target = score.runs + 1;
-      
+
       alert(`Innings 1 complete! ${score.battingTeam} scored ${score.runs}/${score.wickets}. Target for ${score.bowlingTeam}: ${target}`);
 
       const newBattingTeam = score.bowlingTeam;
       const newBowlingTeam = score.battingTeam;
-      
+
       const teamAId = match.teamAId;
       const teamBId = match.teamBId;
       const currentBattingId = state.currentInnings.batting_team_id;
@@ -5086,7 +5303,7 @@
       state.score.undoStack = [];
       state.score.needsBowler = true;
       resetInningsScoreExtras();
-      
+
       renderScore();
     }
 
@@ -5094,7 +5311,7 @@
       const score = state.score;
       const match = state.currentMatch;
       const innings = state.currentInnings;
-      
+
       let resultText = "";
       let winnerId = null;
 
@@ -5240,7 +5457,7 @@
         try {
           const newTeam = await createTeamInDatabase(team);
           state.teams.push(newTeam);
-          if (state.user) await saveTeamAdminAssignment(newTeam.id, state.user.email);
+          if (state.user) await saveTeamAdminAssignment(newTeam.id, state.user.email, "owner");
         } catch (error) {
           message.textContent = error.code === "23505" ? "This team already exists in the database." : "Could not save team to Supabase.";
           message.classList.add("error");
@@ -5249,7 +5466,7 @@
       } else {
         const localTeam = { id: Date.now(), ...team };
         state.teams.push(localTeam);
-        if (state.user) await saveTeamAdminAssignment(localTeam.id, state.user.email);
+        if (state.user) await saveTeamAdminAssignment(localTeam.id, state.user.email, "owner");
       }
 
       renderTeams();
@@ -5355,10 +5572,10 @@
       if (deleteBtn) {
         const requestId = deleteBtn.dataset.deleteRequest;
         if (!confirm("Are you sure you want to permanently delete this match request?")) return;
-        
+
         deleteBtn.textContent = "Deleting...";
         deleteBtn.disabled = true;
-        
+
         try {
           if (state.usingDatabase) {
             const count = await deleteMatchRequestFromDatabase(requestId);
@@ -5572,7 +5789,7 @@
         try {
           const newTournament = await createTournamentInDatabase(tournament);
           state.tournaments.unshift(newTournament);
-          if (state.user) await saveTournamentAdminAssignment(newTournament.id, state.user.email);
+          if (state.user) await saveTournamentAdminAssignment(newTournament.id, state.user.email, "owner");
         } catch (error) {
           message.textContent = error.code === "23505" ? "This tournament already exists in the database." : "Could not save tournament to Supabase.";
           message.classList.add("error");
@@ -5581,7 +5798,7 @@
       } else {
         const localTournament = { id: Date.now(), ...tournament };
         state.tournaments.unshift(localTournament);
-        if (state.user) await saveTournamentAdminAssignment(localTournament.id, state.user.email);
+        if (state.user) await saveTournamentAdminAssignment(localTournament.id, state.user.email, "owner");
       }
 
       renderTournaments();
@@ -5641,7 +5858,7 @@
       const match = state.matches.find(m => m.id === matchId || m.id === Number(matchId));
       const tossSetup = document.querySelector("#tossSetup");
       const tossWinnerSelect = document.querySelector("#tossWinnerSelect");
-      
+
       if (match && match.status !== "Live") {
         tossSetup.style.display = "flex";
         tossWinnerSelect.innerHTML = `
@@ -5678,7 +5895,7 @@
 
         tossWinnerId = document.querySelector("#tossWinnerSelect").value;
         const tossDecision = document.querySelector("#tossDecisionSelect").value;
-        
+
         if (!tossWinnerId) return alert("Please select the Toss Winner before starting the match.");
 
         // Save Playing XI to database
@@ -5715,7 +5932,7 @@
             await startMatchInDatabase(match.id, tossWinnerId, battingFirstId);
             match.status = "Live";
           }
-          
+
           let innings = await loadInningsFromDatabase(match.id);
           if (!innings) {
             if (!battingTeamId || battingTeamId === "null" || !bowlingTeamId || bowlingTeamId === "null") {
@@ -5723,12 +5940,12 @@
             }
             innings = await createInningsInDatabase(match.id, battingTeamId, bowlingTeamId, battingTeamName, bowlingTeamName, 1);
           }
-          
+
           const balls = await loadBallsFromDatabase(innings.id);
 
           state.currentMatch = match;
           state.currentInnings = innings;
-          
+
           state.score.runs = innings.runs;
           state.score.wickets = innings.wickets;
           state.score.legalBalls = innings.legal_balls;
@@ -5746,12 +5963,12 @@
           rebuildScoreMetaFromBalls(balls);
           state.score.undoStack = [];
           state.score.needsBowler = (innings.legal_balls % 6 === 0);
-          
+
           safeSetText("#activeMatchStatus", `Live: ${match.teamA} vs ${match.teamB}`);
           document.querySelector("#scoringControls").style.display = "";
           document.querySelector("#scoringControls").style.opacity = "1";
           document.querySelector("#scoringControls").style.pointerEvents = "auto";
-          
+
           renderScore();
           renderMatches();
         } catch (error) {
@@ -5800,7 +6017,7 @@
     document.querySelector("#publicDashboardGrid").addEventListener("click", (event) => {
       const card = event.target.closest(".public-match-card");
       if (!card) return;
-      
+
       publicActiveMatchId = card.dataset.matchId;
       document.querySelector("#publicGridContainer").style.display = "none";
       document.querySelector("#publicDetailContainer").style.display = "block";
@@ -5870,7 +6087,7 @@
         const match = state.matches.find(m => String(m.id) === String(matchId));
         if (!canManageMatch(match)) return alert("You do not have permission to delete this match.");
         if (!confirm("Are you sure you want to permanently delete this match and all its data?")) return;
-        
+
         button.textContent = "Deleting...";
         button.disabled = true;
 
@@ -6135,20 +6352,27 @@
 
     const profileForm = document.querySelector("#profileForm");
     if (profileForm) {
-      profileForm.addEventListener("submit", (event) => {
+      profileForm.addEventListener("submit", async (event) => {
         event.preventDefault();
-        saveUserProfile({
-          name: document.querySelector("#profileName").value.trim(),
-          phone: document.querySelector("#profilePhone").value.trim(),
-          city: document.querySelector("#profileCity").value.trim(),
-          avatar: document.querySelector("#profileAvatar").value.trim()
-        });
         const msg = document.querySelector("#profileMessage");
-        if (msg) {
-          msg.textContent = "Profile saved on this device.";
-          msg.className = "form-message success";
+        try {
+          await saveUserProfile({
+            name: document.querySelector("#profileName").value.trim(),
+            phone: document.querySelector("#profilePhone").value.trim(),
+            city: document.querySelector("#profileCity").value.trim(),
+            avatar: document.querySelector("#profileAvatar").value.trim()
+          });
+          if (msg) {
+            msg.textContent = state.usingDatabase ? "Profile saved in Supabase." : "Profile saved on this device.";
+            msg.className = "form-message success";
+          }
+          renderProfile();
+        } catch (error) {
+          if (msg) {
+            msg.textContent = "Could not save profile: " + error.message;
+            msg.className = "form-message error";
+          }
         }
-        renderProfile();
       });
     }
 
@@ -6211,7 +6435,7 @@
 
     // Auth Event Listeners
     let authMode = 'login'; // 'login' or 'signup'
-    
+
     function setAuthMode(mode) {
       authMode = mode;
       const title = document.querySelector("#authModalTitle");
@@ -6219,7 +6443,7 @@
       const submitBtn = document.querySelector("#authSubmitBtn");
       const msg = document.querySelector("#loginMessage");
       const tabs = document.querySelectorAll("#authTabs button");
-      
+
       tabs.forEach(t => t.classList.toggle("active", t.dataset.mode === mode));
 
       if (msg) {
@@ -6238,7 +6462,7 @@
         if(submitBtn) submitBtn.textContent = "Unlock Dashboard";
         document.querySelector("#authTogglePrompt").innerHTML = `Don't have an account? <a href="#" id="authToggleButton" style="color: var(--cyan); font-weight: 800; text-decoration: none;">Sign Up</a>`;
       }
-      
+
       // Re-attach listener to the new dynamic link
       const toggleBtn = document.querySelector("#authToggleButton");
       if (toggleBtn) {
@@ -6325,12 +6549,12 @@
         const emailEl = document.querySelector("#loginEmail");
         const passEl = document.querySelector("#loginPassword");
         const msg = document.querySelector("#loginMessage");
-        
+
         if (!emailEl || !passEl || !msg) return;
-        
+
         const email = emailEl.value;
         const password = passEl.value;
-      
+
       msg.textContent = authMode === 'signup' ? "Creating account..." : "Verifying...";
       msg.className = "form-message";
 
@@ -6338,9 +6562,11 @@
         try {
           const { data, error } = await supabase.auth.signUp({ email, password });
           if (error) throw error;
-          
+
           if (data.session) {
             state.user = data.user;
+            await loadProfileFromDatabase();
+            await loadNotificationsFromDatabase();
             updateAuthUI();
             document.querySelector("#loginModal").style.display = "none";
           } else {
@@ -6369,9 +6595,11 @@
 
     // Initial Auth Check
     if (supabase && supabase.auth) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
+      supabase.auth.getSession().then(async ({ data: { session } }) => {
         if (session) {
           state.user = session.user;
+          await loadProfileFromDatabase();
+          await loadNotificationsFromDatabase();
         }
         updateAuthUI();
       }).catch(err => {
@@ -6386,8 +6614,127 @@
     if (nBtn) {
       nBtn.addEventListener("click", requestNotificationPermission);
       if (Notification.permission === "granted") {
-        nBtn.textContent = "🔕";
+        nBtn.textContent = "ðŸ”•";
       }
+    }
+
+    // --- Team Admin Management & Editing Logic ---
+
+    window.removeTeamAdmin = async function(adminId) {
+      if (!confirm("Are you sure you want to remove this admin?")) return;
+      const teamId = document.querySelector("#adminManageTeamSelect").value;
+      try {
+        if (state.usingDatabase) {
+          const { error } = await supabase.from('team_admins').delete().eq('id', adminId);
+          if (error) throw error;
+        } else {
+          state.teamAdmins = state.teamAdmins.filter(a => a.id !== adminId);
+        }
+        loadTeamAdmins(teamId);
+      } catch (err) { alert("Error removing admin: " + err.message); }
+    };
+
+    window.openEditTeam = function(teamId) {
+      const team = state.teams.find(t => t.id === teamId);
+      if (!team) return;
+      document.querySelector("#editTeamId").value = team.id;
+      document.querySelector("#editTeamName").value = team.name;
+      document.querySelector("#editTeamCity").value = team.city;
+      document.querySelector("#editTeamCaptain").value = team.captain;
+      document.querySelector("#editTeamLogo").value = team.logo_url || "";
+      document.querySelector("#editTeamModal").style.display = "flex";
+    };
+
+    async function loadTeamAdmins(teamId) {
+      if (!state.usingDatabase) return;
+      try {
+        const { data, error } = await supabase.from('team_admins').select('*').eq('team_id', teamId);
+        if (error) throw error;
+        state.teamAdmins = data || [];
+        renderTeamAdminsUI();
+      } catch (e) { console.error("Error loading team admins:", e); }
+    }
+
+    function renderTeamAdminsUI() {
+      const list = document.querySelector("#teamAdminsList");
+      if (!list) return;
+      list.innerHTML = state.teamAdmins.map(adm => `
+        <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--line);">
+          <div>
+            <strong style="display: block;">${adm.email || 'Unknown User'}</strong>
+            <span class="tag ${adm.role === 'owner' ? 'gold' : 'blue'}" style="font-size: 0.7rem;">${adm.role.toUpperCase()}</span>
+          </div>
+          ${adm.role !== 'owner' ? `<button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem;" onclick="removeTeamAdmin('${adm.id}')">Remove</button>` : ''}
+        </li>
+      `).join("");
+      if (state.teamAdmins.length === 0) list.innerHTML = '<p class="muted">No additional admins assigned.</p>';
+    }
+
+    const manageTeamSelect = document.querySelector("#adminManageTeamSelect");
+    if (manageTeamSelect) {
+      manageTeamSelect.addEventListener("change", (e) => {
+        const teamId = e.target.value;
+        const container = document.querySelector("#teamAdminsListContainer");
+        if (teamId) {
+          container.style.display = "block";
+          loadTeamAdmins(teamId);
+        } else {
+          container.style.display = "none";
+        }
+      });
+    }
+
+    const addAdminF = document.querySelector("#addTeamAdminForm");
+    if (addAdminF) {
+      addAdminF.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const teamId = document.querySelector("#adminManageTeamSelect").value;
+        const email = document.querySelector("#newAdminEmail").value;
+        const role = document.querySelector("#newAdminRole").value;
+        const msg = document.querySelector("#adminActionMessage");
+        try {
+          if (state.usingDatabase) {
+            const { error } = await supabase.from('team_admins').insert([{ team_id: teamId, email: email.toLowerCase().trim(), role: role, invited_by: state.user.id }]);
+            if (error) throw error;
+          } else {
+            state.teamAdmins.push({ id: Date.now(), team_id: teamId, email, role });
+          }
+          msg.textContent = "Admin added successfully!";
+          msg.className = "form-message success";
+          addAdminF.reset();
+          loadTeamAdmins(teamId);
+        } catch (err) { msg.textContent = err.message; msg.className = "form-message error"; }
+      });
+    }
+
+    const editTeamF = document.querySelector("#editTeamForm");
+    if (editTeamF) {
+      editTeamF.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = document.querySelector("#editTeamId").value;
+        const data = {
+          name: document.querySelector("#editTeamName").value,
+          city: document.querySelector("#editTeamCity").value,
+          captain: document.querySelector("#editTeamCaptain").value,
+          logo_url: document.querySelector("#editTeamLogo").value
+        };
+        const msg = document.querySelector("#editTeamMessage");
+        try {
+          if (state.usingDatabase) {
+            const { error } = await supabase.from('teams').update(data).eq('id', id);
+            if (error) throw error;
+          } else {
+            const idx = state.teams.findIndex(t => t.id == id);
+            if (idx !== -1) state.teams[idx] = { ...state.teams[idx], ...data };
+          }
+          msg.textContent = "Team updated successfully!";
+          msg.className = "form-message success";
+          setTimeout(() => {
+            document.querySelector("#editTeamModal").style.display = "none";
+            loadTeamsFromDatabase().then(() => renderTeams());
+          }, 1500);
+        } catch (err) { msg.textContent = err.message; msg.className = "form-message error"; }
+      });
     }
 
     if (supabase) {
@@ -6428,7 +6775,7 @@
         const battingIn = quickAddForm.querySelector(".player-batting-in");
         const bowlingIn = quickAddForm.querySelector(".player-bowling-in");
         const photoIn = quickAddForm.querySelector(".player-photo-in");
-        
+
         const name = nameIn.value.trim();
         const role = roleIn.value;
         const selectedTeam = state.teams.find(t => t.name === teamName);
