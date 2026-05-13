@@ -1514,7 +1514,7 @@
             </section>
 
             <div class="grid" style="gap:16px;">
-              <section class="panel">
+              <section class="panel" id="applyTournamentPanel">
                 <div class="panel-head">
                   <h2>Apply to Tournament</h2>
                   <span>Register your team</span>
@@ -1911,6 +1911,9 @@
         createPrompt.style.display = user ? "none" : "block";
         createSection.style.display = user ? "block" : "none";
       }
+
+      const applyPanel = document.querySelector("#applyTournamentPanel");
+      if (applyPanel) applyPanel.style.display = user ? "" : "none";
 
       const myPrompt = document.querySelector("#myTourneyLoginPrompt");
       const mySection = document.querySelector("#myTourneyListSection");
@@ -3142,6 +3145,8 @@
       if (!tournamentCountEl || !tournamentListEl) return;
 
       tournamentCountEl.textContent = `${count} tournament${count !== 1 ? "s" : ""}`;
+      const applyPanel = document.querySelector("#applyTournamentPanel");
+      if (applyPanel) applyPanel.style.display = state.user ? "" : "none";
       
       if (!count) {
         tournamentListEl.innerHTML = `<div class="card">No tournaments created yet.</div>`;
