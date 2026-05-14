@@ -2167,6 +2167,75 @@
       font-weight: 750;
     }
 
+    .profile-hero {
+      display: grid;
+      grid-template-columns: 112px minmax(0, 1fr);
+      gap: 20px;
+      align-items: center;
+      padding: clamp(20px, 4vw, 34px);
+      border-bottom: 1px solid var(--line);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(49,255,154,0.18), transparent 34%),
+        linear-gradient(135deg, rgba(13, 62, 76, 0.92), rgba(7, 19, 29, 0.94));
+    }
+
+    .profile-avatar-large {
+      width: 104px;
+      height: 104px;
+      border-radius: 30px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: #06151d;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      font-size: 1.6rem;
+      font-weight: 950;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.28);
+    }
+
+    .profile-avatar-large img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile-hero h2 {
+      margin: 10px 0 0;
+      font-size: clamp(1.8rem, 4vw, 3.2rem);
+      line-height: 1;
+    }
+
+    .profile-stat {
+      min-height: 104px;
+    }
+
+    .profile-menu {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+
+    .profile-menu button {
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.045);
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .profile-menu button:hover {
+      border-color: rgba(49,255,154,0.34);
+      background: rgba(49,255,154,0.08);
+    }
+
     .match-detail-hero {
       border-bottom: 1px solid var(--line);
       background:
@@ -2605,6 +2674,18 @@
         text-align: left !important;
         font-size: 0.82rem;
       }
+
+      .profile-hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+        justify-items: center;
+      }
+
+      .profile-avatar-large {
+        width: 92px;
+        height: 92px;
+        border-radius: 26px;
+      }
     }
   </style>
 </head>
@@ -2850,47 +2931,6 @@
           </div>
         </section>
 
-        <div class="feature-grid" data-auth-only>
-          <article class="feature-card">
-            <span class="feature-icon">TV</span>
-            <strong>Public viewer mode</strong>
-            <span>Guests can follow matches, tournaments, scorecards, teams, and leaders without logging in.</span>
-          </article>
-          <article class="feature-card">
-            <span class="feature-icon">XI</span>
-            <strong>Team management</strong>
-            <span>Team admins manage squads, player photos, roles, match requests, and co-admin access.</span>
-          </article>
-          <article class="feature-card">
-            <span class="feature-icon">T20</span>
-            <strong>Live scoring</strong>
-            <span>Scorers handle overs, strike rotation, wickets, extras, undo history, and innings flow.</span>
-          </article>
-          <article class="feature-card">
-            <span class="feature-icon">R2</span>
-            <strong>Cloud media</strong>
-            <span>Logos, avatars, banners, cards, and videos are stored in Cloudflare R2 and tracked in Supabase.</span>
-          </article>
-        </div>
-
-        <div class="grid cols-3" data-auth-only>
-          <div class="card metric">
-            <span>Teams</span>
-            <strong id="teamCount">0</strong>
-            <small>Registered squads</small>
-          </div>
-          <div class="card metric">
-            <span>Players</span>
-            <strong id="playerCount">0</strong>
-            <small>Active cricketers</small>
-          </div>
-          <div class="card metric">
-            <span>Live Score</span>
-            <strong id="dashScore">0/0</strong>
-            <small id="dashOvers">0.0 overs</small>
-          </div>
-        </div>
-
         <div class="grid cols-1" style="margin-top: 16px;">
           <section class="panel">
             <div class="panel-head">
@@ -2906,64 +2946,89 @@
       </section>
 
       <section class="page" id="profile">
-        <div class="grid cols-2">
-          <section class="panel">
-            <div class="panel-head">
-              <h2>User Profile</h2>
-              <span id="profileRoleBadge">Viewer</span>
+        <section class="panel">
+          <div class="profile-hero">
+            <div id="profileAvatarPreview" class="profile-avatar-large">PS</div>
+            <div style="min-width:0;">
+              <span class="tag green" id="profileRoleBadge">Viewer</span>
+              <h2 id="profileDisplayName">Guest User</h2>
+              <p id="profileUsername" class="muted">@guest</p>
+              <p id="profileEmail" class="muted">Not logged in</p>
+              <button class="btn primary btn-sm" type="button" id="profileLoginAction">Sign In</button>
             </div>
-            <div class="panel-body grid">
-              <div class="card">
-                <span class="muted">Signed in as</span>
-                <h3 id="profileEmail">Not logged in</h3>
-                <p class="muted" id="profileUserId">Login to manage your teams and matches.</p>
-              </div>
-              <form id="profileForm" class="grid">
-                <div class="form-grid">
-                  <label>Name <input id="profileName" placeholder="Your name"></label>
-                  <label>Phone <input id="profilePhone" placeholder="+92..."></label>
-                </div>
-                <div class="form-grid">
-                  <label>City <input id="profileCity" placeholder="Your city"></label>
-                  <label>Avatar URL <input id="profileAvatar" placeholder="https://..."></label>
-                </div>
-                <label>Upload Avatar <input id="profileAvatarFile" type="file" accept="image/*"></label>
-                <button class="btn primary" type="submit">Save Profile</button>
-              </form>
-              <div class="card">
-                <span class="muted">How roles work</span>
-                <p class="muted" style="margin-top: 8px;">Roles are earned from what this account owns or is assigned to. Viewers are default. Team creators become team admins, tournament creators become tournament admins, and scorers are assigned per match.</p>
-              </div>
-              <div class="grid cols-2">
-                <div class="card"><span class="muted">Teams owned</span><h3 id="profileTeamAdminCount">0</h3></div>
-                <div class="card"><span class="muted">Tournaments owned</span><h3 id="profileTournamentAdminCount">0</h3></div>
-                <div class="card"><span class="muted">Matches to score</span><h3 id="profileScorerCount">0</h3></div>
-                <div class="card"><span class="muted">Global access</span><h3 id="profileGlobalRole">Viewer</h3></div>
-              </div>
-              <p class="form-message" id="profileMessage" aria-live="polite"></p>
-              <div class="card">
-                <span class="muted">Role History & Invitations</span>
-                <ul class="feed" id="profileRoleHistory" style="margin-top: 10px;"></ul>
-              </div>
-            </div>
-          </section>
+          </div>
 
-          <section class="panel">
-            <div class="panel-head">
-              <h2>Role Access</h2>
-              <span>What this account can do</span>
+          <div class="panel-body grid">
+            <div class="grid cols-3">
+              <div class="card profile-stat"><span class="muted">Matches</span><h3 id="profileMatchesCount">0</h3></div>
+              <div class="card profile-stat"><span class="muted">Teams</span><h3 id="profileTeamAdminCount">0</h3></div>
+              <div class="card profile-stat"><span class="muted">Tournaments</span><h3 id="profileTournamentAdminCount">0</h3></div>
             </div>
-            <div class="panel-body">
-              <ul class="feed" id="profileRoleAccess"></ul>
+
+            <div class="grid cols-2">
+              <section class="card">
+                <h3 style="margin-bottom:12px;">Menu</h3>
+                <ul class="profile-menu">
+                  <li><button type="button" data-profile-panel="edit">Edit Profile<span>›</span></button></li>
+                  <li><button type="button" data-page-jump="teams">My Teams<span id="profileTeamMenuCount">0</span></button></li>
+                  <li><button type="button" data-profile-panel="notifications">Notifications<span id="profileNotificationCount">0</span></button></li>
+                  <li><button type="button" data-profile-panel="settings">Settings<span>›</span></button></li>
+                  <li><button type="button" data-profile-panel="support">Support<span>›</span></button></li>
+                  <li><button type="button" id="profileLogoutAction">Logout<span>↗</span></button></li>
+                </ul>
+              </section>
+
+              <section class="card">
+                <div class="profile-panel active" data-profile-panel-content="edit">
+                  <h3 style="margin-bottom:12px;">Edit Profile</h3>
+                  <form id="profileForm" class="grid">
+                    <div class="form-grid">
+                      <label>Name <input id="profileName" placeholder="Your name"></label>
+                      <label>Phone <input id="profilePhone" placeholder="+92..."></label>
+                    </div>
+                    <div class="form-grid">
+                      <label>City <input id="profileCity" placeholder="Your city"></label>
+                      <label>Avatar URL <input id="profileAvatar" placeholder="https://..."></label>
+                    </div>
+                    <label>Upload Avatar <input id="profileAvatarFile" type="file" accept="image/*"></label>
+                    <button class="btn primary" type="submit">Save Profile</button>
+                    <p class="form-message" id="profileMessage" aria-live="polite"></p>
+                  </form>
+                </div>
+
+                <div class="profile-panel" data-profile-panel-content="notifications" style="display:none;">
+                  <h3 style="margin-bottom:12px;">Notifications</h3>
+                  <ul class="feed" id="profileNotificationsList"></ul>
+                </div>
+
+                <div class="profile-panel" data-profile-panel-content="settings" style="display:none;">
+                  <h3 style="margin-bottom:12px;">Settings</h3>
+                  <ul class="feed">
+                    <li><strong>Account role</strong><span id="profileGlobalRole">Viewer</span></li>
+                    <li><strong>User ID</strong><span id="profileUserId">Login to manage teams and matches.</span></li>
+                  </ul>
+                </div>
+
+                <div class="profile-panel" data-profile-panel-content="support" style="display:none;">
+                  <h3 style="margin-bottom:12px;">Support</h3>
+                  <p class="muted">For help, contact the PakScorer admin or report the issue with your account email and match/team name.</p>
+                </div>
+              </section>
             </div>
-          </section>
-        </div>
+
+            <div class="card">
+              <span class="muted">Role History & Invitations</span>
+              <ul class="feed" id="profileRoleHistory" style="margin-top: 10px;"></ul>
+            </div>
+          </div>
+        </section>
       </section>
 
       <section class="page" id="teams">
         <div class="sub-nav" style="display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid var(--line); padding-bottom: 12px;">
           <button class="btn primary btn-sm sub-nav-btn active" data-sub="profiles">Team Profiles</button>
           <button class="btn ghost btn-sm sub-nav-btn" data-sub="create" data-auth-only>Create New Team</button>
+          <button class="btn ghost btn-sm sub-nav-btn" data-sub="management" data-auth-only>Team Management</button>
           <button class="btn ghost btn-sm sub-nav-btn" data-sub="fixtures">Scheduled Matches</button>
           <button class="btn ghost btn-sm sub-nav-btn" data-sub="admins" data-auth-only>Manage Access</button>
         </div>
@@ -2984,17 +3049,123 @@
           <section class="panel" style="max-width: 500px;">
             <div class="panel-head">
               <h2>Create New Team</h2>
-              <span>Expand your roster</span>
+              <span id="teamCreateLimitLabel">Maximum 2 teams per account</span>
             </div>
-            <form class="panel-body grid" id="teamForm">
-              <label>Team name <input id="newTeamName" value="Rawalpindi Royals" /></label>
-              <label>City <input id="newTeamCity" value="Rawalpindi" /></label>
-              <label>Captain <input id="newTeamCaptain" value="Bilal Khan" /></label>
-              <label>Logo URL <input id="newTeamLogo" placeholder="https://... or upload below" /></label>
-              <label>Upload Logo <input id="newTeamLogoFile" type="file" accept="image/*"></label>
-              <p class="form-message" id="teamFormMessage" aria-live="polite"></p>
-              <button class="btn primary" type="submit">Add Team</button>
-            </form>
+            <div class="panel-body grid">
+              <div id="teamCreatePrompt" class="card" style="display:none;">
+                <h3>Team created</h3>
+                <p class="muted" id="teamCreatePromptText">Do you want to create another team?</p>
+                <button class="btn primary btn-sm" type="button" id="createAnotherTeamBtn" style="width:max-content;">Create another team</button>
+              </div>
+              <div id="teamCreateLimitCard" class="card" style="display:none;">
+                <h3>Team limit reached</h3>
+                <p class="muted">One account can create only 2 teams. Manage your existing teams from Team Profiles.</p>
+              </div>
+              <form class="grid" id="teamForm">
+                <label>Team name <input id="newTeamName" value="Rawalpindi Royals" /></label>
+                <label>City <input id="newTeamCity" value="Rawalpindi" /></label>
+                <label>Captain <input id="newTeamCaptain" value="Bilal Khan" /></label>
+                <label>Logo URL <input id="newTeamLogo" placeholder="https://... or upload below" /></label>
+                <label>Upload Logo <input id="newTeamLogoFile" type="file" accept="image/*"></label>
+                <p class="form-message" id="teamFormMessage" aria-live="polite"></p>
+                <button class="btn primary" type="submit">Add Team</button>
+              </form>
+            </div>
+          </section>
+        </div>
+
+        <div id="sub-management" class="sub-page">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 id="teamManagementTitle">Team Management</h2>
+                <span id="teamManagementSubtitle">Select a team from Team Profiles to manage it.</span>
+              </div>
+              <button class="btn ghost btn-sm" type="button" data-team-management-back>Back to Team Profiles</button>
+            </div>
+            <div class="panel-body">
+              <div id="teamManagementEmpty" class="card">
+                <h3>No team selected</h3>
+                <p class="muted">Open Team Profiles, then click the team you want to manage.</p>
+              </div>
+
+              <div id="teamManagementContent" style="display:none;">
+                <div class="sub-nav" style="display:flex; gap:10px; overflow-x:auto; margin-bottom:16px; border-bottom:1px solid var(--line); padding-bottom:12px;">
+                  <button class="btn primary btn-sm" type="button" data-team-manage-tab="edit">Edit Team Details</button>
+                  <button class="btn ghost btn-sm" type="button" data-team-manage-tab="players">Add Players</button>
+                  <button class="btn ghost btn-sm" type="button" data-team-manage-tab="squad">Squad</button>
+                </div>
+
+                <section class="team-manage-panel" data-team-manage-panel="edit">
+                  <form id="teamManagementEditForm" class="grid">
+                    <input type="hidden" id="teamManagementId">
+                    <div class="form-grid">
+                      <label>Team Name <input id="teamManagementName" required></label>
+                      <label>City <input id="teamManagementCity" required></label>
+                    </div>
+                    <div class="form-grid">
+                      <label>Captain <input id="teamManagementCaptain" required></label>
+                      <label>Logo URL <input id="teamManagementLogo" placeholder="https://..."></label>
+                    </div>
+                    <label>Upload Logo <input id="teamManagementLogoFile" type="file" accept="image/*"></label>
+                    <button class="btn primary" type="submit">Save Team Details</button>
+                    <p class="form-message" id="teamManagementMessage" aria-live="polite"></p>
+                  </form>
+                </section>
+
+                <section class="team-manage-panel" data-team-manage-panel="players" style="display:none;">
+                  <form id="teamPlayerForm" class="grid">
+                    <input type="hidden" id="teamPlayerTeamId">
+                    <input type="hidden" id="teamPlayerTeamName">
+                    <div class="form-grid">
+                      <label>Player Name <input id="teamPlayerName" placeholder="Player name" required></label>
+                      <label>Age <input id="teamPlayerAge" type="number" min="8" max="70" placeholder="Age"></label>
+                    </div>
+                    <div class="card" style="background:rgba(255,255,255,0.035);">
+                      <h3 style="margin-bottom:12px;">Player Type</h3>
+                      <div class="form-grid">
+                        <label style="display:flex;align-items:center;gap:8px;"><input id="teamPlayerBatter" type="checkbox" style="width:auto;"> Batter</label>
+                        <label style="display:flex;align-items:center;gap:8px;"><input id="teamPlayerFastBowler" type="checkbox" style="width:auto;"> Fast Bowler</label>
+                        <label style="display:flex;align-items:center;gap:8px;"><input id="teamPlayerSpinBowler" type="checkbox" style="width:auto;"> Spin Bowler</label>
+                        <label style="display:flex;align-items:center;gap:8px;"><input id="teamPlayerWicketKeeper" type="checkbox" style="width:auto;"> Wicket Keeper</label>
+                        <label style="display:flex;align-items:center;gap:8px;"><input id="teamPlayerAllRounder" type="checkbox" style="width:auto;"> All-rounder</label>
+                      </div>
+                    </div>
+                    <div class="form-grid">
+                      <label>Batting Style
+                        <select id="teamPlayerBattingStyle">
+                          <option value="">Select batting style</option>
+                          <option>Right-hand batter</option>
+                          <option>Left-hand batter</option>
+                        </select>
+                      </label>
+                      <label>Bowling Style
+                        <select id="teamPlayerBowlingStyle">
+                          <option value="">Select bowling style</option>
+                          <option>Right-arm fast</option>
+                          <option>Left-arm fast</option>
+                          <option>Right-arm medium</option>
+                          <option>Left-arm medium</option>
+                          <option>Right-arm off spin</option>
+                          <option>Right-arm leg spin</option>
+                          <option>Left-arm orthodox spin</option>
+                          <option>Left-arm wrist spin</option>
+                          <option>Does not bowl</option>
+                        </select>
+                      </label>
+                    </div>
+                    <label>Player Photo <input id="teamPlayerPhotoFile" type="file" accept="image/*"></label>
+                    <label>Photo URL <input id="teamPlayerPhotoUrl" placeholder="https://... or upload above"></label>
+                    <button class="btn primary" type="submit">Add Player</button>
+                    <p class="form-message" id="teamPlayerMessage" aria-live="polite"></p>
+                  </form>
+                </section>
+
+                <section class="team-manage-panel" data-team-manage-panel="squad" style="display:none;">
+                  <div class="grid cols-2" id="teamManagementSquad"></div>
+                </section>
+              </div>
+            </div>
           </section>
         </div>
 
@@ -3036,8 +3207,10 @@
                       </label>
                       <label>Role
                         <select id="newAdminRole">
-                          <option value="co_admin">Co-Admin</option>
-                          <option value="owner">Owner</option>
+                          <option value="co_admin">Co-Admin - full team management</option>
+                          <option value="squad_manager">Squad Manager - add/edit players</option>
+                          <option value="match_manager">Match Manager - requests and schedules</option>
+                          <option value="scorer_manager">Scorer Manager - assign scorers</option>
                         </select>
                       </label>
                       <button class="btn primary" type="submit">Invite/Add Admin</button>
@@ -3732,6 +3905,7 @@
       tournamentAdmins: [],
       matchScorers: [],
       selectedTournamentId: null,
+      selectedTeamManagementId: null,
       expandedRankings: {
         batters: false,
         bowlers: false,
@@ -3882,8 +4056,8 @@
 
         // Populate team management dropdown
         const adminSelect = document.querySelector("#adminManageTeamSelect");
-        if (adminSelect) {
-          const ownedTeams = state.teams.filter(t => isOwner(t));
+      if (adminSelect) {
+          const ownedTeams = getOwnedTeams();
           adminSelect.innerHTML = '<option value="">-- Select Team --</option>' +
             ownedTeams.map(t => `<option value="${t.id}">${t.name}</option>`).join("");
         }
@@ -3919,9 +4093,12 @@
       if (!user && restrictedPages.includes(activePage)) {
         document.querySelector("[data-page='home']").click();
       }
-      if (!user && activePage === "profile") {
-        document.querySelector("[data-page='home']").click();
-      }
+      const profileForm = document.querySelector("#profileForm");
+      if (profileForm) profileForm.style.display = user ? "grid" : "none";
+      const profileLoginAction = document.querySelector("#profileLoginAction");
+      if (profileLoginAction) profileLoginAction.style.display = user ? "none" : "";
+      const profileLogoutAction = document.querySelector("#profileLogoutAction");
+      if (profileLogoutAction) profileLogoutAction.style.display = user ? "" : "none";
 
       // Hide/Show admin-only elements
       document.querySelectorAll("[data-admin-only]").forEach(el => {
@@ -4087,16 +4264,24 @@
       const emailEl = document.querySelector("#profileEmail");
       const userIdEl = document.querySelector("#profileUserId");
       const roleBadge = document.querySelector("#profileRoleBadge");
-      const accessEl = document.querySelector("#profileRoleAccess");
       const historyEl = document.querySelector("#profileRoleHistory");
       const myTeams = getMyTeams();
       const myTournaments = getMyTournaments();
       const scoringMatches = getAssignedScoringMatches();
       const profile = getUserProfile();
+      const displayName = profile.name || state.user?.email?.split("@")[0] || "Guest User";
+      const username = state.user?.email ? `@${state.user.email.split("@")[0]}` : "@guest";
+      const avatar = profile.avatar || "";
 
       if (emailEl) emailEl.textContent = state.user?.email || "Not logged in";
       if (userIdEl) userIdEl.textContent = state.user ? `User ID: ${state.user.id}` : "Login to manage teams, tournaments, and scoring.";
       if (roleBadge) roleBadge.textContent = primaryRoleLabel();
+      safeSetText("#profileDisplayName", displayName);
+      safeSetText("#profileUsername", username);
+      const avatarPreview = document.querySelector("#profileAvatarPreview");
+      if (avatarPreview) {
+        avatarPreview.innerHTML = avatar ? `<img src="${avatar}" alt="${displayName}">` : initials(displayName);
+      }
       const profileName = document.querySelector("#profileName");
       const profilePhone = document.querySelector("#profilePhone");
       const profileCity = document.querySelector("#profileCity");
@@ -4108,16 +4293,20 @@
       safeSetText("#profileTeamAdminCount", myTeams.length);
       safeSetText("#profileTournamentAdminCount", myTournaments.length);
       safeSetText("#profileScorerCount", scoringMatches.length);
+      safeSetText("#profileMatchesCount", scoringMatches.length + state.matches.filter(isUserMatch).length);
+      safeSetText("#profileTeamMenuCount", myTeams.length);
+      safeSetText("#profileNotificationCount", state.notifications.filter(item => !item.read_at && !item.readAt).length);
       safeSetText("#profileGlobalRole", roleLabel());
-
-      const access = ["Viewer: view public matches, tournaments, teams, leaders, and scorecards"];
-      if (myTeams.length || isSuperAdmin()) access.push("Team Admin: manage teams you created and their players");
-      if (myTournaments.length || isSuperAdmin()) access.push("Tournament Admin: manage tournaments you created, applications, fixtures, and series");
-      if (scoringMatches.length || isSuperAdmin()) access.push("Scorer: score only assigned or owned matches");
-      if (isSuperAdmin()) access.push("Super Admin: full app access");
-
-      if (accessEl) {
-        accessEl.innerHTML = access.map(item => `<li><strong>${item}</strong><span>${primaryRoleLabel()}</span></li>`).join("");
+      const loginAction = document.querySelector("#profileLoginAction");
+      if (loginAction) {
+        loginAction.textContent = state.user ? "Account Active" : "Sign In";
+        loginAction.disabled = Boolean(state.user);
+      }
+      const notificationsList = document.querySelector("#profileNotificationsList");
+      if (notificationsList) {
+        notificationsList.innerHTML = state.notifications.length
+          ? state.notifications.map(item => `<li><strong>${item.type || "Notification"}</strong><span>${item.payload?.message || item.payload?.title || new Date(item.created_at || Date.now()).toLocaleString()}</span></li>`).join("")
+          : `<li><strong>No notifications</strong><span>Match requests and role updates will appear here.</span></li>`;
       }
       if (historyEl) {
         const history = getRoleHistory();
@@ -4430,6 +4619,29 @@
       return state.teams.filter(t => String(t.user_id) === String(state.user.id));
     }
 
+    function getOwnedTeams() {
+      if (!state.user) return [];
+      return state.teams.filter(team => isOwner(team) || state.teamAdmins.some(row =>
+        String(row.teamId || row.team_id) === String(team.id) &&
+        row.role === "owner" &&
+        (String(row.userId || row.user_id) === String(state.user.id) || row.email === state.user.email)
+      ));
+    }
+
+    function renderTeamCreateState(showPrompt = false) {
+      const form = document.querySelector("#teamForm");
+      const prompt = document.querySelector("#teamCreatePrompt");
+      const limitCard = document.querySelector("#teamCreateLimitCard");
+      const label = document.querySelector("#teamCreateLimitLabel");
+      if (!form || !prompt || !limitCard) return;
+      const ownedCount = getOwnedTeams().length;
+      if (label) label.textContent = `${ownedCount}/2 teams created`;
+      const atLimit = ownedCount >= 2;
+      limitCard.style.display = atLimit ? "" : "none";
+      prompt.style.display = !atLimit && showPrompt ? "" : "none";
+      form.style.display = !atLimit && !showPrompt ? "grid" : "none";
+    }
+
     function initials(name) {
       return name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
     }
@@ -4454,7 +4666,7 @@
       const bowlingTeam = (state.score.bowlingTeam || "").trim().toLowerCase();
       const bowlers = state.players.filter((player) => (
         (player.team || "").trim().toLowerCase() === bowlingTeam &&
-        (player.role === "Bowler" || player.role === "All-rounder")
+        ((player.role || "").includes("Bowler") || (player.role || "").includes("All-rounder"))
       ));
 
       if (bowlers.length) return bowlers;
@@ -4589,83 +4801,123 @@
     }
 
     function renderTeams() {
-      let visibleTeams;
-      if (isAdmin()) {
-        visibleTeams = isSuperAdmin() ? state.teams : state.teams.filter(t => isOwner(t) || isRegisteredWith(t));
-      } else {
-        visibleTeams = state.teams.filter(t => isOwner(t) || isRegisteredWith(t));
-      }
+      let visibleTeams = state.user
+        ? state.teams.filter(t => canManageTeam(t) || isRegisteredWith(t))
+        : state.teams;
 
-      document.querySelector("#teamList").innerHTML = visibleTeams.map((team) => {
-        const teamPlayers = state.players.filter(p => p.team === team.name);
+      const teamList = document.querySelector("#teamList");
+      if (!teamList) return;
+      teamList.innerHTML = visibleTeams.length ? visibleTeams.map((team) => {
         const owner = canManageTeam(team);
         const admin = isSuperAdmin();
 
-        const rosterHtml = teamPlayers.length ? `
-          <div class="team-roster" style="margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px;">
-            <p style="font-size: 0.75rem; color: var(--muted); font-weight: 800; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.05em;">Squad (${teamPlayers.length})</p>
-            <ul style="list-style: none; display: flex; flex-direction: column; gap: 4px;">
-              ${teamPlayers.map(p => `
-                ${(() => { const meta = getPlayerMeta(p.id); return `
-                <li style="display: flex; justify-content: space-between; align-items: center; gap: 8px; background: rgba(255,255,255,0.03); padding: 4px 8px; border-radius: 6px;">
-                  <span style="display:flex; align-items:center; gap:8px; font-size: 0.82rem;">
-                    ${meta.photo || p.photo_url ? `<img src="${meta.photo || p.photo_url}" alt="${p.name}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">` : `<span class="avatar" style="width:32px;height:32px;font-size:0.7rem;">${initials(p.name)}</span>`}
-                    <span><strong>${p.name}</strong> <small class="muted">(${p.role}${meta.age || p.age ? `, ${meta.age || p.age}` : ""})</small><br><small class="muted">${meta.batting || p.batting_style || "Batting"} / ${meta.bowling || p.bowling_style || "Bowling"}</small></span>
-                  </span>
-                  ${owner || admin ? `<button class="btn ghost danger" style="padding: 2px 4px; font-size: 0.6rem;" data-delete-player="${p.id}">Remove</button>` : ""}
-                </li>
-                `; })()}
-              `).join("")}
-            </ul>
-          </div>
-        ` : `<p class="muted" style="font-size: 0.75rem; margin-top: 12px;">No players added yet</p>`;
-
-        const managementTools = (owner || admin) ? `
-            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line);">
-              <p style="font-size: 0.7rem; color: var(--gold); font-weight: 800; text-transform: uppercase; margin-bottom: 6px;">Quick Add Player</p>
-              <form class="quick-add-player" data-team-name="${team.name}" style="display: grid; grid-template-columns: 1.2fr 0.8fr 0.7fr; gap: 6px;">
-                <input type="text" placeholder="Name" class="player-name-in" style="font-size: 0.8rem; padding: 4px 8px;" required>
-                <select class="player-role-in" style="font-size: 0.8rem; padding: 4px;">
-                  <option>Batter</option><option>Bowler</option><option>All-rounder</option><option>WK</option>
-                </select>
-                <input type="number" placeholder="Age" class="player-age-in" min="8" max="70" style="font-size: 0.8rem; padding: 4px 8px;">
-                <input type="text" placeholder="Batting style" class="player-batting-in" style="font-size: 0.8rem; padding: 4px 8px;">
-                <input type="text" placeholder="Bowling style" class="player-bowling-in" style="font-size: 0.8rem; padding: 4px 8px;">
-                <input type="url" placeholder="Photo URL" class="player-photo-in" style="font-size: 0.8rem; padding: 4px 8px;">
-                <input type="file" accept="image/*" class="player-photo-file-in" style="font-size: 0.75rem; padding: 4px 8px;">
-                <button class="btn primary btn-sm" type="submit">+</button>
-              </form>
-            </div>
-        ` : "";
-
         return `
-          <article class="card team-card" style="display: flex; flex-direction: column;">
-            <div class="team-top" data-public-team="${team.id}" style="cursor:pointer;">
-              ${team.logo_url ? `<img src="${team.logo_url}" alt="${team.name}" class="avatar" style="object-fit:cover;">` : `<div class="avatar">${initials(team.name)}</div>`}
+          <article class="card team-card" ${owner || admin ? `data-manage-team="${team.id}"` : `data-public-team="${team.id}"`} style="cursor:pointer; min-height:150px; display:flex; align-items:center; justify-content:center; text-align:center;">
+            <div style="display:grid; gap:12px; justify-items:center;">
+              ${team.logo_url ? `<img src="${team.logo_url}" alt="${team.name}" class="avatar" style="width:72px;height:72px;object-fit:cover;border-radius:18px;">` : `<div class="avatar" style="width:72px;height:72px;border-radius:18px;">${initials(team.name)}</div>`}
               <div>
                 <h3>${team.name}</h3>
-                <p>${team.city}</p>
+                <p class="muted">${owner || admin ? "Open team management" : "Open team profile"}</p>
               </div>
-            </div>
-
-            ${rosterHtml}
-            ${managementTools}
-
-            <div class="actions" style="margin-top: auto; padding-top: 12px;">
-              <span class="tag green">${team.record}</span>
-              <span class="tag">Captain: ${team.captain}</span>
-              <button class="btn ghost" style="padding: 2px 6px; font-size: 0.65rem;" data-public-team="${team.id}">Details</button>
-              ${owner || admin ? `<button class="btn ghost" style="padding: 2px 6px; font-size: 0.65rem;" onclick="openEditTeam('${team.id}')">Edit</button>` : ""}
-              ${owner || admin ? `<button class="btn ghost" style="padding: 2px 6px; font-size: 0.65rem;" data-invite-team-admin="${team.id}">Invite Admin</button>` : ""}
-              ${owner || admin ? `<button class="btn ghost" style="padding: 2px 6px; font-size: 0.65rem;" data-transfer-team="${team.id}">Transfer</button>` : ""}
-              ${owner || admin ? `<button class="btn ghost danger" style="padding: 2px 6px; font-size: 0.65rem;" data-delete-team="${team.id}">Delete</button>` : ""}
             </div>
           </article>
         `;
-      }).join("");
-      document.querySelector("#teamCount").textContent = visibleTeams.length;
-      document.querySelector("#teamsLabel").textContent = `${visibleTeams.length} teams`;
+      }).join("") : `<article class="card"><h3>No teams yet</h3><p class="muted">Create a team first, then it will appear here.</p><button class="btn primary btn-sm" type="button" data-sub-jump="create" style="width:max-content;margin-top:12px;">Create Team</button></article>`;
+      const teamCountEl = document.querySelector("#teamCount");
+      if (teamCountEl) teamCountEl.textContent = visibleTeams.length;
+      safeSetText("#teamsLabel", `${visibleTeams.length} teams`);
       renderTeamSelects();
+      renderTeamManagement();
+      renderTeamCreateState(false);
+    }
+
+    function switchTeamsSubPage(subId) {
+      const teamsPage = document.querySelector("#teams");
+      if (!teamsPage) return;
+      teamsPage.querySelectorAll(".sub-nav-btn[data-sub]").forEach(button => {
+        const active = button.dataset.sub === subId;
+        button.classList.toggle("primary", active);
+        button.classList.toggle("ghost", !active);
+        button.classList.toggle("active", active);
+      });
+      teamsPage.querySelectorAll(":scope > .sub-page").forEach(panel => panel.classList.remove("active"));
+      const target = teamsPage.querySelector(`#sub-${subId}`);
+      if (target) target.classList.add("active");
+    }
+
+    function switchTeamManagePanel(panelId) {
+      document.querySelectorAll("[data-team-manage-tab]").forEach(button => {
+        const active = button.dataset.teamManageTab === panelId;
+        button.classList.toggle("primary", active);
+        button.classList.toggle("ghost", !active);
+      });
+      document.querySelectorAll("[data-team-manage-panel]").forEach(panel => {
+        panel.style.display = panel.dataset.teamManagePanel === panelId ? "block" : "none";
+      });
+    }
+
+    function openTeamManagement(teamId, panelId = "edit") {
+      const team = state.teams.find(t => String(t.id) === String(teamId));
+      if (!team || (!canManageTeam(team) && !isSuperAdmin())) {
+        if (team) renderPublicTeamDetail(team.id);
+        return;
+      }
+      state.selectedTeamManagementId = team.id;
+      switchTeamsSubPage("management");
+      renderTeamManagement();
+      switchTeamManagePanel(panelId);
+    }
+
+    function renderTeamManagement() {
+      const team = state.teams.find(t => String(t.id) === String(state.selectedTeamManagementId));
+      const empty = document.querySelector("#teamManagementEmpty");
+      const content = document.querySelector("#teamManagementContent");
+      if (!empty || !content) return;
+
+      if (!team) {
+        empty.style.display = "";
+        content.style.display = "none";
+        safeSetText("#teamManagementTitle", "Team Management");
+        safeSetText("#teamManagementSubtitle", "Select a team from Team Profiles to manage it.");
+        return;
+      }
+
+      const players = state.players.filter(player => String(player.team_id || "") === String(team.id) || player.team === team.name);
+      empty.style.display = "none";
+      content.style.display = "";
+      safeSetText("#teamManagementTitle", team.name);
+      safeSetText("#teamManagementSubtitle", `${team.city || "City not set"} - Captain ${team.captain || "Not set"} - ${players.length} players`);
+
+      const setValue = (selector, value) => {
+        const el = document.querySelector(selector);
+        if (el) el.value = value || "";
+      };
+      setValue("#teamManagementId", team.id);
+      setValue("#teamManagementName", team.name);
+      setValue("#teamManagementCity", team.city);
+      setValue("#teamManagementCaptain", team.captain);
+      setValue("#teamManagementLogo", team.logo_url);
+      setValue("#teamPlayerTeamId", team.id);
+      setValue("#teamPlayerTeamName", team.name);
+
+      const squad = document.querySelector("#teamManagementSquad");
+      if (squad) {
+        squad.innerHTML = players.length ? players.map(player => {
+          const meta = getPlayerMeta(player.id);
+          const photo = meta.photo || player.photo_url;
+          return `
+            <article class="card" style="display:flex;gap:12px;align-items:center;">
+              ${photo ? `<img src="${photo}" alt="${player.name}" style="width:54px;height:54px;border-radius:50%;object-fit:cover;">` : `<span class="avatar" style="border-radius:50%;width:54px;height:54px;">${initials(player.name)}</span>`}
+              <div style="min-width:0;flex:1;">
+                <h3>${player.name}</h3>
+                <p class="muted">${player.role || "Player"}${player.age ? ` - ${player.age} yrs` : ""}</p>
+                <p class="muted">${player.batting_style || meta.batting || "Batting style"} / ${player.bowling_style || meta.bowling || "Bowling style"}</p>
+              </div>
+              <button class="btn ghost danger btn-sm" type="button" data-delete-player="${player.id}">Remove</button>
+            </article>
+          `;
+        }).join("") : `<article class="card"><h3>No players yet</h3><p class="muted">Use Add Players to build this squad.</p></article>`;
+      }
     }
 
 
@@ -4686,6 +4938,14 @@
       }
 
       renderTournamentSelects();
+      const adminSelect = document.querySelector("#adminManageTeamSelect");
+      if (adminSelect) {
+        const current = adminSelect.value;
+        const ownedTeams = getOwnedTeams();
+        adminSelect.innerHTML = '<option value="">-- Select Team --</option>' +
+          ownedTeams.map(team => `<option value="${team.id}">${team.name}</option>`).join("");
+        adminSelect.value = current;
+      }
     }
 
     function renderPlayers() {
@@ -4737,6 +4997,7 @@
       await loadMatchRequestsFromDatabase();
       await loadMatchesFromDatabase();
       await loadAdminAssignmentsFromDatabase();
+      renderTeams();
     }
 
     async function loadPlayersFromDatabase() {
@@ -4750,6 +5011,7 @@
       state.players = data;
 
       renderPlayers();
+      renderTeams();
     }
 
     async function loadMatchRequestsFromDatabase() {
@@ -4865,6 +5127,7 @@
       } catch (error) {
         console.warn("Admin assignment tables unavailable:", error.message);
       }
+      renderTeams();
     }
 
     async function saveTeamAdminAssignment(teamId, email, role = "co_admin") {
@@ -5909,12 +6172,14 @@
       const upcomingMatches = state.matches.filter((match) => match.status === "Scheduled" || match.status === "Setup");
       const activeMatches = state.matches.filter((match) => match.status === "Scheduled" || match.status === "Setup" || match.status === "Live");
       const forYouMatches = state.matches.filter(isUserMatch);
+      const myTeamIds = state.teams.filter(team => canManageTeam(team) || isRegisteredWith(team)).map(team => String(team.id));
+      const myScheduledMatches = upcomingMatches.filter(match => myTeamIds.includes(String(match.teamAId)) || myTeamIds.includes(String(match.teamBId)) || getMyTeams().some(team => match.teamA === team.name || match.teamB === team.name));
       const history = state.matches.filter((match) => match.status === "Completed" || match.status === "Cancelled");
-      const rows = renderMatchFeed(upcomingMatches, "No upcoming matches yet", { management: true, emptyText: state.user ? "Accept a request to create one." : "Upcoming public matches will appear here." });
+      const rows = renderMatchFeed(myScheduledMatches, "No scheduled matches for your teams", { management: true, emptyText: state.user ? "Accepted requests for your teams will appear here." : "Login to see your team matches." });
       const historyRows = renderMatchFeed(history, "No finished matches yet");
 
       safeSetText("#fixtureCount", `${activeMatches.length} active`);
-      safeSetText("#scheduledMatchCount", `${upcomingMatches.length} matches`);
+      safeSetText("#scheduledMatchCount", `${myScheduledMatches.length} matches`);
       safeSetText("#historyCount", `${history.length} past matches`);
       safeSetText("#liveMatchCount", `${liveMatches.length} live`);
       safeSetText("#upcomingMatchCount", `${upcomingMatches.length} upcoming`);
@@ -7835,8 +8100,16 @@
       const logoFile = selectedFile("#newTeamLogoFile");
       const normalizedName = name.toLowerCase();
       const alreadyExists = state.teams.some((team) => team.name.trim().toLowerCase() === normalizedName);
+      const ownedCount = getOwnedTeams().length;
 
       message.className = "form-message";
+
+      if (ownedCount >= 2) {
+        message.textContent = "You can create only 2 teams from one account.";
+        message.classList.add("error");
+        renderTeamCreateState(false);
+        return;
+      }
 
       if (!name) {
         message.textContent = "Please enter a team name.";
@@ -7899,7 +8172,21 @@
       renderTeams();
       message.textContent = `${name} added successfully.`;
       message.classList.add("success");
+      event.target.reset();
+      renderTeamCreateState(true);
     });
+
+    const createAnotherTeamBtn = document.querySelector("#createAnotherTeamBtn");
+    if (createAnotherTeamBtn) {
+      createAnotherTeamBtn.addEventListener("click", () => {
+        renderTeamCreateState(false);
+        const msg = document.querySelector("#teamFormMessage");
+        if (msg) {
+          msg.textContent = "";
+          msg.className = "form-message";
+        }
+      });
+    }
 
     // Team management is now handled via the Team Form and Team Cards
 
@@ -8579,6 +8866,30 @@
         return;
       }
 
+      const subJump = event.target.closest("[data-sub-jump]");
+      if (subJump) {
+        switchTeamsSubPage(subJump.dataset.subJump);
+        return;
+      }
+
+      const manageTeamBtn = event.target.closest("[data-manage-team]");
+      if (manageTeamBtn) {
+        openTeamManagement(manageTeamBtn.dataset.manageTeam);
+        return;
+      }
+
+      const teamManageTab = event.target.closest("[data-team-manage-tab]");
+      if (teamManageTab) {
+        switchTeamManagePanel(teamManageTab.dataset.teamManageTab);
+        return;
+      }
+
+      const teamManagementBack = event.target.closest("[data-team-management-back]");
+      if (teamManagementBack) {
+        switchTeamsSubPage("profiles");
+        return;
+      }
+
       const shareMatchBtn = event.target.closest("[data-share-match]");
       if (shareMatchBtn) {
         const url = shareMatchBtn.dataset.shareUrl || `${window.location.origin}${window.location.pathname}#match-${shareMatchBtn.dataset.shareMatch}`;
@@ -8593,6 +8904,15 @@
         } catch (error) {
           if (error?.name !== "AbortError") prompt("Copy this match link:", url);
         }
+        return;
+      }
+
+      const profilePanelBtn = event.target.closest("[data-profile-panel]");
+      if (profilePanelBtn) {
+        const panel = profilePanelBtn.dataset.profilePanel;
+        document.querySelectorAll("[data-profile-panel-content]").forEach(item => {
+          item.style.display = item.dataset.profilePanelContent === panel ? "block" : "none";
+        });
         return;
       }
 
@@ -9075,6 +9395,22 @@
       });
     }
 
+    const profileLoginAction = document.querySelector("#profileLoginAction");
+    if (profileLoginAction) {
+      profileLoginAction.addEventListener("click", () => {
+        setAuthMode("login");
+        const modal = document.querySelector("#loginModal");
+        if (modal) modal.style.display = "grid";
+      });
+    }
+
+    const profileLogoutAction = document.querySelector("#profileLogoutAction");
+    if (profileLogoutAction) {
+      profileLogoutAction.addEventListener("click", () => {
+        handleLogout();
+      });
+    }
+
     const mobileBtn = document.querySelector("#mobileProfileBtn");
     if (mobileBtn) {
       mobileBtn.addEventListener("click", () => {
@@ -9211,6 +9547,10 @@
       if (!confirm("Are you sure you want to remove this admin?")) return;
       const teamId = document.querySelector("#adminManageTeamSelect").value;
       try {
+        const team = state.teams.find(t => String(t.id) === String(teamId));
+        if (!team || (!isOwner(team) && !isSuperAdmin())) {
+          throw new Error("Only the team owner can manage admin access.");
+        }
         if (state.usingDatabase) {
           const { error } = await supabase.from('team_admins').delete().eq('id', adminId);
           if (error) throw error;
@@ -9222,7 +9562,7 @@
     };
 
     window.openEditTeam = function(teamId) {
-      const team = state.teams.find(t => t.id === teamId);
+      const team = state.teams.find(t => String(t.id) === String(teamId));
       if (!team) return;
       document.querySelector("#editTeamId").value = team.id;
       document.querySelector("#editTeamName").value = team.name;
@@ -9280,6 +9620,10 @@
         const role = document.querySelector("#newAdminRole").value;
         const msg = document.querySelector("#adminActionMessage");
         try {
+          const team = state.teams.find(t => String(t.id) === String(teamId));
+          if (!team || (!isOwner(team) && !isSuperAdmin())) {
+            throw new Error("Only the team owner can create admins for this team.");
+          }
           if (state.usingDatabase) {
             const { error } = await supabase.from('team_admins').insert([{ team_id: teamId, email: email.toLowerCase().trim(), role: role, invited_by: state.user.id }]);
             if (error) throw error;
@@ -9336,6 +9680,160 @@
             loadTeamsFromDatabase().then(() => renderTeams());
           }, 1500);
         } catch (err) { msg.textContent = err.message; msg.className = "form-message error"; }
+      });
+    }
+
+    const teamManagementEditForm = document.querySelector("#teamManagementEditForm");
+    if (teamManagementEditForm) {
+      teamManagementEditForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const msg = document.querySelector("#teamManagementMessage");
+        const id = document.querySelector("#teamManagementId").value;
+        const team = state.teams.find(t => String(t.id) === String(id));
+        if (!team) return;
+        if (!canManageTeam(team) && !isSuperAdmin()) return alert("You cannot edit this team.");
+
+        const data = {
+          name: document.querySelector("#teamManagementName").value.trim(),
+          city: document.querySelector("#teamManagementCity").value.trim(),
+          captain: document.querySelector("#teamManagementCaptain").value.trim(),
+          logo_url: document.querySelector("#teamManagementLogo").value.trim() || null
+        };
+
+        try {
+          if (msg) {
+            msg.textContent = "Saving team details...";
+            msg.className = "form-message";
+          }
+          const logoFile = selectedFile("#teamManagementLogoFile");
+          if (logoFile) {
+            if (msg) msg.textContent = "Uploading logo to R2...";
+            const media = await uploadMediaToR2(logoFile, {
+              entityType: "team",
+              entityId: id,
+              mediaType: "image"
+            });
+            await attachMediaAsset({ entityType: "team", entityId: id, mediaType: "image" }, media, logoFile);
+            data.logo_url = media.publicUrl;
+            data.logo_r2_key = media.key;
+            document.querySelector("#teamManagementLogo").value = media.publicUrl;
+          }
+
+          if (state.usingDatabase) {
+            const { error } = await supabase.from("teams").update(data).eq("id", id);
+            if (error) throw error;
+          }
+
+          Object.assign(team, data);
+          renderTeams();
+          openTeamManagement(id, "edit");
+          if (msg) {
+            msg.textContent = "Team details saved.";
+            msg.className = "form-message success";
+          }
+        } catch (error) {
+          if (msg) {
+            msg.textContent = "Could not save team: " + error.message;
+            msg.className = "form-message error";
+          }
+        }
+      });
+    }
+
+    const teamPlayerForm = document.querySelector("#teamPlayerForm");
+    if (teamPlayerForm) {
+      teamPlayerForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const msg = document.querySelector("#teamPlayerMessage");
+        const teamId = document.querySelector("#teamPlayerTeamId").value;
+        const teamName = document.querySelector("#teamPlayerTeamName").value;
+        const team = state.teams.find(t => String(t.id) === String(teamId));
+        if (!team) return;
+        if (!canManageTeam(team) && !isSuperAdmin()) return alert("You cannot add players to this team.");
+
+        const name = document.querySelector("#teamPlayerName").value.trim();
+        const duplicate = state.players.some(player => String(player.team_id || "") === String(teamId) && player.name.trim().toLowerCase() === name.toLowerCase());
+        if (!name) return;
+        if (duplicate) {
+          if (msg) {
+            msg.textContent = "This player already exists in this team.";
+            msg.className = "form-message error";
+          }
+          return;
+        }
+
+        const roles = [
+          document.querySelector("#teamPlayerBatter").checked ? "Batter" : "",
+          document.querySelector("#teamPlayerFastBowler").checked ? "Fast Bowler" : "",
+          document.querySelector("#teamPlayerSpinBowler").checked ? "Spin Bowler" : "",
+          document.querySelector("#teamPlayerWicketKeeper").checked ? "Wicket Keeper" : "",
+          document.querySelector("#teamPlayerAllRounder").checked ? "All-rounder" : ""
+        ].filter(Boolean);
+        const role = roles.length ? roles.join(", ") : "Player";
+        let photoUrl = document.querySelector("#teamPlayerPhotoUrl").value.trim();
+        let photoKey = "";
+
+        try {
+          if (msg) {
+            msg.textContent = "Saving player...";
+            msg.className = "form-message";
+          }
+          const photoFile = selectedFile("#teamPlayerPhotoFile");
+          if (photoFile) {
+            if (msg) msg.textContent = "Uploading player photo to R2...";
+            const media = await uploadMediaToR2(photoFile, {
+              entityType: "player",
+              entityId: `${teamId}-${name}`,
+              mediaType: "image"
+            });
+            await attachMediaAsset({ entityType: "player", entityId: null, mediaType: "image" }, media, photoFile);
+            photoUrl = media.publicUrl;
+            photoKey = media.key;
+            document.querySelector("#teamPlayerPhotoUrl").value = photoUrl;
+          }
+
+          const player = {
+            name,
+            team: teamName,
+            team_id: teamId,
+            role,
+            age: document.querySelector("#teamPlayerAge").value ? Number(document.querySelector("#teamPlayerAge").value) : null,
+            batting_style: document.querySelector("#teamPlayerBattingStyle").value || null,
+            bowling_style: document.querySelector("#teamPlayerBowlingStyle").value || null,
+            photo_url: photoUrl || null,
+            photo_r2_key: photoKey || null,
+            user_id: state.user?.id || null
+          };
+
+          let savedPlayer;
+          if (state.usingDatabase) {
+            savedPlayer = await createPlayerInDatabase(player);
+          } else {
+            savedPlayer = { id: Date.now(), runs: 0, wickets: 0, ...player };
+          }
+          state.players.push(savedPlayer);
+          savePlayerMeta(savedPlayer.id, {
+            age: player.age || "",
+            batting: player.batting_style || "",
+            bowling: player.bowling_style || "",
+            photo: photoUrl || ""
+          });
+
+          teamPlayerForm.reset();
+          document.querySelector("#teamPlayerTeamId").value = teamId;
+          document.querySelector("#teamPlayerTeamName").value = teamName;
+          renderTeams();
+          openTeamManagement(teamId, "players");
+          if (msg) {
+            msg.textContent = `${name} added to ${teamName}.`;
+            msg.className = "form-message success";
+          }
+        } catch (error) {
+          if (msg) {
+            msg.textContent = "Could not add player: " + error.message;
+            msg.className = "form-message error";
+          }
+        }
       });
     }
 
