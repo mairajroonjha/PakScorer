@@ -1594,34 +1594,40 @@
 
     .home-hero {
       display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-      gap: 20px;
+      grid-template-columns: 1fr;
       margin-bottom: 18px;
       align-items: stretch;
+      min-height: min(760px, calc(100vh - 132px));
     }
 
     .hero-panel {
-      min-height: 260px;
-      padding: clamp(22px, 3vw, 36px);
+      min-height: min(760px, calc(100vh - 132px));
+      padding: clamp(28px, 6vw, 84px);
       border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 24px;
+      border-radius: 28px;
       background:
-        radial-gradient(circle at 86% 18%, rgba(255,204,77,0.22), transparent 30%),
-        radial-gradient(circle at 12% 10%, rgba(49,255,154,0.20), transparent 28%),
+        radial-gradient(circle at 82% 18%, rgba(255,204,77,0.24), transparent 28%),
+        radial-gradient(circle at 14% 14%, rgba(49,255,154,0.22), transparent 28%),
+        radial-gradient(circle at 66% 86%, rgba(29,217,255,0.18), transparent 30%),
         linear-gradient(135deg, rgba(13, 62, 76, 0.95), rgba(7, 19, 29, 0.94));
       box-shadow: var(--shadow);
       overflow: hidden;
       position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
     }
 
     .hero-panel::after {
       content: "";
       position: absolute;
-      right: -80px;
-      bottom: -95px;
-      width: 260px;
-      height: 260px;
-      border: 34px solid rgba(255,255,255,0.065);
+      right: -110px;
+      bottom: -130px;
+      width: 340px;
+      height: 340px;
+      border: 42px solid rgba(255,255,255,0.065);
       border-radius: 50%;
     }
 
@@ -1642,27 +1648,28 @@
     }
 
     .hero-title {
-      max-width: 760px;
-      margin: 18px 0 0;
-      font-size: clamp(2.15rem, 5vw, 5rem);
+      max-width: 1080px;
+      margin: 22px auto 0;
+      font-size: clamp(2.6rem, 6.4vw, 6rem);
       line-height: 0.94;
       font-weight: 950;
       letter-spacing: 0;
     }
 
     .hero-copy {
-      max-width: 680px;
-      margin: 16px 0 0;
+      max-width: 820px;
+      margin: 22px auto 0;
       color: #c4dde5;
-      font-size: clamp(1rem, 1.3vw, 1.15rem);
+      font-size: clamp(1rem, 1.7vw, 1.35rem);
       line-height: 1.6;
     }
 
     .hero-actions {
       display: flex;
       flex-wrap: wrap;
+      justify-content: center;
       gap: 12px;
-      margin-top: 24px;
+      margin-top: 32px;
       position: relative;
       z-index: 1;
     }
@@ -1808,11 +1815,25 @@
       }
 
       .hero-panel {
-        min-height: 0;
+        min-height: calc(100vh - 170px);
+        padding: 28px 18px;
       }
 
       .hero-title {
-        font-size: clamp(2rem, 14vw, 3.8rem);
+        font-size: clamp(2.2rem, 11vw, 3.7rem);
+      }
+
+      .hero-copy {
+        font-size: 1rem;
+      }
+
+      .hero-actions {
+        width: 100%;
+      }
+
+      .hero-actions .btn {
+        flex: 1 1 100%;
+        justify-content: center;
       }
     }
 
@@ -1833,6 +1854,509 @@
     .panel-body p,
     .feed span {
       line-height: 1.5;
+    }
+
+    .viewer-scroll-row {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 3px 2px 10px;
+      scroll-snap-type: x proximity;
+      scrollbar-color: rgba(29, 217, 255, 0.55) rgba(255, 255, 255, 0.06);
+      scrollbar-width: thin;
+    }
+
+    .viewer-scroll-row::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .viewer-scroll-row::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 999px;
+    }
+
+    .viewer-scroll-row::-webkit-scrollbar-thumb {
+      background: linear-gradient(90deg, var(--green), var(--cyan));
+      border-radius: 999px;
+    }
+
+    .viewer-match-card,
+    .viewer-series-card,
+    .viewer-empty-card {
+      flex: 0 0 min(310px, 86vw);
+      min-height: 210px;
+      scroll-snap-align: start;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(49,255,154,0.16), transparent 34%),
+        linear-gradient(145deg, rgba(255,255,255,0.10), rgba(255,255,255,0.035));
+      color: #e9f4fa;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      cursor: pointer;
+      overflow-wrap: anywhere;
+      box-shadow:
+        0 22px 42px rgba(0, 0, 0, 0.46),
+        inset 0 1px 0 rgba(255,255,255,0.13),
+        inset 0 -10px 30px rgba(16, 185, 129, 0.05);
+      transform: perspective(900px) rotateX(0deg) rotateY(0deg) translateZ(0);
+      transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+    }
+
+    .viewer-match-card:hover,
+    .viewer-series-card:hover {
+      transform: perspective(900px) rotateX(2deg) rotateY(-2deg) translateY(-6px);
+      border-color: rgba(49, 255, 154, 0.42);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(49,255,154,0.22), transparent 34%),
+        linear-gradient(145deg, rgba(255,255,255,0.14), rgba(255,255,255,0.045));
+    }
+
+    .viewer-match-card strong,
+    .viewer-series-card strong,
+    .viewer-empty-card strong {
+      font-size: 0.98rem;
+      line-height: 1.35;
+    }
+
+    .viewer-card-meta {
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.5;
+      font-weight: 700;
+    }
+
+    .viewer-card-result {
+      color: var(--gold);
+      background: rgba(255, 209, 102, 0.11);
+      border-radius: 12px;
+      padding: 7px 10px;
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
+    .viewer-match-card .tag,
+    .viewer-series-card .tag {
+      color: #bdeeff;
+      background: rgba(29, 217, 255, 0.13);
+    }
+
+    .viewer-match-card .tag.green,
+    .viewer-series-card .tag.green {
+      color: #b9ffe0;
+      background: rgba(16, 185, 129, 0.17);
+    }
+
+    .viewer-match-card .tag.gold,
+    .viewer-series-card .tag.gold {
+      color: #ffe7a3;
+      background: rgba(255, 209, 102, 0.25);
+    }
+
+    .viewer-match-card .tag.red,
+    .viewer-series-card .tag.red {
+      color: #ffc2d0;
+      background: rgba(239, 71, 111, 0.16);
+    }
+
+    .cricket-card-kicker {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: #f5fbff;
+      font-size: 0.95rem;
+      font-weight: 900;
+    }
+
+    .cricket-card-location {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 750;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cricket-card-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(86px, 0.85fr);
+      align-items: center;
+      gap: 12px;
+      margin-top: 2px;
+    }
+
+    .cricket-team-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-right: 14px;
+      border-right: 1px solid rgba(255, 255, 255, 0.10);
+    }
+
+    .cricket-team-row {
+      display: grid;
+      grid-template-columns: 42px minmax(42px, 0.45fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+    }
+
+    .cricket-team-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 950;
+      font-size: 0.78rem;
+      background: linear-gradient(135deg, #005a36, #31ff9a);
+      box-shadow: inset 0 2px 8px rgba(255,255,255,0.28), 0 8px 18px rgba(0,0,0,0.16);
+      overflow: hidden;
+    }
+
+    .cricket-team-mark img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .cricket-team-code {
+      color: #eaf8ff;
+      font-size: 1.1rem;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .cricket-team-score {
+      color: #ffffff;
+      font-size: 1.12rem;
+      font-weight: 950;
+      line-height: 1.25;
+    }
+
+    .cricket-team-overs {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+      margin-left: 3px;
+    }
+
+    .cricket-card-verdict {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 4px;
+      min-height: 92px;
+      color: var(--green);
+      font-size: 1rem;
+      font-weight: 950;
+    }
+
+    .cricket-card-verdict.red {
+      color: var(--red);
+    }
+
+    .cricket-card-verdict.green {
+      color: var(--green);
+    }
+
+    .cricket-card-verdict.gold {
+      color: var(--gold);
+    }
+
+    .cricket-card-verdict small {
+      color: #e9f4fa;
+      font-size: 0.82rem;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .cricket-card-note {
+      color: var(--gold);
+      font-weight: 850;
+      font-size: 0.84rem;
+      line-height: 1.4;
+      margin-top: auto;
+    }
+
+    .cricket-ball-strip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+
+    .cricket-ball-chip {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: inline-grid;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.08);
+      color: #eaf8ff;
+      font-size: 0.76rem;
+      font-weight: 950;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
+    }
+
+    .cricket-ball-chip.boundary {
+      color: #071a12;
+      background: linear-gradient(135deg, var(--green), #caff70);
+    }
+
+    .cricket-ball-chip.wicket,
+    .cricket-ball-chip.extra {
+      color: #fff;
+      background: linear-gradient(135deg, var(--red), #ff7c7c);
+    }
+
+    .ranking-player-row {
+      display: grid !important;
+      grid-template-columns: 46px minmax(0, 1fr) auto;
+      align-items: center !important;
+      gap: 10px !important;
+    }
+
+    .ranking-player-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: #06151d;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      font-size: 0.76rem;
+      font-weight: 950;
+      box-shadow: 0 9px 18px rgba(29, 217, 255, 0.16);
+    }
+
+    .ranking-player-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .ranking-player-name {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .ranking-player-name strong,
+    .ranking-player-name span {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ranking-player-name span {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 750;
+    }
+
+    .match-detail-hero {
+      border-bottom: 1px solid var(--line);
+      background:
+        radial-gradient(circle at 8% 10%, rgba(49,255,154,0.14), transparent 34%),
+        linear-gradient(135deg, #07131d, #102333);
+      color: var(--text);
+    }
+
+    .match-detail-score {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(210px, 0.85fr);
+      gap: 22px;
+      align-items: stretch;
+      padding: 28px;
+    }
+
+    .match-detail-team-main {
+      display: grid;
+      grid-template-columns: 86px minmax(0, 1fr);
+      gap: 20px;
+      align-items: center;
+    }
+
+    .match-detail-logo {
+      width: 82px;
+      height: 82px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: #06151d;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      box-shadow: 0 18px 34px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,255,255,0.35);
+      font-size: 1.15rem;
+      font-weight: 950;
+    }
+
+    .match-detail-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .match-detail-team-line {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .match-detail-code {
+      font-size: clamp(1.9rem, 4vw, 3rem);
+      font-weight: 900;
+      color: #eaf8ff;
+    }
+
+    .match-detail-scoreline {
+      font-size: clamp(2.4rem, 6vw, 4.2rem);
+      font-weight: 950;
+      color: var(--green);
+      line-height: 1;
+    }
+
+    .match-detail-overs {
+      font-size: clamp(1.1rem, 2.5vw, 1.7rem);
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .match-detail-status {
+      border-left: 1px solid rgba(255,255,255,0.10);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 10px;
+      min-height: 154px;
+      padding-left: 22px;
+    }
+
+    .match-detail-status h3 {
+      margin: 0;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      color: var(--gold);
+      line-height: 1.2;
+    }
+
+    .match-detail-status.green h3 {
+      color: var(--green);
+    }
+
+    .match-detail-status.red h3 {
+      color: var(--red);
+    }
+
+    .match-detail-status p {
+      margin: 0;
+      color: var(--text);
+      font-weight: 800;
+      font-size: 1.05rem;
+      line-height: 1.4;
+    }
+
+    .match-detail-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      background: rgba(255,255,255,0.08);
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .match-detail-metric {
+      padding: 18px 28px;
+      background: rgba(7, 19, 29, 0.56);
+      color: #eaf8ff;
+      font-size: clamp(1.1rem, 2.4vw, 1.7rem);
+      font-weight: 850;
+    }
+
+    @media (max-width: 760px) {
+      .match-detail-score {
+        grid-template-columns: 1fr;
+        padding: 20px;
+      }
+
+      .match-detail-status {
+        border-left: 0;
+        border-top: 1px solid rgba(255,255,255,0.10);
+        padding: 18px 0 0;
+        min-height: 0;
+      }
+
+      .match-detail-team-main {
+        grid-template-columns: 64px minmax(0, 1fr);
+      }
+
+      .match-detail-logo {
+        width: 62px;
+        height: 62px;
+      }
+
+      .match-detail-metrics {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .viewer-series-match {
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: rgba(255,255,255,0.04);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    #matches .sub-page > .panel {
+      min-height: calc(100vh - 210px);
+    }
+
+    #matches .sub-page > .panel .panel-body {
+      flex: 1;
+      display: flex;
+      align-items: stretch;
+    }
+
+    .match-page-scroll {
+      width: 100%;
+      min-height: 420px;
+      align-items: stretch;
+      justify-content: flex-start;
+      padding-left: max(18px, calc((100% - min(880px, 92vw)) / 2));
+      padding-right: max(18px, calc((100% - min(880px, 92vw)) / 2));
+      scroll-snap-type: x mandatory;
+      scroll-padding-inline: max(18px, calc((100% - min(880px, 92vw)) / 2));
+    }
+
+    .match-page-scroll .viewer-match-card,
+    .match-page-scroll .viewer-empty-card {
+      flex: 0 0 min(880px, 92vw);
+      min-height: min(520px, calc(100vh - 310px));
+      justify-content: center;
+      scroll-snap-align: center;
+    }
+
+    .match-page-scroll .viewer-match-card {
+      padding: clamp(18px, 3vw, 34px);
     }
 
     @media (max-width: 768px) {
@@ -2083,24 +2607,6 @@
             </div>
           </section>
 
-          <aside class="workflow-panel">
-            <div class="workflow-step">
-              <span class="step-number">1</span>
-              <div><strong>Create or join a team</strong><span>Add your squad, player roles, photos, and team identity.</span></div>
-            </div>
-            <div class="workflow-step">
-              <span class="step-number">2</span>
-              <div><strong>Schedule the match</strong><span>Send requests, accept challenges, assign scorers, and set time and venue.</span></div>
-            </div>
-            <div class="workflow-step">
-              <span class="step-number">3</span>
-              <div><strong>Score ball by ball</strong><span>Record runs, extras, wickets, overs, toss, innings, and undo mistakes.</span></div>
-            </div>
-            <div class="workflow-step">
-              <span class="step-number">4</span>
-              <div><strong>Share the live view</strong><span>Fans open the public page for live score, commentary, cards, and results.</span></div>
-            </div>
-          </aside>
         </div>
 
         <section class="panel viewer-home" style="margin-bottom: 16px;">
@@ -2126,7 +2632,7 @@
               <span id="guestLiveCount">0 live</span>
             </div>
             <div class="panel-body">
-              <ul class="feed" id="guestLiveMatches"></ul>
+              <div class="viewer-scroll-row" id="guestLiveMatches"></div>
             </div>
           </section>
 
@@ -2136,39 +2642,29 @@
               <span id="guestUpcomingCount">0 upcoming</span>
             </div>
             <div class="panel-body">
-              <ul class="feed" id="guestUpcomingMatches"></ul>
+              <div class="viewer-scroll-row" id="guestUpcomingMatches"></div>
             </div>
           </section>
 
           <section class="panel">
             <div class="panel-head">
-              <h2>Recent Results</h2>
+              <h2>Completed Matches</h2>
               <span id="guestResultCount">0 finished</span>
             </div>
             <div class="panel-body">
-              <ul class="feed" id="guestRecentResults"></ul>
+              <div class="viewer-scroll-row" id="guestRecentResults"></div>
             </div>
           </section>
         </div>
 
-        <div class="grid cols-3 viewer-home" style="margin-bottom: 16px;">
+        <div class="grid cols-2 viewer-home" style="margin-bottom: 16px;">
           <section class="panel">
             <div class="panel-head">
-              <h2>Top Players</h2>
-              <span>Runs and wickets</span>
+              <h2>Series Matches</h2>
+              <span id="guestSeriesCount">0 series</span>
             </div>
             <div class="panel-body">
-              <ul class="feed" id="guestTopPlayers"></ul>
-            </div>
-          </section>
-
-          <section class="panel">
-            <div class="panel-head">
-              <h2>Popular Teams</h2>
-              <span id="guestTeamCount">0 teams</span>
-            </div>
-            <div class="panel-body">
-              <ul class="feed" id="guestPopularTeams"></ul>
+              <div class="viewer-scroll-row" id="guestSeriesMatches"></div>
             </div>
           </section>
 
@@ -2259,17 +2755,7 @@
           </div>
         </div>
 
-        <div class="grid cols-2" style="margin-top: 16px;">
-          <section class="panel">
-            <div class="panel-head">
-              <h2>Matches & Fixtures</h2>
-              <span id="fixtureCount">0 active</span>
-            </div>
-            <div class="panel-body">
-              <ul class="feed" id="homeFixtures"></ul>
-            </div>
-          </section>
-
+        <div class="grid cols-1" style="margin-top: 16px;">
           <section class="panel">
             <div class="panel-head">
               <h2>Tournaments</h2>
@@ -2277,18 +2763,6 @@
             </div>
             <div class="panel-body">
               <ul class="feed" id="homeTournaments"></ul>
-            </div>
-          </section>
-        </div>
-
-        <div class="grid cols-1" style="margin-top: 16px;">
-          <section class="panel">
-            <div class="panel-head">
-              <h2>Matches</h2>
-              <span id="historyCount">0 past matches</span>
-            </div>
-            <div class="panel-body">
-              <ul class="feed" id="matchHistoryList"></ul>
             </div>
           </section>
         </div>
@@ -2456,7 +2930,7 @@
               <span id="liveMatchCount">0 live</span>
             </div>
             <div class="panel-body">
-              <ul class="feed" id="matchLiveList"></ul>
+              <div class="viewer-scroll-row match-page-scroll" id="matchLiveList"></div>
             </div>
           </section>
         </div>
@@ -2468,7 +2942,7 @@
               <span id="upcomingMatchCount">0 upcoming</span>
             </div>
             <div class="panel-body">
-              <ul class="feed" id="matchUpcomingList"></ul>
+              <div class="viewer-scroll-row match-page-scroll" id="matchUpcomingList"></div>
             </div>
           </section>
         </div>
@@ -2492,7 +2966,7 @@
               <span id="finishedMatchCount">0 finished</span>
             </div>
             <div class="panel-body">
-              <ul class="feed" id="matchFinishedList"></ul>
+              <div class="viewer-scroll-row match-page-scroll" id="matchFinishedList"></div>
             </div>
           </section>
         </div>
@@ -4171,7 +4645,7 @@
     async function loadMatchesFromDatabase() {
       const { data, error } = await supabase
         .from("matches")
-        .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date,match_time,tournament_id,series_id,user_id")
+        .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date,match_time,tournament_id,series_id,winner_team_id,result_text,format,user_id")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -4190,6 +4664,9 @@
         matchTime: match.match_time,
         tournamentId: match.tournament_id,
         seriesId: match.series_id,
+        winnerTeamId: match.winner_team_id,
+        resultText: match.result_text,
+        format: match.format,
         user_id: match.user_id
       }));
 
@@ -4805,13 +5282,23 @@
         const canManage = canManageMatch(match);
         const scorerIds = getAssignedScorerIds(match);
         const tagClass = match.status === "Live" ? "green" : match.status === "Completed" ? "cyan" : match.status === "Cancelled" ? "red" : "gold";
+        const isCurrentMatch = state.currentMatch && String(state.currentMatch.id) === String(match.id);
+        const lastBalls = isCurrentMatch ? state.score.last.slice(-6) : Array.isArray(match.lastBalls) ? match.lastBalls.slice(-6) : match.status === "Live" ? ["0", "1", "4", "Wd", "2", "W"] : [];
+        const feedBallClass = (ball) => {
+          const value = String(ball || "").toLowerCase();
+          if (value === "4" || value === "6") return "boundary";
+          if (value === "w" || value.includes("wicket")) return "wicket";
+          if (value.includes("wd") || value.includes("nb")) return "extra";
+          return "";
+        };
         return `
-        <li ${match.status === "Live" || match.status === "Completed" || match.status === "Cancelled" ? `data-view-match="${match.id}"` : ""} style="cursor:${match.status === "Live" || match.status === "Completed" || match.status === "Cancelled" ? "pointer" : "default"}; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-          <div style="display:flex; flex-direction:column; gap: 2px;">
+        <li style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+          <div data-view-match="${match.id}" style="cursor:pointer; display:flex; flex-direction:column; gap: 2px;">
             <strong>${match.teamA} vs ${match.teamB}</strong>
             <span class="muted" style="font-size:0.75rem;">${match.status} Â· ${match.overs} overs Â· ${match.venue}</span>
             ${dateTime ? `<span style="color:var(--cyan);font-size:0.82rem;font-weight:800;">${dateTime}</span>` : ""}
             ${scorerIds.length ? `<span class="muted" style="font-size:0.75rem;">${scorerIds.length} scorer assigned</span>` : ""}
+            ${lastBalls.length ? `<span class="cricket-ball-strip" style="margin-top:6px;">${lastBalls.map(ball => `<span class="cricket-ball-chip ${feedBallClass(ball)}">${ball}</span>`).join("")}</span>` : ""}
           </div>
           <div style="display: flex; gap: 8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
             <span class="tag ${tagClass}" style="font-size: 0.65rem;">${match.status}</span>
@@ -4827,59 +5314,292 @@
       }).join("");
     }
 
+    function renderViewerMatchCards(matches, emptyTitle = "No matches yet", emptyText = "Matches will appear here when available.") {
+      const teamByNameOrId = (name, id) => state.teams.find(team => String(team.id) === String(id)) || state.teams.find(team => String(team.name || "").toLowerCase() === String(name || "").toLowerCase()) || {};
+      const statusTagClass = (status = "") => status === "Live" ? "green" : status === "Completed" ? "cyan" : String(status).toLowerCase().includes("cancel") ? "red" : "gold";
+      const teamMark = (team, name) => team.logo_url
+        ? `<span class="cricket-team-mark"><img src="${team.logo_url}" alt="${name} logo"></span>`
+        : `<span class="cricket-team-mark">${shortTeamCode(name).slice(0, 2)}</span>`;
+      const resultLabel = (match) => {
+        if (match.resultText || match.result_text) return match.resultText || match.result_text;
+        if (String(match.status || "").toLowerCase().includes("cancel")) return "Match cancelled";
+        if (match.status === "Completed") return "Result available";
+        if (match.status === "Live") return "Watch live score";
+        return formatMatchDateTime(match.matchDate, match.matchTime) || "Date and time TBA";
+      };
+      const verdictFor = (match) => {
+        const status = String(match.status || "");
+        const lower = status.toLowerCase();
+        const result = resultLabel(match);
+        if (lower.includes("rain")) return { text: "Match stopped", sub: "due to rain", tone: "red", note: result };
+        if (lower.includes("stop") || lower.includes("pause") || lower.includes("delay")) return { text: "Match stopped", sub: result, tone: "red", note: result };
+        if (lower.includes("cancel")) return { text: "Cancelled", sub: result, tone: "red", note: result };
+        if (status === "Completed") {
+          const winnerName = state.teams.find(team => String(team.id) === String(match.winnerTeamId || match.winner_team_id))?.name;
+          const text = winnerName ? `${shortTeamCode(winnerName)} Won` : result.split(" by ")[0] || "Match Completed";
+          const sub = result.includes(" by ") ? `by ${result.split(" by ").slice(1).join(" by ").replace(/!$/, "")}` : result;
+          return { text, sub, tone: "green", note: result };
+        }
+        if (status === "Live") return { text: "Live", sub: "Tap for score", tone: "green", note: result };
+        return { text: status || "Scheduled", sub: formatMatchDateTime(match.matchDate, match.matchTime) || "Time TBA", tone: "gold", note: `${match.overs || 20} overs` };
+      };
+      const ballClass = (label) => {
+        const value = String(label || "").toLowerCase();
+        if (value === "4" || value === "6") return "boundary";
+        if (value === "w" || value.includes("wicket")) return "wicket";
+        if (value.includes("wd") || value.includes("nb")) return "extra";
+        return "";
+      };
+      const lastSix = (match) => {
+        const isCurrentMatch = state.currentMatch && String(state.currentMatch.id) === String(match.id);
+        if (isCurrentMatch && state.score.last?.length) return state.score.last.slice(-6);
+        if (Array.isArray(match.lastBalls) && match.lastBalls.length) return match.lastBalls.slice(-6);
+        if (match.status === "Live") return ["0", "1", "4", "Wd", "2", "W"];
+        return [];
+      };
+
+      if (!matches.length) {
+        return `<article class="viewer-empty-card"><strong>${emptyTitle}</strong><span class="viewer-card-meta">${emptyText}</span></article>`;
+      }
+
+      return matches.map(match => {
+        const teamA = teamByNameOrId(match.teamA, match.teamAId);
+        const teamB = teamByNameOrId(match.teamB, match.teamBId);
+        const verdict = verdictFor(match);
+        const dateTime = formatMatchDateTime(match.matchDate, match.matchTime);
+        const balls = lastSix(match);
+        return `
+          <article class="viewer-match-card" data-view-match="${match.id}" tabindex="0" role="button" aria-label="Open ${match.teamA} vs ${match.teamB}">
+            <div class="cricket-card-kicker">
+              <span>${match.format || "Cricket"} Match</span>
+              <span class="tag ${statusTagClass(match.status)}">${match.status}</span>
+            </div>
+            <div class="cricket-card-location">${match.venue || "Venue TBA"}${dateTime ? `, ${dateTime}` : ""}</div>
+            <div class="cricket-card-body">
+              <div class="cricket-team-stack">
+                <div class="cricket-team-row">
+                  ${teamMark(teamA, match.teamA)}
+                  <span class="cricket-team-code">${shortTeamCode(match.teamA)}</span>
+                  <span class="cricket-team-score">${match.status === "Live" ? "Live score" : match.status === "Completed" ? "Scorecard" : "Yet to bat"}</span>
+                </div>
+                <div class="cricket-team-row">
+                  ${teamMark(teamB, match.teamB)}
+                  <span class="cricket-team-code">${shortTeamCode(match.teamB)}</span>
+                  <span class="cricket-team-score">${match.overs || 20} overs</span>
+                </div>
+              </div>
+              <div class="cricket-card-verdict ${verdict.tone}">
+                <span>${verdict.text}</span>
+                <small>${verdict.sub}</small>
+              </div>
+            </div>
+            ${balls.length ? `<div class="cricket-ball-strip">${balls.map(ball => `<span class="cricket-ball-chip ${ballClass(ball)}">${ball}</span>`).join("")}</div>` : ""}
+            <div class="cricket-card-note">${verdict.note}</div>
+          </article>
+        `;
+      }).join("");
+    }
+
     function renderPublicHome() {
-      const liveMatches = state.matches.filter((match) => match.status === "Live");
-      const upcomingMatches = state.matches.filter((match) => match.status === "Scheduled" || match.status === "Setup").slice(0, 6);
-      const finishedMatches = state.matches.filter((match) => match.status === "Completed" || match.status === "Cancelled").slice(0, 6);
-      const topPlayers = [...state.players]
-        .sort((a, b) => ((b.runs || 0) + (b.wickets || 0) * 20) - ((a.runs || 0) + (a.wickets || 0) * 20))
-        .slice(0, 6);
-      const popularTeams = [...state.teams].slice(0, 6);
+      const liveMatches = state.matches.filter((match) => {
+        const status = String(match.status || "").toLowerCase();
+        return status === "live" || status.includes("delay") || status.includes("rain");
+      });
+      const upcomingMatches = state.matches
+        .filter((match) => match.status === "Scheduled" || match.status === "Setup")
+        .sort((a, b) => String(a.matchDate || "").localeCompare(String(b.matchDate || "")));
+      const finishedMatches = state.matches
+        .filter((match) => match.status === "Completed" || match.status === "Cancelled")
+        .sort((a, b) => String(b.matchDate || "").localeCompare(String(a.matchDate || "")));
+      const visibleSeries = [...state.series].sort((a, b) => {
+        const aLive = ["Live", "Running", "Ongoing"].includes(a.status || "");
+        const bLive = ["Live", "Running", "Ongoing"].includes(b.status || "");
+        if (aLive !== bLive) return aLive ? -1 : 1;
+        return String(b.created_at || b.createdAt || "").localeCompare(String(a.created_at || a.createdAt || ""));
+      });
 
       safeSetText("#guestLiveCount", `${liveMatches.length} live`);
       safeSetText("#guestUpcomingCount", `${upcomingMatches.length} upcoming`);
       safeSetText("#guestResultCount", `${finishedMatches.length} finished`);
-      safeSetText("#guestTeamCount", `${popularTeams.length} teams`);
+      safeSetText("#guestSeriesCount", `${visibleSeries.length} series`);
+
+      const teamByNameOrId = (name, id) => state.teams.find(team => String(team.id) === String(id)) || state.teams.find(team => String(team.name || "").toLowerCase() === String(name || "").toLowerCase()) || {};
+      const shortCode = (name) => {
+        const parts = String(name || "Team").trim().split(/\s+/).filter(Boolean);
+        if (parts.length === 1) return parts[0].slice(0, 3).toUpperCase();
+        return parts.map(part => part[0]).join("").slice(0, 3).toUpperCase();
+      };
+      const teamMark = (team, name) => team.logo_url
+        ? `<span class="cricket-team-mark"><img src="${team.logo_url}" alt="${name} logo"></span>`
+        : `<span class="cricket-team-mark">${shortCode(name).slice(0, 2)}</span>`;
+      const ballClass = (label) => {
+        const value = String(label || "").toLowerCase();
+        if (value === "4" || value === "6") return "boundary";
+        if (value === "w" || value.includes("wicket")) return "wicket";
+        if (value.includes("wd") || value.includes("nb")) return "extra";
+        return "";
+      };
+      const lastSixForMatch = (match) => {
+        const isCurrentMatch = state.currentMatch && String(state.currentMatch.id) === String(match.id);
+        if (isCurrentMatch && state.score.last?.length) return state.score.last.slice(-6);
+        if (Array.isArray(match.lastBalls) && match.lastBalls.length) return match.lastBalls.slice(-6);
+        if (match.status === "Live") return ["0", "1", "4", "Wd", "2", "W"];
+        return [];
+      };
+      const ballStrip = (match) => {
+        const balls = lastSixForMatch(match);
+        const isCurrentMatch = state.currentMatch && String(state.currentMatch.id) === String(match.id);
+        const overText = isCurrentMatch ? `Over ${oversText(state.score.legalBalls || 0)}` : match.status === "Live" ? "Current over" : "Last 6";
+        if (!balls.length) return "";
+        return `
+          <div class="cricket-ball-strip" aria-label="${overText}">
+            <span class="viewer-card-meta" style="width:100%; font-size:0.72rem;">${overText}</span>
+            ${balls.map(ball => `<span class="cricket-ball-chip ${ballClass(ball)}">${ball}</span>`).join("")}
+          </div>
+        `;
+      };
+      const currentScoreForTeam = (match, teamName) => {
+        const isCurrentMatch = state.currentMatch && String(state.currentMatch.id) === String(match.id);
+        if (isCurrentMatch && String(state.score.battingTeam || "").toLowerCase() === String(teamName || "").toLowerCase()) {
+          return {
+            score: `${state.score.runs || 0}-${state.score.wickets || 0}`,
+            overs: oversText(state.score.legalBalls || 0)
+          };
+        }
+        return null;
+      };
+      const scoreLabel = (match, teamName) => {
+        const current = currentScoreForTeam(match, teamName);
+        if (current) return `${current.score} <span class="cricket-team-overs">${current.overs}</span>`;
+        if (match.status === "Scheduled" || match.status === "Setup") return `<span class="cricket-team-overs">Yet to bat</span>`;
+        if (match.status === "Cancelled") return `<span class="cricket-team-overs">Cancelled</span>`;
+        if (match.status === "Live") return `<span class="cricket-team-overs">Live score</span>`;
+        return `<span class="cricket-team-overs">Scorecard</span>`;
+      };
+      const matchResultLabel = (match) => {
+        if (match.resultText || match.result_text) return match.resultText || match.result_text;
+        if (match.status === "Cancelled") return "Match cancelled";
+        if (match.status === "Completed") return "Result available";
+        if (match.status === "Live") return "Watch live score";
+        return formatMatchDateTime(match.matchDate, match.matchTime) || "Date and time TBA";
+      };
+
+      const statusTagClass = (status = "") => status === "Live" ? "green" : status === "Completed" ? "cyan" : status === "Cancelled" ? "red" : "gold";
+      const verdictForMatch = (match, mode) => {
+        const status = String(match.status || "");
+        const lowerStatus = status.toLowerCase();
+        const result = matchResultLabel(match);
+        if (lowerStatus.includes("delay") || lowerStatus.includes("rain")) {
+          return { text: "Rain Delay", sub: "Match delayed", tone: "red", note: result };
+        }
+        if (lowerStatus.includes("cancel")) {
+          return { text: "Cancelled", sub: "Match cancelled", tone: "red", note: result };
+        }
+        if (status === "Completed") {
+          const winnerName = state.teams.find(team => String(team.id) === String(match.winnerTeamId || match.winner_team_id))?.name;
+          const wonText = winnerName ? `${shortCode(winnerName)} Won` : result.split(" by ")[0] || "Match Completed";
+          const byText = result.includes(" by ") ? `by ${result.split(" by ").slice(1).join(" by ").replace(/!$/, "")}` : result;
+          return { text: wonText, sub: byText, tone: "green", note: result };
+        }
+        if (status === "Live") return { text: "Live", sub: "Tap for score", tone: "green", note: result };
+        if (status === "Setup") return { text: "Setup", sub: "Teams preparing", tone: "gold", note: result };
+        return { text: "Scheduled", sub: formatMatchDateTime(match.matchDate, match.matchTime) || "Time TBA", tone: "gold", note: `${match.overs || 20} overs` };
+      };
+
+      const matchCard = (match, mode = "default") => {
+        const dateTime = formatMatchDateTime(match.matchDate, match.matchTime);
+        const teamA = teamByNameOrId(match.teamA, match.teamAId);
+        const teamB = teamByNameOrId(match.teamB, match.teamBId);
+        const verdict = verdictForMatch(match, mode);
+        const tournament = state.tournaments.find(item => String(item.id) === String(match.tournamentId || ""));
+        const series = state.series.find(item => String(item.id) === String(match.seriesId || match.series_id || ""));
+        const title = series?.name || tournament?.name || `${match.format || "Cricket"} Match`;
+        const location = `${match.format || `${match.overs || 20} overs`}, ${match.venue || "Venue TBA"}${dateTime ? `, ${dateTime}` : ""}`;
+        return `
+          <article class="viewer-match-card" data-view-match="${match.id}" tabindex="0" role="button" aria-label="Open ${match.teamA} vs ${match.teamB}">
+            <div class="cricket-card-kicker">
+              <span>${title}</span>
+              <span class="tag ${statusTagClass(match.status)}">${match.status}</span>
+            </div>
+            <div class="cricket-card-location">${location}</div>
+            <div class="cricket-card-body">
+              <div class="cricket-team-stack">
+                <div class="cricket-team-row">
+                  ${teamMark(teamA, match.teamA)}
+                  <span class="cricket-team-code">${shortCode(match.teamA)}</span>
+                  <span class="cricket-team-score">${scoreLabel(match, match.teamA)}</span>
+                </div>
+                <div class="cricket-team-row">
+                  ${teamMark(teamB, match.teamB)}
+                  <span class="cricket-team-code">${shortCode(match.teamB)}</span>
+                  <span class="cricket-team-score">${scoreLabel(match, match.teamB)}</span>
+                </div>
+              </div>
+              <div class="cricket-card-verdict ${verdict.tone}">
+                <span>${verdict.text}</span>
+                <small>${verdict.sub}</small>
+              </div>
+            </div>
+            ${ballStrip(match)}
+            <div class="cricket-card-note">${verdict.note}</div>
+          </article>
+        `;
+      };
+
+      const emptyCard = (title, text) => `
+        <article class="viewer-empty-card">
+          <strong>${title}</strong>
+          <span class="viewer-card-meta">${text}</span>
+        </article>
+      `;
 
       const liveEl = document.querySelector("#guestLiveMatches");
-      if (liveEl) liveEl.innerHTML = liveMatches.length ? liveMatches.map(match => `
-        <li data-view-match="${match.id}" style="cursor:pointer;">
-          <strong>${match.teamA} vs ${match.teamB}</strong>
-          <span>${match.venue} - ${match.overs} overs - Watch live</span>
-        </li>
-      `).join("") : `<li><strong>No live matches right now</strong><span>Live matches will appear here as scoring starts.</span></li>`;
+      if (liveEl) liveEl.innerHTML = liveMatches.length
+        ? liveMatches.map(match => matchCard(match, "live")).join("")
+        : emptyCard("No live matches right now", "Live matches will appear here as scoring starts.");
 
       const upcomingEl = document.querySelector("#guestUpcomingMatches");
-      if (upcomingEl) upcomingEl.innerHTML = upcomingMatches.length ? upcomingMatches.map(match => `
-        <li data-view-match="${match.id}" style="cursor:pointer;">
-          <strong>${match.teamA} vs ${match.teamB}</strong>
-          <span>${formatMatchDateTime(match.matchDate, match.matchTime) || "Date TBA"} - ${match.venue}</span>
-        </li>
-      `).join("") : `<li><strong>No upcoming matches</strong><span>Scheduled matches will appear here.</span></li>`;
+      if (upcomingEl) upcomingEl.innerHTML = upcomingMatches.length
+        ? upcomingMatches.map(match => matchCard(match, "upcoming")).join("")
+        : emptyCard("No upcoming matches", "Scheduled matches will appear here.");
 
       const resultEl = document.querySelector("#guestRecentResults");
-      if (resultEl) resultEl.innerHTML = finishedMatches.length ? finishedMatches.map(match => `
-        <li data-view-match="${match.id}" style="cursor:pointer;">
-          <strong>${match.teamA} vs ${match.teamB}</strong>
-          <span>${match.resultText || match.result_text || match.status}</span>
-        </li>
-      `).join("") : `<li><strong>No recent results</strong><span>Completed matches will appear here.</span></li>`;
+      if (resultEl) resultEl.innerHTML = finishedMatches.length
+        ? finishedMatches.map(match => matchCard(match, "result")).join("")
+        : emptyCard("No completed matches", "Finished match results will appear here.");
 
-      const playerEl = document.querySelector("#guestTopPlayers");
-      if (playerEl) playerEl.innerHTML = topPlayers.length ? topPlayers.map(player => `
-        <li>
-          <strong>${player.name}</strong>
-          <span>${player.team} - ${player.runs || 0} runs - ${player.wickets || 0} wickets</span>
-        </li>
-      `).join("") : `<li><strong>No player stats yet</strong><span>Player rankings build as matches are scored.</span></li>`;
-
-      const teamEl = document.querySelector("#guestPopularTeams");
-      if (teamEl) teamEl.innerHTML = popularTeams.length ? popularTeams.map(team => `
-        <li data-public-team="${team.id}" style="cursor:pointer;">
-          <strong>${team.name}</strong>
-          <span>${team.city} - Captain ${team.captain}</span>
-        </li>
-      `).join("") : `<li><strong>No teams yet</strong><span>Teams will appear after registration.</span></li>`;
+      const seriesEl = document.querySelector("#guestSeriesMatches");
+      if (seriesEl) {
+        seriesEl.innerHTML = visibleSeries.length ? visibleSeries.map(series => {
+          const seriesMatches = state.matches.filter(match => String(match.seriesId || match.series_id || "") === String(series.id));
+          const liveCount = seriesMatches.filter(match => match.status === "Live").length;
+          const completedCount = seriesMatches.filter(match => match.status === "Completed").length;
+          const status = series.status || "Scheduled";
+          return `
+            <article class="viewer-series-card">
+              <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
+                <strong>${series.name || "Cricket Series"}</strong>
+                <span class="tag ${statusTagClass(status)}">${status}</span>
+              </div>
+              <span class="viewer-card-meta">${series.team_a_name || "Team A"} vs ${series.team_b_name || "Team B"}</span>
+              <span class="viewer-card-meta">${series.num_matches || seriesMatches.length || 0} matches - ${series.overs || 20} overs${series.venue ? ` - ${series.venue}` : ""}</span>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <span class="tag green">${liveCount} live</span>
+                <span class="tag cyan">${completedCount} completed</span>
+                <span class="tag gold">${seriesMatches.length} total</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                ${seriesMatches.length ? seriesMatches.slice(0, 4).map((match, index) => `
+                  <div class="viewer-series-match" data-view-match="${match.id}">
+                    <span>Match ${index + 1}: ${match.teamA} vs ${match.teamB}</span>
+                    <span class="tag ${statusTagClass(match.status)}">${match.status}</span>
+                  </div>
+                `).join("") : `<span class="viewer-card-meta">Series matches will appear after fixtures are created.</span>`}
+              </div>
+            </article>
+          `;
+        }).join("") : emptyCard("No series yet", "Series matches will appear here when a series is created.");
+      }
 
       renderPublicSearch();
     }
@@ -4966,10 +5686,21 @@
         const el = document.querySelector(config.selector);
         const homeEl = document.querySelector(config.homeSelector);
         const rows = rankingRows(type);
+        const playerAvatar = (player) => {
+          const meta = getPlayerMeta(player.id);
+          const photo = meta.photo || player.photo_url;
+          return photo
+            ? `<span class="ranking-player-avatar"><img src="${photo}" alt="${player.name}"></span>`
+            : `<span class="ranking-player-avatar">${initials(player.name)}</span>`;
+        };
         const renderRows = (visible) => visible.length ? visible.map((player, index) => `
-          <li>
-            <strong>#${index + 1} ${player.name}</strong>
-            <span>${config.primary(player)} - ${config.secondary(player)}</span>
+          <li class="ranking-player-row" data-public-player="${player.id || ""}" style="cursor:pointer;">
+            ${playerAvatar(player)}
+            <span class="ranking-player-name">
+              <strong>#${index + 1} ${player.name}</strong>
+              <span>${player.team || "No team"}</span>
+            </span>
+            <span style="text-align:right; font-weight:900; color:var(--green);">${config.primary(player)}</span>
           </li>
         `).join("") : `<li><strong>No players yet</strong><span>Career rankings will appear after players are added.</span></li>`;
 
@@ -5005,15 +5736,7 @@
 
       const dashFixtures = document.querySelector("#homeFixtures");
       if (dashFixtures) {
-        dashFixtures.innerHTML = activeMatches.length ? activeMatches.slice(0, 5).map(match => `
-          <li class="match-card-compact" data-view-match="${match.id}" style="cursor:pointer; display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px; transition: 0.2s;">
-            <div style="display:flex; flex-direction:column; gap: 2px;">
-              <strong>${match.teamA} vs ${match.teamB}</strong>
-              <span class="muted" style="font-size:0.75rem;">${match.status} Â· ${match.overs} overs</span>
-            </div>
-            <span class="tag ${match.status === 'Live' ? 'green' : 'gold'}" style="font-size: 0.65rem;">${match.status === 'Live' ? 'LIVE' : 'UPCOMING'}</span>
-          </li>
-        `).join("") : `<li><strong>No active matches</strong></li>`;
+        dashFixtures.innerHTML = renderViewerMatchCards(activeMatches.slice(0, 8), "No active matches", "Live and upcoming matches will appear here.");
       }
 
       const schedList = document.querySelector("#scheduledMatchList");
@@ -5023,16 +5746,16 @@
       if (histList) histList.innerHTML = historyRows;
 
       const liveList = document.querySelector("#matchLiveList");
-      if (liveList) liveList.innerHTML = renderMatchFeed(liveMatches, "No live matches right now");
+      if (liveList) liveList.innerHTML = renderViewerMatchCards(liveMatches, "No live matches right now", "Live matches will appear here as scoring starts.");
 
       const upcomingList = document.querySelector("#matchUpcomingList");
-      if (upcomingList) upcomingList.innerHTML = renderMatchFeed(upcomingMatches, "No upcoming matches yet", { management: true });
+      if (upcomingList) upcomingList.innerHTML = renderViewerMatchCards(upcomingMatches, "No upcoming matches yet", "Scheduled matches will appear here.");
 
       const forYouList = document.querySelector("#matchForYouList");
       if (forYouList) forYouList.innerHTML = renderMatchFeed(forYouMatches, "No matches for you yet", { management: true, emptyText: "Create a team, accept a request, or get assigned as scorer." });
 
       const finishedList = document.querySelector("#matchFinishedList");
-      if (finishedList) finishedList.innerHTML = historyRows;
+      if (finishedList) finishedList.innerHTML = renderViewerMatchCards(history, "No finished matches yet", "Completed scorecards will appear here.");
 
       renderScoringMatchSelect();
       renderPublicHome();
@@ -6153,21 +6876,23 @@
         : `<div class="avatar" style="width:${size}px;height:${size}px;">${initials(team?.name || "T")}</div>`;
     }
 
-    function detailPageShell({ label, title, subtitle, imageHtml = "", tabs = [] }) {
+    function detailPageShell({ label, title, subtitle, imageHtml = "", heroHtml = "", tabs = [] }) {
       const content = document.querySelector("#publicEntityDetailContent");
       if (!content) return;
       content.innerHTML = `
         <div class="panel" style="background:linear-gradient(135deg,#07131d,#0d2530); min-height:520px; color:var(--text); overflow:hidden;">
-          <div style="padding:28px; border-bottom:1px solid var(--line); background:linear-gradient(135deg,rgba(49,255,154,.12),rgba(29,217,255,.08));">
-            <span class="tag green">${label}</span>
-            <div style="display:flex; gap:16px; align-items:center; margin-top:16px;">
-              ${imageHtml}
-              <div>
-                <h2 style="margin:0; font-size:clamp(1.6rem,3vw,2.4rem);">${title}</h2>
-                <p class="muted" style="margin:6px 0 0;">${subtitle || ""}</p>
+          ${heroHtml || `
+            <div style="padding:28px; border-bottom:1px solid var(--line); background:linear-gradient(135deg,rgba(49,255,154,.12),rgba(29,217,255,.08));">
+              <span class="tag green">${label}</span>
+              <div style="display:flex; gap:16px; align-items:center; margin-top:16px;">
+                ${imageHtml}
+                <div>
+                  <h2 style="margin:0; font-size:clamp(1.6rem,3vw,2.4rem);">${title}</h2>
+                  <p class="muted" style="margin:6px 0 0;">${subtitle || ""}</p>
+                </div>
               </div>
             </div>
-          </div>
+          `}
           <div class="sub-nav" style="display:flex;gap:10px;overflow-x:auto;padding:14px 18px;border-bottom:1px solid var(--line);">
             ${tabs.map((tab, index) => `<button class="btn ${index === 0 ? "primary" : "ghost"} btn-sm detail-tab-btn" type="button" data-detail-tab="${tab.id}">${tab.label}</button>`).join("")}
           </div>
@@ -6237,6 +6962,88 @@
       return { batters, bowlers };
     }
 
+    function shortTeamCode(name) {
+      const parts = String(name || "Team").trim().split(/\s+/).filter(Boolean);
+      if (parts.length === 1) return parts[0].slice(0, 3).toUpperCase();
+      return parts.map(part => part[0]).join("").slice(0, 3).toUpperCase();
+    }
+
+    function matchDetailLogo(team, name) {
+      return team?.logo_url
+        ? `<span class="match-detail-logo"><img src="${team.logo_url}" alt="${name} logo"></span>`
+        : `<span class="match-detail-logo">${shortTeamCode(name).slice(0, 2)}</span>`;
+    }
+
+    function buildMatchDetailHero(match, teams, innings, currentInnings, balls) {
+      const battingTeamName = currentInnings?.batting_team || match.teamA;
+      const battingTeam = String(battingTeamName) === String(match.teamB) ? teams.b : teams.a;
+      const scoreRuns = currentInnings ? `${currentInnings.runs}-${currentInnings.wickets}` : "--";
+      const scoreOvers = currentInnings ? oversText(currentInnings.legal_balls || 0) : "0.0";
+      const legalBalls = Number(currentInnings?.legal_balls || 0);
+      const crr = legalBalls ? ((Number(currentInnings.runs || 0) / legalBalls) * 6).toFixed(2) : "0.00";
+      const target = Number(currentInnings?.target || match.target || 0);
+      const ballsLeft = Math.max(0, Number(match.overs || 20) * 6 - legalBalls);
+      const runsNeeded = target ? Math.max(0, target - Number(currentInnings?.runs || 0)) : 0;
+      const rrr = target && ballsLeft ? ((runsNeeded / ballsLeft) * 6).toFixed(2) : "--";
+      const status = String(match.status || "");
+      const lowerStatus = status.toLowerCase();
+      const resultText = match.resultText || match.result_text || "";
+      let verdict = { text: "Scheduled", sub: formatMatchDateTime(match.matchDate, match.matchTime) || "Time TBA", tone: "gold" };
+
+      if (status === "Live") {
+        verdict = { text: "Live", sub: "Match in progress", tone: "green" };
+      } else if (lowerStatus.includes("rain") || lowerStatus.includes("delay")) {
+        verdict = { text: "Match stopped", sub: lowerStatus.includes("rain") ? "due to rain" : "temporarily stopped", tone: "red" };
+      } else if (lowerStatus.includes("stop") || lowerStatus.includes("pause")) {
+        verdict = { text: "Match stopped", sub: resultText || "due to official reason", tone: "red" };
+      } else if (lowerStatus.includes("cancel")) {
+        verdict = { text: "Cancelled", sub: resultText || "Match cancelled", tone: "red" };
+      } else if (status === "Completed") {
+        const winner = state.teams.find(team => String(team.id) === String(match.winnerTeamId || match.winner_team_id));
+        const winnerText = winner ? `${shortTeamCode(winner.name)} Won` : (resultText.split(" by ")[0] || "Match completed");
+        const byText = resultText.includes(" by ") ? `by ${resultText.split(" by ").slice(1).join(" by ").replace(/!$/, "")}` : resultText || "Final result";
+        verdict = { text: winnerText, sub: byText, tone: "green" };
+      } else if (status === "Setup") {
+        verdict = { text: "Setup", sub: "Teams preparing", tone: "gold" };
+      }
+
+      const lastSix = balls.slice(-6).map(b => b.is_wicket ? "W" : b.extra_type ? (b.extra_type === "Wide" ? "Wd" : b.extra_type === "No Ball" ? "Nb" : b.extra_type) : String(b.runs_bat || 0));
+
+      return `
+        <div class="match-detail-hero">
+          <div style="padding:22px 28px 0;">
+            <span class="tag green">Match Detail</span>
+          </div>
+          <div class="match-detail-score">
+            <div class="match-detail-team-main">
+              ${matchDetailLogo(battingTeam, battingTeamName)}
+              <div>
+                <div class="match-detail-team-line">
+                  <span class="match-detail-code">${shortTeamCode(battingTeamName)}</span>
+                  <span class="tag">${match.status}</span>
+                </div>
+                <div style="margin-top:10px;">
+                  <span class="match-detail-scoreline">${scoreRuns}</span>
+                  <span class="match-detail-overs">${scoreOvers}</span>
+                </div>
+                <p class="muted" style="margin:10px 0 0; font-weight:800;">${match.teamA} vs ${match.teamB} - ${match.venue || "Venue TBA"}</p>
+                ${lastSix.length ? `<div class="cricket-ball-strip" style="margin-top:12px;">${lastSix.map(ball => `<span class="cricket-ball-chip ${String(ball).toLowerCase() === "w" ? "wicket" : String(ball) === "4" || String(ball) === "6" ? "boundary" : String(ball).toLowerCase().includes("wd") || String(ball).toLowerCase().includes("nb") ? "extra" : ""}">${ball}</span>`).join("")}</div>` : ""}
+              </div>
+            </div>
+            <div class="match-detail-status ${verdict.tone}">
+              <h3>${verdict.text}</h3>
+              <p>${verdict.sub}</p>
+            </div>
+          </div>
+          <div class="match-detail-metrics">
+            <div class="match-detail-metric">CRR: ${crr}</div>
+            <div class="match-detail-metric">RRR: ${rrr}</div>
+            <div class="match-detail-metric">Target: ${target || "TBA"}</div>
+          </div>
+        </div>
+      `;
+    }
+
     async function renderMatchDetailPage(match) {
       const teams = matchTeams(match);
       const balls = await matchBalls(match.id);
@@ -6252,6 +7059,7 @@
         title: `${match.teamA} vs ${match.teamB}`,
         subtitle: `${match.status} - ${match.venue} - ${match.overs} overs`,
         imageHtml: `<div style="display:flex;gap:8px;">${teamLogo(teams.a, 54)}${teamLogo(teams.b, 54)}</div>`,
+        heroHtml: buildMatchDetailHero(match, teams, innings, currentInnings, balls),
         tabs: [
           { id: "live", label: "Live", html: `
             <div class="grid cols-3">
