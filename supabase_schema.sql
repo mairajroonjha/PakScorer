@@ -12,10 +12,21 @@ create table if not exists public.profiles (
   phone text,
   city text,
   avatar_url text,
+  avatar_r2_key text,
   bio text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.profiles
+  add column if not exists email text,
+  add column if not exists display_name text not null default 'PakScorer User',
+  add column if not exists phone text,
+  add column if not exists city text,
+  add column if not exists avatar_url text,
+  add column if not exists avatar_r2_key text,
+  add column if not exists bio text,
+  add column if not exists updated_at timestamptz not null default now();
 
 -- Core teams
 create table if not exists public.teams (
@@ -33,6 +44,7 @@ on public.teams (lower(trim(name)));
 
 alter table public.teams
   add column if not exists logo_url text,
+  add column if not exists logo_r2_key text,
   add column if not exists user_id uuid references auth.users(id),
   add column if not exists deleted_at timestamptz,
   add column if not exists founded_date date,
@@ -67,6 +79,7 @@ alter table public.players
   add column if not exists is_captain boolean not null default false,
   add column if not exists is_wicketkeeper boolean not null default false,
   add column if not exists photo_url text,
+  add column if not exists photo_r2_key text,
   add column if not exists age integer,
   add column if not exists deleted_at timestamptz,
   add column if not exists balls_faced integer not null default 0,
@@ -143,7 +156,11 @@ alter table public.matches
   add column if not exists match_days integer default 1,
   add column if not exists innings_per_team integer default 1 check (innings_per_team in (1, 2)),
   add column if not exists is_tape_ball boolean default false,
-  add column if not exists format text default 'T20';
+  add column if not exists format text default 'T20',
+  add column if not exists share_card_url text,
+  add column if not exists share_card_r2_key text,
+  add column if not exists highlight_video_url text,
+  add column if not exists highlight_video_r2_key text;
 
 -- Playing XI for match setup
 create table if not exists public.match_players (
@@ -242,7 +259,11 @@ on public.tournaments (lower(trim(name)));
 
 alter table public.tournaments
   add column if not exists group_count integer not null default 1,
-  add column if not exists user_id uuid references auth.users(id);
+  add column if not exists user_id uuid references auth.users(id),
+  add column if not exists banner_url text,
+  add column if not exists banner_r2_key text,
+  add column if not exists promo_video_url text,
+  add column if not exists promo_video_r2_key text;
 
 do $$
 begin
@@ -448,6 +469,24 @@ create table if not exists public.notifications (
 create index if not exists notifications_user_read_idx
 on public.notifications (user_id, read_at);
 
+-- R2 media metadata. Actual files live in Cloudflare R2; Supabase stores only URLs/keys.
+create table if not exists public.media_assets (
+  id uuid primary key default gen_random_uuid(),
+  owner_user_id uuid references auth.users(id) on delete set null,
+  entity_type text not null check (entity_type in ('profile', 'team', 'player', 'tournament', 'match')),
+  entity_id uuid,
+  media_type text not null check (media_type in ('image', 'video', 'card')),
+  r2_key text not null,
+  public_url text not null,
+  file_name text,
+  content_type text,
+  file_size bigint,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists media_assets_entity_idx
+on public.media_assets (entity_type, entity_id);
+
 -- Row level security for browser prototype.
 -- Later, replace insert/update/delete policies with authenticated role-based policies.
 alter table public.profiles enable row level security;
@@ -470,6 +509,7 @@ alter table public.team_admins enable row level security;
 alter table public.tournament_admins enable row level security;
 alter table public.match_scorers enable row level security;
 alter table public.notifications enable row level security;
+alter table public.media_assets enable row level security;
 
 do $$
 declare
@@ -495,7 +535,8 @@ begin
     'team_admins',
     'tournament_admins',
     'match_scorers',
-    'notifications'
+    'notifications',
+    'media_assets'
   ]
   loop
     execute format('drop policy if exists "Prototype read %1$s" on public.%1$I', table_name);

@@ -1,0 +1,15 @@
+name = "pakscorer-r2-upload"
+main = "r2-upload-worker.js"
+compatibility_date = "2026-05-14"
+
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "pakscorer-media"
+
+[vars]
+R2_PUBLIC_BASE_URL = "https://pub-5a5234b682214c14abc65ead18b20926.r2.dev"
+SUPABASE_URL = "https://sbmraxcazwsmcyyavqjv.supabase.co"
+ALLOWED_ORIGIN = "*"
+
+# Add SUPABASE_ANON_KEY in the Cloudflare Worker dashboard as an environment variable.
+# Do not put service-role keys here.

@@ -1382,6 +1382,7 @@
       <nav class="nav" aria-label="Main navigation">
         <button class="active" data-page="home"><span class="nav-icon">H</span>Home</button>
         <button data-page="teams"><span class="nav-icon">T</span>Teams</button>
+        <button data-page="matches"><span class="nav-icon">M</span>Matches</button>
         <button data-page="profile" data-auth-only><span class="nav-icon">P</span>Profile</button>
         <button data-page="requests" data-admin-only><span class="nav-icon">R</span>Requests</button>
         <button data-page="scoring" data-admin-only><span class="nav-icon">S</span>Scoring</button>
@@ -1469,6 +1470,7 @@
           <label>City <input id="editTeamCity" required></label>
           <label>Captain <input id="editTeamCaptain" required></label>
           <label>Logo URL <input id="editTeamLogo" placeholder="https://..."></label>
+          <label>Upload Logo <input id="editTeamLogoFile" type="file" accept="image/*"></label>
           <div class="grid cols-2" style="margin-top: 10px;">
             <button class="btn primary" type="submit">Save Changes</button>
             <button class="btn ghost" type="button" onclick="document.getElementById('editTeamModal').style.display='none'">Cancel</button>
@@ -1488,7 +1490,7 @@
       </header>
 
       <section class="page active" id="home">
-        <div class="grid cols-3">
+        <div class="grid cols-3" data-auth-only>
           <div class="card metric">
             <span>Teams</span>
             <strong id="teamCount">0</strong>
@@ -1519,7 +1521,7 @@
 
           <section class="panel">
             <div class="panel-head">
-              <h2>Active Tournaments</h2>
+              <h2>Tournaments</h2>
               <span id="activeTournamentCount">0 running</span>
             </div>
             <div class="panel-body">
@@ -1531,7 +1533,7 @@
         <div class="grid cols-1" style="margin-top: 16px;">
           <section class="panel">
             <div class="panel-head">
-              <h2>Match History</h2>
+              <h2>Matches</h2>
               <span id="historyCount">0 past matches</span>
             </div>
             <div class="panel-body">
@@ -1568,6 +1570,7 @@
                   <label>City <input id="profileCity" placeholder="Your city"></label>
                   <label>Avatar URL <input id="profileAvatar" placeholder="https://..."></label>
                 </div>
+                <label>Upload Avatar <input id="profileAvatarFile" type="file" accept="image/*"></label>
                 <button class="btn primary" type="submit">Save Profile</button>
               </form>
               <div class="card">
@@ -1630,6 +1633,8 @@
               <label>Team name <input id="newTeamName" value="Rawalpindi Royals" /></label>
               <label>City <input id="newTeamCity" value="Rawalpindi" /></label>
               <label>Captain <input id="newTeamCaptain" value="Bilal Khan" /></label>
+              <label>Logo URL <input id="newTeamLogo" placeholder="https://... or upload below" /></label>
+              <label>Upload Logo <input id="newTeamLogoFile" type="file" accept="image/*"></label>
               <p class="form-message" id="teamFormMessage" aria-live="polite"></p>
               <button class="btn primary" type="submit">Add Team</button>
             </form>
@@ -1684,6 +1689,63 @@
                   </section>
                 </div>
               </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="page" id="matches">
+        <div class="sub-nav" style="display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid var(--line); padding-bottom: 12px;">
+          <button class="btn primary btn-sm sub-nav-btn active" data-sub="live">Live</button>
+          <button class="btn ghost btn-sm sub-nav-btn" data-sub="upcoming">Upcoming</button>
+          <button class="btn ghost btn-sm sub-nav-btn" data-sub="for-you" data-auth-only>For You</button>
+          <button class="btn ghost btn-sm sub-nav-btn" data-sub="finished">Finished</button>
+        </div>
+
+        <div id="sub-live" class="sub-page active">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Live Matches</h2>
+              <span id="liveMatchCount">0 live</span>
+            </div>
+            <div class="panel-body">
+              <ul class="feed" id="matchLiveList"></ul>
+            </div>
+          </section>
+        </div>
+
+        <div id="sub-upcoming" class="sub-page">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Upcoming Matches</h2>
+              <span id="upcomingMatchCount">0 upcoming</span>
+            </div>
+            <div class="panel-body">
+              <ul class="feed" id="matchUpcomingList"></ul>
+            </div>
+          </section>
+        </div>
+
+        <div id="sub-for-you" class="sub-page">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>For You</h2>
+              <span id="forYouMatchCount">0 matches</span>
+            </div>
+            <div class="panel-body">
+              <ul class="feed" id="matchForYouList"></ul>
+            </div>
+          </section>
+        </div>
+
+        <div id="sub-finished" class="sub-page">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Finished Matches</h2>
+              <span id="finishedMatchCount">0 finished</span>
+            </div>
+            <div class="panel-body">
+              <ul class="feed" id="matchFinishedList"></ul>
             </div>
           </section>
         </div>
@@ -2086,6 +2148,8 @@
                   <label>End Date <input id="newTournamentEnd" type="date" /></label>
                 </div>
                 <label>Venue <input id="newTournamentVenue" value="Multiple venues" /></label>
+                <label>Banner URL <input id="newTournamentBanner" placeholder="https://... or upload below" /></label>
+                <label>Upload Banner <input id="newTournamentBannerFile" type="file" accept="image/*"></label>
                 <p class="form-message" id="tournamentFormMessage" aria-live="polite"></p>
                 <button class="btn primary" type="submit">Create Tournament</button>
               </form>
@@ -2159,6 +2223,8 @@
 
     const SUPABASE_URL = "https://sbmraxcazwsmcyyavqjv.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNibXJheGNhendzbWN5eWF2cWp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0ODY4ODQsImV4cCI6MjA5NDA2Mjg4NH0.dSwT0K7lmk_GuFpHvSrdDd42rUv5MUTVrmJNC1E0xg0";
+    const R2_PUBLIC_BASE_URL = "https://pub-5a5234b682214c14abc65ead18b20926.r2.dev";
+    const R2_UPLOAD_WORKER_URL = "https://pakscorer-r2-upload.mirajroonjha.workers.dev/";
 
     // Global Error Handler for debugging
     window.onerror = function(msg, url, lineNo, columnNo, error) {
@@ -2183,6 +2249,7 @@
     const pages = {
       home: ["Home", "Your central hub for local cricket activity."],
       teams: ["Teams & Management", "Manage your squads, players, and match fixtures."],
+      matches: ["Matches", "Live, upcoming, personal, and finished cricket matches."],
       profile: ["Profile", "Your account, role, and access."],
       requests: ["Requests", "Challenges and match invitations."],
       scoring: ["Scoring", "Professional ball-by-ball match management."],
@@ -2273,6 +2340,10 @@
           renderTournaments();
         }
 
+        if (page === "matches") {
+          renderMatches();
+        }
+
         if (page === "public") {
           renderPublicLiveView();
         }
@@ -2328,10 +2399,15 @@
       const adminProfile = document.querySelector("#adminProfile");
       const showLoginBtn = document.querySelector("#showLoginBtn");
       const adminEmail = document.querySelector("#adminEmail");
+      const canUseUploads = Boolean(user && isR2Configured());
 
       const mobileProfileBtn = document.querySelector("#mobileProfileBtn");
       document.querySelectorAll("[data-auth-only]").forEach(el => {
         el.style.display = user ? "" : "none";
+      });
+      document.querySelectorAll("input[type='file']").forEach(el => {
+        el.disabled = !canUseUploads;
+        el.title = canUseUploads ? "Upload to Cloudflare R2" : "Login required for R2 upload";
       });
 
       if (user) {
@@ -2770,6 +2846,54 @@
       }
     }
 
+    function isR2Configured() {
+      return Boolean(R2_UPLOAD_WORKER_URL && R2_PUBLIC_BASE_URL);
+    }
+
+    function r2PublicUrl(key) {
+      if (!R2_PUBLIC_BASE_URL || !key) return "";
+      return `${R2_PUBLIC_BASE_URL.replace(/\/$/, "")}/${key.replace(/^\//, "")}`;
+    }
+
+    async function uploadMediaToR2(file, context) {
+      if (!file) throw new Error("Please select a file first.");
+      if (!isR2Configured()) {
+        throw new Error("Cloudflare R2 upload Worker is not configured yet.");
+      }
+
+      const token = state.user ? (await supabase.auth.getSession()).data.session?.access_token : null;
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("entityType", context.entityType);
+      formData.append("entityId", context.entityId || "new");
+      formData.append("mediaType", context.mediaType);
+
+      const uploadResponse = await fetch(R2_UPLOAD_WORKER_URL, {
+        method: "POST",
+        headers: {
+          ...(token ? { authorization: `Bearer ${token}` } : {})
+        },
+        body: formData
+      });
+
+      const upload = await uploadResponse.json();
+      if (!uploadResponse.ok) throw new Error(upload.error || "R2 upload failed.");
+
+      const publicUrl = upload.publicUrl || r2PublicUrl(upload.key);
+      return { key: upload.key, publicUrl };
+    }
+
+    function selectedFile(selector) {
+      const input = document.querySelector(selector);
+      return input?.files?.[0] || null;
+    }
+
+    async function uploadSelectedMedia(selector, context) {
+      const file = selectedFile(selector);
+      if (!file) return null;
+      return uploadMediaToR2(file, context);
+    }
+
     function getLocalList(name, id) {
       return (localStorage.getItem(`pakscorer_${name}_${id}`) || "").split(",").map(v => v.trim()).filter(Boolean);
     }
@@ -3033,8 +3157,8 @@
                 ${(() => { const meta = getPlayerMeta(p.id); return `
                 <li style="display: flex; justify-content: space-between; align-items: center; gap: 8px; background: rgba(255,255,255,0.03); padding: 4px 8px; border-radius: 6px;">
                   <span style="display:flex; align-items:center; gap:8px; font-size: 0.82rem;">
-                    ${meta.photo ? `<img src="${meta.photo}" alt="${p.name}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">` : `<span class="avatar" style="width:32px;height:32px;font-size:0.7rem;">${initials(p.name)}</span>`}
-                    <span><strong>${p.name}</strong> <small class="muted">(${p.role}${meta.age ? `, ${meta.age}` : ""})</small><br><small class="muted">${meta.batting || "Batting"} / ${meta.bowling || "Bowling"}</small></span>
+                    ${meta.photo || p.photo_url ? `<img src="${meta.photo || p.photo_url}" alt="${p.name}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">` : `<span class="avatar" style="width:32px;height:32px;font-size:0.7rem;">${initials(p.name)}</span>`}
+                    <span><strong>${p.name}</strong> <small class="muted">(${p.role}${meta.age || p.age ? `, ${meta.age || p.age}` : ""})</small><br><small class="muted">${meta.batting || p.batting_style || "Batting"} / ${meta.bowling || p.bowling_style || "Bowling"}</small></span>
                   </span>
                   ${owner || admin ? `<button class="btn ghost danger" style="padding: 2px 4px; font-size: 0.6rem;" data-delete-player="${p.id}">Remove</button>` : ""}
                 </li>
@@ -3056,6 +3180,7 @@
                 <input type="text" placeholder="Batting style" class="player-batting-in" style="font-size: 0.8rem; padding: 4px 8px;">
                 <input type="text" placeholder="Bowling style" class="player-bowling-in" style="font-size: 0.8rem; padding: 4px 8px;">
                 <input type="url" placeholder="Photo URL" class="player-photo-in" style="font-size: 0.8rem; padding: 4px 8px;">
+                <input type="file" accept="image/*" class="player-photo-file-in" style="font-size: 0.75rem; padding: 4px 8px;">
                 <button class="btn primary btn-sm" type="submit">+</button>
               </form>
             </div>
@@ -3064,7 +3189,7 @@
         return `
           <article class="card team-card" style="display: flex; flex-direction: column;">
             <div class="team-top" data-public-team="${team.id}" style="cursor:pointer;">
-              <div class="avatar">${initials(team.name)}</div>
+              ${team.logo_url ? `<img src="${team.logo_url}" alt="${team.name}" class="avatar" style="object-fit:cover;">` : `<div class="avatar">${initials(team.name)}</div>`}
               <div>
                 <h3>${team.name}</h3>
                 <p>${team.city}</p>
@@ -3122,7 +3247,7 @@
         const econ = p.balls_bowled ? ((p.runs_conceded / p.balls_bowled) * 6).toFixed(2) : "0.00";
         return `
           <tr>
-            <td><strong>${p.name}</strong><br><small class="muted">${meta.age ? `${meta.age} yrs - ` : ""}${meta.batting || "Batting style"} / ${meta.bowling || "Bowling style"}</small></td>
+            <td><strong>${p.name}</strong><br><small class="muted">${meta.age || p.age ? `${meta.age || p.age} yrs - ` : ""}${meta.batting || p.batting_style || "Batting style"} / ${meta.bowling || p.bowling_style || "Bowling style"}</small></td>
             <td>${p.team}</td>
             <td><span class="tag">${p.role}</span></td>
             <td title="Innings: ${p.innings_played || 0}">${p.runs} <small class="muted">(${ave})</small></td>
@@ -3144,7 +3269,7 @@
     async function loadTeamsFromDatabase() {
       const { data, error } = await supabase
         .from("teams")
-        .select("id,name,city,captain,record,user_id")
+        .select("id,name,city,captain,record,logo_url,logo_r2_key,user_id")
         .order("created_at", { ascending: true });
 
       if (error) throw error;
@@ -3165,7 +3290,7 @@
     async function loadPlayersFromDatabase() {
       const { data, error } = await supabase
         .from("players")
-        .select("id,team_id,name,team,role,runs,wickets,balls_faced,innings_played,runs_conceded,balls_bowled,user_id")
+        .select("id,team_id,name,team,role,photo_url,photo_r2_key,age,batting_style,bowling_style,runs,wickets,balls_faced,innings_played,runs_conceded,balls_bowled,user_id")
         .order("created_at", { ascending: true });
 
       if (error) throw error;
@@ -3327,7 +3452,7 @@
     async function loadTournamentsFromDatabase() {
       const { data, error } = await supabase
         .from("tournaments")
-        .select("id,name,venue,start_date,end_date,overs,format,status,user_id")
+        .select("id,name,venue,start_date,end_date,overs,format,status,banner_url,banner_r2_key,user_id")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -3403,7 +3528,7 @@
       const { data, error } = await supabase
         .from("tournaments")
         .insert(tournament)
-        .select("id,name,format,overs,venue,start_date,end_date,status,user_id")
+        .select("id,name,format,overs,venue,start_date,end_date,status,banner_url,banner_r2_key,user_id")
         .single();
 
       if (error) throw error;
@@ -3446,7 +3571,7 @@
       const { data, error } = await supabase
         .from("teams")
         .insert(team)
-        .select("id,name,city,captain,record,user_id")
+        .select("id,name,city,captain,record,logo_url,logo_r2_key,user_id")
         .single();
 
       if (error) throw error;
@@ -3457,11 +3582,28 @@
       const { data, error } = await supabase
         .from("players")
         .insert(player)
-        .select("id,team_id,name,team,role,runs,wickets,user_id")
+        .select("id,team_id,name,team,role,photo_url,photo_r2_key,age,batting_style,bowling_style,runs,wickets,user_id")
         .single();
 
       if (error) throw error;
       return data;
+    }
+
+    async function attachMediaAsset(context, media, file) {
+      if (!state.usingDatabase || !media?.key || !media?.publicUrl) return;
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(context.entityId || ""));
+      const { error } = await supabase.from("media_assets").insert({
+        owner_user_id: state.user?.id || null,
+        entity_type: context.entityType,
+        entity_id: isUuid ? context.entityId : null,
+        media_type: context.mediaType,
+        r2_key: media.key,
+        public_url: media.publicUrl,
+        file_name: file?.name || media.fileName || null,
+        content_type: file?.type || media.contentType || null,
+        file_size: file?.size || media.fileSize || null
+      });
+      if (error) console.warn("Could not save media metadata:", error.message);
     }
 
     async function createMatchRequestInDatabase(request) {
@@ -3810,51 +3952,60 @@
       return `${dateStr} Â· ${display}`;
     }
 
-    function renderMatches() {
-      const activeMatches = state.matches.filter((match) => (match.status === "Scheduled" || match.status === "Setup" || match.status === "Live") && !match.tournamentId);
-      const rows = activeMatches.length ? activeMatches.map((match) => {
+    function isUserMatch(match) {
+      if (!state.user || !match) return false;
+      return canManageMatch(match) || canScoreMatch(match) || ownsTeam(match.teamAId) || ownsTeam(match.teamBId);
+    }
+
+    function renderMatchFeed(matches, emptyTitle, options = {}) {
+      if (!matches.length) return `<li><strong>${emptyTitle}</strong><span>${options.emptyText || "Matches will appear here when available."}</span></li>`;
+      return matches.map((match) => {
         const dateTime = formatMatchDateTime(match.matchDate, match.matchTime);
         const canManage = canManageMatch(match);
         const scorerIds = getAssignedScorerIds(match);
+        const tagClass = match.status === "Live" ? "green" : match.status === "Completed" ? "cyan" : match.status === "Cancelled" ? "red" : "gold";
         return `
-        <li style="display: flex; justify-content: space-between; align-items: center;">
+        <li style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
           <div style="display:flex; flex-direction:column; gap: 2px;">
             <strong>${match.teamA} vs ${match.teamB}</strong>
             <span class="muted" style="font-size:0.75rem;">${match.status} Â· ${match.overs} overs Â· ${match.venue}</span>
             ${dateTime ? `<span style="color:var(--cyan);font-size:0.82rem;font-weight:800;">${dateTime}</span>` : ""}
             ${scorerIds.length ? `<span class="muted" style="font-size:0.75rem;">${scorerIds.length} scorer assigned</span>` : ""}
           </div>
-          <div style="display: flex; gap: 8px; align-items:center; flex-wrap:wrap;">
-            ${canManage ? `<input type="date" data-match-date-edit="${match.id}" value="${match.matchDate || ""}" style="max-width: 150px; padding: 4px 8px; font-size: 0.75rem;">` : ""}
-            ${canManage ? `<input type="time" data-match-time-edit="${match.id}" value="${match.matchTime || ""}" style="max-width: 120px; padding: 4px 8px; font-size: 0.75rem;">` : ""}
-            ${canManage ? `<select data-assign-scorer="${match.id}" style="max-width: 180px; padding: 4px 8px; font-size: 0.75rem;"><option value="">Assign scorer</option>${state.players.map(p => `<option value="${p.user_id || ""}">${p.name}</option>`).join("")}</select>` : ""}
+          <div style="display: flex; gap: 8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+            <span class="tag ${tagClass}" style="font-size: 0.65rem;">${match.status}</span>
+            ${match.status === "Live" ? `<button class="btn ghost" style="padding: 4px 8px; font-size: 0.75rem;" data-view-match="${match.id}">Watch</button>` : ""}
+            ${match.status === "Completed" ? `<button class="btn ghost" style="font-size: 0.75rem; padding: 4px 8px;" onclick="renderMatchSummary('${match.id}')">Highlights</button>` : ""}
+            ${options.management && canManage ? `<input type="date" data-match-date-edit="${match.id}" value="${match.matchDate || ""}" style="max-width: 150px; padding: 4px 8px; font-size: 0.75rem;">` : ""}
+            ${options.management && canManage ? `<input type="time" data-match-time-edit="${match.id}" value="${match.matchTime || ""}" style="max-width: 120px; padding: 4px 8px; font-size: 0.75rem;">` : ""}
+            ${options.management && canManage ? `<select data-assign-scorer="${match.id}" style="max-width: 180px; padding: 4px 8px; font-size: 0.75rem;"><option value="">Assign scorer</option>${state.players.map(p => `<option value="${p.user_id || ""}">${p.name}</option>`).join("")}</select>` : ""}
             ${canManage ? `<button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem;" data-delete-match="${match.id}">Delete</button>` : ""}
           </div>
         </li>
       `;
-      }).join("") : `<li><strong>No scheduled matches yet</strong>${state.user ? '<span>Accept a request to create one</span>' : ''}</li>`;
+      }).join("");
+    }
 
-      const history = state.matches.filter((match) => (match.status === "Completed" || match.status === "Cancelled") && !match.tournamentId);
-      const historyRows = history.length ? history.map((match) => `
-        <li style="display: flex; justify-content: space-between; align-items: center;">
-          <div style="display:flex; flex-direction:column; gap: 2px;">
-            <strong>${match.teamA} vs ${match.teamB}</strong>
-            <span class="muted" style="font-size:0.75rem;">${match.status} Â· ${match.venue}</span>
-          </div>
-          <div style="display: flex; gap: 8px;">
-             ${match.status === "Completed" ? `<button class="btn ghost" style="font-size: 0.75rem; padding: 4px 8px;" onclick="renderMatchSummary('${match.id}')">Highlights</button>` : ""}
-             ${canManageMatch(match) ? `<button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem;" data-delete-match="${match.id}">Delete</button>` : ""}
-          </div>
-        </li>
-      `).join("") : `<li><strong>No match history</strong></li>`;
+    function renderMatches() {
+      const liveMatches = state.matches.filter((match) => match.status === "Live");
+      const upcomingMatches = state.matches.filter((match) => match.status === "Scheduled" || match.status === "Setup");
+      const activeMatches = state.matches.filter((match) => match.status === "Scheduled" || match.status === "Setup" || match.status === "Live");
+      const forYouMatches = state.matches.filter(isUserMatch);
+      const history = state.matches.filter((match) => match.status === "Completed" || match.status === "Cancelled");
+      const rows = renderMatchFeed(upcomingMatches, "No upcoming matches yet", { management: true, emptyText: state.user ? "Accept a request to create one." : "Upcoming public matches will appear here." });
+      const historyRows = renderMatchFeed(history, "No finished matches yet");
 
       safeSetText("#fixtureCount", `${activeMatches.length} active`);
-      safeSetText("#scheduledMatchCount", `${activeMatches.length} matches`);
+      safeSetText("#scheduledMatchCount", `${upcomingMatches.length} matches`);
       safeSetText("#historyCount", `${history.length} past matches`);
+      safeSetText("#liveMatchCount", `${liveMatches.length} live`);
+      safeSetText("#upcomingMatchCount", `${upcomingMatches.length} upcoming`);
+      safeSetText("#forYouMatchCount", `${forYouMatches.length} matches`);
+      safeSetText("#finishedMatchCount", `${history.length} finished`);
 
       const dashFixtures = document.querySelector("#homeFixtures");
       if (dashFixtures) {
-        dashFixtures.innerHTML = activeMatches.length ? activeMatches.map(match => `
+        dashFixtures.innerHTML = activeMatches.length ? activeMatches.slice(0, 5).map(match => `
           <li class="match-card-compact" data-view-match="${match.id}" style="cursor:pointer; display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px; transition: 0.2s;">
             <div style="display:flex; flex-direction:column; gap: 2px;">
               <strong>${match.teamA} vs ${match.teamB}</strong>
@@ -3870,6 +4021,18 @@
 
       const histList = document.querySelector("#matchHistoryList");
       if (histList) histList.innerHTML = historyRows;
+
+      const liveList = document.querySelector("#matchLiveList");
+      if (liveList) liveList.innerHTML = renderMatchFeed(liveMatches, "No live matches right now");
+
+      const upcomingList = document.querySelector("#matchUpcomingList");
+      if (upcomingList) upcomingList.innerHTML = renderMatchFeed(upcomingMatches, "No upcoming matches yet", { management: true });
+
+      const forYouList = document.querySelector("#matchForYouList");
+      if (forYouList) forYouList.innerHTML = renderMatchFeed(forYouMatches, "No matches for you yet", { management: true, emptyText: "Create a team, accept a request, or get assigned as scorer." });
+
+      const finishedList = document.querySelector("#matchFinishedList");
+      if (finishedList) finishedList.innerHTML = historyRows;
 
       renderScoringMatchSelect();
     }
@@ -4343,6 +4506,7 @@
 
           return `
             <article class="card" data-tournament-card-id="${tournament.id}" data-view-tournament="${tournament.id}" style="display: flex; flex-direction: column; gap: 4px; cursor: pointer;">
+              ${tournament.banner_url ? `<img src="${tournament.banner_url}" alt="${tournament.name}" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-bottom:10px;">` : ""}
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
                   <h3 style="margin: 0;">${tournament.name}</h3>
@@ -5426,6 +5590,8 @@
       const name = document.querySelector("#newTeamName").value.trim();
       const city = document.querySelector("#newTeamCity").value.trim();
       const captain = document.querySelector("#newTeamCaptain").value.trim();
+      const logoInput = document.querySelector("#newTeamLogo");
+      const logoFile = selectedFile("#newTeamLogoFile");
       const normalizedName = name.toLowerCase();
       const alreadyExists = state.teams.some((team) => team.name.trim().toLowerCase() === normalizedName);
 
@@ -5448,10 +5614,30 @@
         city: city || "Unknown",
         captain: captain || "Captain",
         record: "0W - 0L",
+        logo_url: logoInput?.value.trim() || null,
         user_id: state.user?.id || null,
       };
 
       message.textContent = "Saving team...";
+
+      if (logoFile) {
+        try {
+          message.textContent = "Uploading logo to R2...";
+          const media = await uploadMediaToR2(logoFile, {
+            entityType: "team",
+            entityId: normalizedName,
+            mediaType: "image"
+          });
+          await attachMediaAsset({ entityType: "team", entityId: null, mediaType: "image" }, media, logoFile);
+          team.logo_url = media.publicUrl;
+          team.logo_r2_key = media.key;
+          if (logoInput) logoInput.value = media.publicUrl;
+        } catch (error) {
+          message.textContent = "Logo upload failed: " + error.message;
+          message.classList.add("error");
+          return;
+        }
+      }
 
       if (state.usingDatabase) {
         try {
@@ -5755,6 +5941,8 @@
       const startDate = document.querySelector("#newTournamentStart").value || null;
       const endDate = document.querySelector("#newTournamentEnd")?.value || null;
       const groupCount = Number(document.querySelector("#newTournamentGroups")?.value || 1);
+      const bannerInput = document.querySelector("#newTournamentBanner");
+      const bannerFile = selectedFile("#newTournamentBannerFile");
 
       message.className = "form-message";
 
@@ -5779,11 +5967,31 @@
         start_date: startDate,
         end_date: endDate,
         group_count: groupCount,
+        banner_url: bannerInput?.value.trim() || null,
         status: "Applications Open",
         user_id: state.user?.id || null,
       };
 
       message.textContent = "Saving tournament...";
+
+      if (bannerFile) {
+        try {
+          message.textContent = "Uploading banner to R2...";
+          const media = await uploadMediaToR2(bannerFile, {
+            entityType: "tournament",
+            entityId: name.toLowerCase(),
+            mediaType: "image"
+          });
+          await attachMediaAsset({ entityType: "tournament", entityId: null, mediaType: "image" }, media, bannerFile);
+          tournament.banner_url = media.publicUrl;
+          tournament.banner_r2_key = media.key;
+          if (bannerInput) bannerInput.value = media.publicUrl;
+        } catch (error) {
+          message.textContent = "Banner upload failed: " + error.message;
+          message.classList.add("error");
+          return;
+        }
+      }
 
       if (state.usingDatabase) {
         try {
@@ -6355,12 +6563,30 @@
       profileForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         const msg = document.querySelector("#profileMessage");
+        const avatarInput = document.querySelector("#profileAvatar");
+        const avatarFile = selectedFile("#profileAvatarFile");
         try {
+          let avatarUrl = avatarInput.value.trim();
+          if (avatarFile) {
+            if (msg) {
+              msg.textContent = "Uploading avatar to R2...";
+              msg.className = "form-message";
+            }
+            const media = await uploadMediaToR2(avatarFile, {
+              entityType: "profile",
+              entityId: state.user?.id || "guest",
+              mediaType: "image"
+            });
+            await attachMediaAsset({ entityType: "profile", entityId: state.user?.id || null, mediaType: "image" }, media, avatarFile);
+            avatarUrl = media.publicUrl;
+            avatarInput.value = media.publicUrl;
+          }
+
           await saveUserProfile({
             name: document.querySelector("#profileName").value.trim(),
             phone: document.querySelector("#profilePhone").value.trim(),
             city: document.querySelector("#profileCity").value.trim(),
-            avatar: document.querySelector("#profileAvatar").value.trim()
+            avatar: avatarUrl
           });
           if (msg) {
             msg.textContent = state.usingDatabase ? "Profile saved in Supabase." : "Profile saved on this device.";
@@ -6720,6 +6946,21 @@
         };
         const msg = document.querySelector("#editTeamMessage");
         try {
+          const logoFile = selectedFile("#editTeamLogoFile");
+          if (logoFile) {
+            msg.textContent = "Uploading logo to R2...";
+            msg.className = "form-message";
+            const media = await uploadMediaToR2(logoFile, {
+              entityType: "team",
+              entityId: id,
+              mediaType: "image"
+            });
+            await attachMediaAsset({ entityType: "team", entityId: id, mediaType: "image" }, media, logoFile);
+            data.logo_url = media.publicUrl;
+            data.logo_r2_key = media.key;
+            document.querySelector("#editTeamLogo").value = media.publicUrl;
+          }
+
           if (state.usingDatabase) {
             const { error } = await supabase.from('teams').update(data).eq('id', id);
             if (error) throw error;
@@ -6775,6 +7016,7 @@
         const battingIn = quickAddForm.querySelector(".player-batting-in");
         const bowlingIn = quickAddForm.querySelector(".player-bowling-in");
         const photoIn = quickAddForm.querySelector(".player-photo-in");
+        const photoFileIn = quickAddForm.querySelector(".player-photo-file-in");
 
         const name = nameIn.value.trim();
         const role = roleIn.value;
@@ -6782,11 +7024,35 @@
 
         if (!name) return;
 
+        let photoUrl = photoIn?.value.trim() || "";
+        let photoKey = "";
+        if (photoFileIn?.files?.[0]) {
+          try {
+            const media = await uploadMediaToR2(photoFileIn.files[0], {
+              entityType: "player",
+              entityId: `${selectedTeam?.id || teamName}-${name}`,
+              mediaType: "image"
+            });
+            await attachMediaAsset({ entityType: "player", entityId: null, mediaType: "image" }, media, photoFileIn.files[0]);
+            photoUrl = media.publicUrl;
+            photoKey = media.key;
+            if (photoIn) photoIn.value = photoUrl;
+          } catch (error) {
+            alert("Player photo upload failed: " + error.message);
+            return;
+          }
+        }
+
         const player = {
           name,
           team: teamName,
           team_id: selectedTeam?.id,
           role,
+          photo_url: photoUrl || null,
+          photo_r2_key: photoKey || null,
+          age: ageIn?.value ? Number(ageIn.value) : null,
+          batting_style: battingIn?.value || null,
+          bowling_style: bowlingIn?.value || null,
           user_id: state.user?.id
         };
 
@@ -6801,7 +7067,7 @@
               age: ageIn?.value || "",
               batting: battingIn?.value || "",
               bowling: bowlingIn?.value || "",
-              photo: photoIn?.value || ""
+              photo: photoUrl || ""
             });
           } else {
             const localPlayer = { id: Date.now(), ...player, runs: 0, wickets: 0 };
@@ -6810,7 +7076,7 @@
               age: ageIn?.value || "",
               batting: battingIn?.value || "",
               bowling: bowlingIn?.value || "",
-              photo: photoIn?.value || ""
+              photo: photoUrl || ""
             });
           }
           nameIn.value = "";
@@ -6818,6 +7084,7 @@
           if (battingIn) battingIn.value = "";
           if (bowlingIn) bowlingIn.value = "";
           if (photoIn) photoIn.value = "";
+          if (photoFileIn) photoFileIn.value = "";
           renderTeams();
         } catch (e) {
           alert("Error adding player: " + e.message);
