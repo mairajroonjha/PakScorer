@@ -2369,8 +2369,9 @@
     .match-page-scroll .viewer-match-card,
     .match-page-scroll .viewer-empty-card {
       flex: 0 0 min(880px, 92vw);
-      min-height: min(520px, calc(100vh - 310px));
-      justify-content: center;
+      min-height: 0;
+      height: max-content;
+      justify-content: flex-start;
       scroll-snap-align: center;
     }
 
@@ -2587,7 +2588,7 @@
       .match-page-scroll .viewer-match-card,
       .match-page-scroll .viewer-empty-card {
         flex-basis: min(360px, 88vw);
-        min-height: calc(100vh - 310px);
+        min-height: 0;
         justify-content: flex-start;
       }
 
@@ -3724,6 +3725,7 @@
       tournaments: [],
       applications: [],
       series: [],
+      innings: [],
       profile: null,
       notifications: [],
       teamAdmins: [],
@@ -4805,7 +4807,23 @@
         user_id: match.user_id
       }));
 
+      await loadAllInningsFromDatabase();
       renderMatches();
+    }
+
+    async function loadAllInningsFromDatabase() {
+      if (!state.usingDatabase) return;
+      try {
+        const { data, error } = await supabase
+          .from("innings")
+          .select("id,match_id,innings_number,batting_team_id,bowling_team_id,batting_team,bowling_team,runs,wickets,legal_balls,target,status")
+          .order("innings_number", { ascending: true });
+        if (error) throw error;
+        state.innings = data || [];
+      } catch (error) {
+        console.warn("Could not load innings for match cards", error);
+        state.innings = [];
+      }
     }
 
     async function loadAdminAssignmentsFromDatabase() {
@@ -5452,6 +5470,39 @@
     function renderViewerMatchCards(matches, emptyTitle = "No matches yet", emptyText = "Matches will appear here when available.") {
       const teamByNameOrId = (name, id) => state.teams.find(team => String(team.id) === String(id)) || state.teams.find(team => String(team.name || "").toLowerCase() === String(name || "").toLowerCase()) || {};
       const statusTagClass = (status = "") => status === "Live" ? "green" : status === "Completed" ? "cyan" : String(status).toLowerCase().includes("cancel") ? "red" : "gold";
+      const inningsForMatch = (match) => {
+        const cached = state.innings.filter(inn => String(inn.match_id || inn.matchId) === String(match.id));
+        const isCurrentMatch = state.currentMatch && String(state.currentMatch.id) === String(match.id);
+        if (isCurrentMatch && !cached.length) {
+          return [{
+            batting_team: state.score.battingTeam,
+            runs: state.score.runs,
+            wickets: state.score.wickets,
+            legal_balls: state.score.legalBalls,
+            target: state.score.target,
+            status: "Live"
+          }];
+        }
+        return cached;
+      };
+      const teamScore = (match, teamName) => {
+        const innings = inningsForMatch(match).filter(inn => String(inn.batting_team || "").toLowerCase() === String(teamName || "").toLowerCase());
+        if (!innings.length) {
+          if (match.status === "Scheduled" || match.status === "Setup") return `<span class="cricket-team-overs">Yet to bat</span>`;
+          if (match.status === "Cancelled") return `<span class="cricket-team-overs">Cancelled</span>`;
+          if (match.status === "Live") return `<span class="cricket-team-overs">Live score</span>`;
+          return `<span class="cricket-team-overs">Scorecard</span>`;
+        }
+        return innings.map(inn => `${inn.runs || 0}-${inn.wickets || 0} <span class="cricket-team-overs">${oversText(inn.legal_balls || 0)}</span>`).join(" & ");
+      };
+      const chaseNote = (match) => {
+        const innings = inningsForMatch(match);
+        const current = innings.find(inn => inn.status === "Live") || innings[innings.length - 1];
+        if (!current || !current.target || match.status !== "Live") return "";
+        const needed = Math.max(0, Number(current.target) - Number(current.runs || 0));
+        const ballsLeft = Math.max(0, Number(match.overs || 20) * 6 - Number(current.legal_balls || 0));
+        return `${needed} runs needed in ${ballsLeft} balls`;
+      };
       const teamMark = (team, name) => team.logo_url
         ? `<span class="cricket-team-mark"><img src="${team.logo_url}" alt="${name} logo"></span>`
         : `<span class="cricket-team-mark">${shortTeamCode(name).slice(0, 2)}</span>`;
@@ -5494,7 +5545,7 @@
       };
 
       if (!matches.length) {
-        return `<article class="viewer-empty-card"><strong>${emptyTitle}</strong><span class="viewer-card-meta">${emptyText}</span></article>`;
+        return `<article class="viewer-empty-card"><strong>${emptyTitle}</strong><span class="viewer-card-meta">${emptyText}</span><button class="btn ghost btn-sm" type="button" data-page-jump="matches" style="width:max-content;">View Matches</button></article>`;
       }
 
       return matches.map(match => {
@@ -5515,12 +5566,12 @@
                 <div class="cricket-team-row">
                   ${teamMark(teamA, match.teamA)}
                   <span class="cricket-team-code">${shortTeamCode(match.teamA)}</span>
-                  <span class="cricket-team-score">${match.status === "Live" ? "Live score" : match.status === "Completed" ? "Scorecard" : "Yet to bat"}</span>
+                  <span class="cricket-team-score">${teamScore(match, match.teamA)}</span>
                 </div>
                 <div class="cricket-team-row">
                   ${teamMark(teamB, match.teamB)}
                   <span class="cricket-team-code">${shortTeamCode(match.teamB)}</span>
-                  <span class="cricket-team-score">${match.overs || 20} overs</span>
+                  <span class="cricket-team-score">${teamScore(match, match.teamB)}</span>
                 </div>
               </div>
               <div class="cricket-card-verdict ${verdict.tone}">
@@ -5529,7 +5580,7 @@
               </div>
             </div>
             ${balls.length ? `<div class="cricket-ball-strip">${balls.map(ball => `<span class="cricket-ball-chip ${ballClass(ball)}">${ball}</span>`).join("")}</div>` : ""}
-            <div class="cricket-card-note">${verdict.note}</div>
+            <div class="cricket-card-note">${chaseNote(match) || verdict.note}</div>
           </article>
         `;
       }).join("");
@@ -5685,22 +5736,23 @@
         <article class="viewer-empty-card">
           <strong>${title}</strong>
           <span class="viewer-card-meta">${text}</span>
+          <button class="btn ghost btn-sm" type="button" data-page-jump="matches" style="width:max-content;">View Matches</button>
         </article>
       `;
 
       const liveEl = document.querySelector("#guestLiveMatches");
       if (liveEl) liveEl.innerHTML = liveMatches.length
-        ? liveMatches.map(match => matchCard(match, "live")).join("")
+        ? renderViewerMatchCards(liveMatches)
         : emptyCard("No live matches right now", "Live matches will appear here as scoring starts.");
 
       const upcomingEl = document.querySelector("#guestUpcomingMatches");
       if (upcomingEl) upcomingEl.innerHTML = upcomingMatches.length
-        ? upcomingMatches.map(match => matchCard(match, "upcoming")).join("")
+        ? renderViewerMatchCards(upcomingMatches)
         : emptyCard("No upcoming matches", "Scheduled matches will appear here.");
 
       const resultEl = document.querySelector("#guestRecentResults");
       if (resultEl) resultEl.innerHTML = finishedMatches.length
-        ? finishedMatches.map(match => matchCard(match, "result")).join("")
+        ? renderViewerMatchCards(finishedMatches)
         : emptyCard("No completed matches", "Finished match results will appear here.");
 
       const seriesEl = document.querySelector("#guestSeriesMatches");
@@ -5766,7 +5818,7 @@
 
       resultsEl.innerHTML = [
         block("Teams", teams, team => `<li data-public-team="${team.id}" style="cursor:pointer;"><strong>${team.name}</strong><span>${team.city} - ${team.captain}</span></li>`),
-        block("Players", players, player => `<li><strong>${player.name}</strong><span>${player.team} - ${player.role}</span></li>`),
+        block("Players", players, player => `<li data-public-player="${player.id || ""}" style="cursor:pointer;"><strong>${player.name}</strong><span>${player.team} - ${player.role}</span></li>`),
         block("Tournaments", tournaments, tournament => `<li data-view-tournament="${tournament.id}" style="cursor:pointer;"><strong>${tournament.name}</strong><span>${tournament.status || "Open"} - ${tournament.venue}</span></li>`),
         block("Matches", matches, match => `<li data-view-match="${match.id}" style="cursor:pointer;"><strong>${match.teamA} vs ${match.teamB}</strong><span>${match.status} - ${match.venue}</span></li>`)
       ].join("");
@@ -7143,11 +7195,13 @@
       }
 
       const lastSix = balls.slice(-6).map(b => b.is_wicket ? "W" : b.extra_type ? (b.extra_type === "Wide" ? "Wd" : b.extra_type === "No Ball" ? "Nb" : b.extra_type) : String(b.runs_bat || 0));
+      const shareUrl = `${window.location.origin}${window.location.pathname}#match-${match.id}`;
 
       return `
         <div class="match-detail-hero">
-          <div style="padding:22px 28px 0;">
+          <div style="padding:22px 28px 0; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
             <span class="tag green">Match Detail</span>
+            <button class="btn ghost btn-sm" type="button" data-share-match="${match.id}" data-share-url="${shareUrl}" data-share-title="${match.teamA} vs ${match.teamB}">Share Match</button>
           </div>
           <div class="match-detail-score">
             <div class="match-detail-team-main">
@@ -7189,6 +7243,14 @@
       const lastBalls = balls.slice(-6).map(b => b.is_wicket ? "W" : b.extra_type ? (b.extra_type === "Wide" ? "Wd" : b.extra_type === "No Ball" ? "Nb" : b.extra_type) : String(b.runs_bat || 0));
       const commentary = balls.slice(-20).reverse().map(b => `<li><strong>${b.over_number}.${b.ball_in_over}</strong><span>${b.commentary || (b.is_wicket ? "Wicket" : b.extra_type ? `${b.extra_type} added` : `${b.runs_bat || 0} runs`)}</span></li>`).join("");
       const tournament = state.tournaments.find(t => String(t.id) === String(match.tournamentId || ""));
+      const currentBalls = Number(currentInnings?.legal_balls || 0);
+      const crr = currentBalls ? ((Number(currentInnings?.runs || 0) / currentBalls) * 6).toFixed(2) : "0.00";
+      const target = Number(currentInnings?.target || 0);
+      const ballsLeft = Math.max(0, Number(match.overs || 20) * 6 - currentBalls);
+      const runsNeeded = target ? Math.max(0, target - Number(currentInnings?.runs || 0)) : 0;
+      const rrr = target && ballsLeft ? ((runsNeeded / ballsLeft) * 6).toFixed(2) : "--";
+      const activeBatters = Object.entries(card.batters).slice(-2);
+      const activeBowlers = Object.entries(card.bowlers).slice(-1);
       detailPageShell({
         label: "Match Detail",
         title: `${match.teamA} vs ${match.teamB}`,
@@ -7202,7 +7264,16 @@
               <div class="card"><span class="muted">Batting</span><h3>${currentInnings?.batting_team || match.teamA}</h3></div>
               <div class="card"><span class="muted">Status</span><h3>${match.status}</h3></div>
             </div>
+            <div class="grid cols-3" style="margin-top:16px;">
+              <div class="card"><span class="muted">CRR</span><h3>${crr}</h3></div>
+              <div class="card"><span class="muted">RRR</span><h3>${rrr}</h3></div>
+              <div class="card"><span class="muted">Target</span><h3>${target || "TBA"}</h3></div>
+            </div>
             <div class="last-balls" style="margin-top:16px;">${lastBalls.length ? lastBalls.map(b => `<span class="ball-chip">${b}</span>`).join("") : `<span class="muted">No balls yet.</span>`}</div>
+            <div class="grid cols-2" style="margin-top:16px;">
+              <article class="card"><h3>Batters</h3><ul class="feed" style="margin-top:10px;">${activeBatters.length ? activeBatters.map(([name, s]) => `<li data-public-player="${state.players.find(p => p.name === name)?.id || ""}" style="cursor:pointer;"><strong>${name}</strong><span>${s.runs} (${s.balls})</span></li>`).join("") : `<li><strong>No batter data yet</strong></li>`}</ul></article>
+              <article class="card"><h3>Bowler</h3><ul class="feed" style="margin-top:10px;">${activeBowlers.length ? activeBowlers.map(([name, s]) => `<li data-public-player="${state.players.find(p => p.name === name)?.id || ""}" style="cursor:pointer;"><strong>${name}</strong><span>${s.wickets}-${s.runs} (${oversText(s.balls)})</span></li>`).join("") : `<li><strong>No bowler data yet</strong></li>`}</ul></article>
+            </div>
             <div class="grid cols-2" style="margin-top:16px;">
               <article class="card" data-public-team="${teams.a?.id || ""}" style="cursor:pointer;">${teamLogo(teams.a, 46)}<h3>${match.teamA}</h3><p class="muted">Open team profile</p></article>
               <article class="card" data-public-team="${teams.b?.id || ""}" style="cursor:pointer;">${teamLogo(teams.b, 46)}<h3>${match.teamB}</h3><p class="muted">Open team profile</p></article>
@@ -8505,6 +8576,23 @@
       if (pageJump) {
         const target = document.querySelector(`[data-page="${pageJump.dataset.pageJump}"]`);
         if (target) target.click();
+        return;
+      }
+
+      const shareMatchBtn = event.target.closest("[data-share-match]");
+      if (shareMatchBtn) {
+        const url = shareMatchBtn.dataset.shareUrl || `${window.location.origin}${window.location.pathname}#match-${shareMatchBtn.dataset.shareMatch}`;
+        const title = shareMatchBtn.dataset.shareTitle || "PakScorer match";
+        try {
+          if (navigator.share) {
+            await navigator.share({ title, url });
+          } else {
+            await navigator.clipboard.writeText(url);
+            alert("Share link copied.");
+          }
+        } catch (error) {
+          if (error?.name !== "AbortError") prompt("Copy this match link:", url);
+        }
         return;
       }
 
