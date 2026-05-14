@@ -1815,6 +1815,137 @@
         font-size: clamp(2rem, 14vw, 3.8rem);
       }
     }
+
+    .card,
+    .panel-body,
+    .feed li {
+      overflow-wrap: anywhere;
+    }
+
+    .feed li {
+      padding: 12px 14px;
+      gap: 6px;
+      line-height: 1.45;
+    }
+
+    .card p,
+    .card span,
+    .panel-body p,
+    .feed span {
+      line-height: 1.5;
+    }
+
+    @media (max-width: 768px) {
+      .app {
+        display: block;
+        padding-bottom: calc(86px + env(safe-area-inset-bottom));
+      }
+
+      .sidebar {
+        position: fixed !important;
+        top: auto !important;
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        width: auto;
+        height: auto;
+        padding: 8px;
+        border: 1px solid rgba(255,255,255,0.16);
+        border-radius: 22px;
+        background:
+          linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.06)),
+          rgba(6, 22, 32, 0.92);
+        box-shadow: 0 -18px 48px rgba(0,0,0,0.44), inset 0 1px 0 rgba(255,255,255,0.14);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        perspective: 900px;
+      }
+
+      .sidebar .brand,
+      .sidebar-footer {
+        display: none !important;
+      }
+
+      .nav {
+        display: flex !important;
+        gap: 6px;
+        width: 100%;
+        overflow-x: auto;
+        padding: 2px;
+        justify-content: flex-start;
+        scrollbar-width: none;
+      }
+
+      .nav::-webkit-scrollbar {
+        display: none;
+      }
+
+      .nav button,
+      #mobileProfileBtn {
+        flex: 0 0 74px;
+        min-width: 74px;
+        min-height: 58px;
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 6px 4px;
+        border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 16px;
+        background: rgba(255,255,255,0.045);
+        color: #d8eef4;
+        font-size: 0.64rem;
+        line-height: 1.05;
+        text-align: center;
+        white-space: normal;
+        transform-style: preserve-3d;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 8px 18px rgba(0,0,0,0.18);
+      }
+
+      .nav button span:not(.nav-icon),
+      #mobileProfileLabel {
+        display: block;
+        max-width: 68px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .nav-icon {
+        width: 26px;
+        height: 26px;
+        font-size: 0.72rem;
+        border-radius: 10px;
+        background: linear-gradient(145deg, rgba(49,255,154,0.22), rgba(29,217,255,0.12));
+      }
+
+      .nav button.active,
+      .nav button:hover,
+      #mobileProfileBtn.logged-in {
+        color: #06151d;
+        background: linear-gradient(135deg, var(--green), var(--cyan));
+        border-color: rgba(255,255,255,0.38);
+        transform: translateY(-8px) rotateX(12deg) translateZ(18px);
+        box-shadow: 0 18px 30px rgba(29,217,255,0.24), inset 0 1px 0 rgba(255,255,255,0.32);
+      }
+
+      .nav button.active .nav-icon,
+      .nav button:hover .nav-icon,
+      #mobileProfileBtn.logged-in .nav-icon {
+        color: #06151d;
+        background: rgba(255,255,255,0.40);
+      }
+
+      .main {
+        padding-bottom: calc(112px + env(safe-area-inset-bottom)) !important;
+      }
+
+      .card,
+      .panel-body {
+        padding: 18px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -2445,6 +2576,11 @@
         </div>
       </section>
 
+      <section class="page" id="detail">
+        <button class="btn ghost" type="button" id="backFromDetailBtn" style="margin-bottom: 16px;">Back</button>
+        <div id="publicEntityDetailContent"></div>
+      </section>
+
       <section class="page" id="requests">
         <div class="split">
           <section class="panel">
@@ -2945,6 +3081,7 @@
       teams: ["Teams", "Create teams, manage squads, upload logos, and control team access."],
       matches: ["Matches", "Browse live, upcoming, assigned, and finished matches."],
       rankings: ["Career Player Rankings", "Explore career leaders for batters, bowlers, and all-rounders."],
+      detail: ["Detail", "Public cricket detail view."],
       profile: ["Profile", "Manage your account, avatar, roles, and access."],
       requests: ["Match Requests", "Send, accept, or reject team challenges."],
       scoring: ["Live Scoring", "Record every ball with match setup, innings, wickets, extras, and undo tools."],
@@ -6017,11 +6154,10 @@
     }
 
     function detailPageShell({ label, title, subtitle, imageHtml = "", tabs = [] }) {
-      const modal = document.querySelector("#matchSummaryModal");
-      const content = document.querySelector("#highlightsContent");
-      if (!modal || !content) return;
+      const content = document.querySelector("#publicEntityDetailContent");
+      if (!content) return;
       content.innerHTML = `
-        <div style="background:linear-gradient(135deg,#07131d,#0d2530); min-height:520px; color:var(--text);">
+        <div class="panel" style="background:linear-gradient(135deg,#07131d,#0d2530); min-height:520px; color:var(--text); overflow:hidden;">
           <div style="padding:28px; border-bottom:1px solid var(--line); background:linear-gradient(135deg,rgba(49,255,154,.12),rgba(29,217,255,.08));">
             <span class="tag green">${label}</span>
             <div style="display:flex; gap:16px; align-items:center; margin-top:16px;">
@@ -6040,7 +6176,13 @@
           </div>
         </div>
       `;
-      modal.style.display = "flex";
+      document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
+      document.querySelectorAll(".nav button").forEach(button => button.classList.remove("active"));
+      const detailPage = document.querySelector("#detail");
+      if (detailPage) detailPage.classList.add("active");
+      if (title) safeSetText("#pageTitle", title);
+      if (subtitle) safeSetText("#pageSubtitle", subtitle);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     function clickablePlayerList(players) {
@@ -7351,7 +7493,71 @@
       renderPublicLiveView();
     });
 
+    const backFromDetailBtn = document.querySelector("#backFromDetailBtn");
+    if (backFromDetailBtn) {
+      backFromDetailBtn.addEventListener("click", () => {
+        const target = document.querySelector('[data-page="matches"]') || document.querySelector('[data-page="home"]');
+        if (target) target.click();
+      });
+    }
+
+    const detailModal = document.querySelector("#matchSummaryModal");
+    if (detailModal) {
+      detailModal.addEventListener("click", (event) => {
+        const detailTab = event.target.closest("[data-detail-tab]");
+        if (detailTab) {
+          const root = detailTab.closest("#highlightsContent");
+          root.querySelectorAll("[data-detail-tab]").forEach(button => {
+            button.classList.toggle("primary", button === detailTab);
+            button.classList.toggle("ghost", button !== detailTab);
+          });
+          root.querySelectorAll("[data-detail-panel]").forEach(panel => {
+            panel.style.display = panel.dataset.detailPanel === detailTab.dataset.detailTab ? "block" : "none";
+          });
+          return;
+        }
+
+        const match = event.target.closest("[data-view-match]");
+        if (match) {
+          renderPublicMatchDetail(match.dataset.viewMatch);
+          return;
+        }
+
+        const team = event.target.closest("[data-public-team]");
+        if (team && team.dataset.publicTeam) {
+          renderPublicTeamDetail(team.dataset.publicTeam);
+          return;
+        }
+
+        const player = event.target.closest("[data-public-player]");
+        if (player) {
+          renderPublicPlayerDetail(player.dataset.publicPlayer);
+          return;
+        }
+
+        const tournament = event.target.closest("[data-view-tournament]");
+        if (tournament) {
+          renderPublicTournamentDetail(tournament.dataset.viewTournament);
+        }
+      });
+    }
+
     document.querySelector(".main").addEventListener("click", async (event) => {
+      const detailTab = event.target.closest("[data-detail-tab]");
+      if (detailTab) {
+        const root = detailTab.closest("#publicEntityDetailContent");
+        if (root) {
+          root.querySelectorAll("[data-detail-tab]").forEach(button => {
+            button.classList.toggle("primary", button === detailTab);
+            button.classList.toggle("ghost", button !== detailTab);
+          });
+          root.querySelectorAll("[data-detail-panel]").forEach(panel => {
+            panel.style.display = panel.dataset.detailPanel === detailTab.dataset.detailTab ? "block" : "none";
+          });
+        }
+        return;
+      }
+
       const pageJump = event.target.closest("[data-page-jump]");
       if (pageJump) {
         const target = document.querySelector(`[data-page="${pageJump.dataset.pageJump}"]`);
