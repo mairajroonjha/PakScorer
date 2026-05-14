@@ -192,6 +192,69 @@
       font-size: 1.35rem;
     }
 
+    .sidebar-profile-btn {
+      width: 100%;
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: flex-start;
+      padding: 8px 10px;
+      text-align: left;
+    }
+
+    .sidebar-footer .sidebar-profile-avatar {
+      width: 36px;
+      height: 36px;
+      flex: 0 0 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      overflow: hidden;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      color: #03131a;
+      font-size: 0.82rem;
+      font-weight: 950;
+      letter-spacing: 0;
+      line-height: 1;
+      text-transform: none;
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    }
+
+    .sidebar-footer .sidebar-profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .sidebar-profile-copy {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .sidebar-footer .sidebar-profile-copy span {
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 950;
+      letter-spacing: 0;
+      line-height: 1.1;
+      text-transform: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sidebar-footer .sidebar-profile-copy small {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 800;
+      line-height: 1.1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .main {
       min-width: 0;
       padding: clamp(18px, 2.4vw, 32px);
@@ -2679,12 +2742,116 @@
         grid-template-columns: 1fr;
         text-align: center;
         justify-items: center;
+        padding: 22px 16px;
       }
 
       .profile-avatar-large {
         width: 92px;
         height: 92px;
         border-radius: 26px;
+      }
+
+      .profile-hero h2 {
+        font-size: clamp(1.55rem, 9vw, 2.3rem);
+        overflow-wrap: anywhere;
+      }
+
+      .profile-menu {
+        gap: 10px;
+      }
+
+      .profile-menu button {
+        min-height: 54px;
+        padding: 12px 14px;
+      }
+
+      #profile .panel-body,
+      #teams .panel-body {
+        padding: 14px;
+      }
+
+      #profile .card,
+      #teams .card {
+        border-radius: 16px;
+      }
+
+      #teams .sub-nav {
+        display: flex !important;
+        gap: 8px !important;
+        overflow-x: auto !important;
+        padding-bottom: 10px !important;
+        scrollbar-width: none;
+      }
+
+      #teams .sub-nav::-webkit-scrollbar {
+        display: none;
+      }
+
+      #teams .sub-nav .btn {
+        flex: 0 0 auto;
+        min-height: 42px;
+        white-space: nowrap;
+      }
+
+      #teamList {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 12px;
+      }
+
+      #teamList .team-card {
+        min-height: 132px !important;
+        padding: 14px;
+      }
+
+      #teamList .avatar {
+        width: 58px !important;
+        height: 58px !important;
+        border-radius: 16px !important;
+      }
+
+      #teamList h3 {
+        font-size: 0.98rem;
+      }
+
+      #teamList p {
+        font-size: 0.78rem;
+      }
+
+      #sub-create .panel,
+      #sub-management .panel,
+      #sub-admins .panel {
+        max-width: none !important;
+      }
+
+      #teamForm,
+      #teamManagementEditForm,
+      #teamPlayerForm,
+      #addTeamAdminForm {
+        gap: 14px;
+      }
+
+      #teamPlayerForm .card .form-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+      }
+
+      #teamManagementContent > .sub-nav {
+        margin-left: -2px;
+        margin-right: -2px;
+      }
+
+      #teamManagementSquad {
+        grid-template-columns: 1fr !important;
+      }
+
+      #teamManagementSquad .card {
+        align-items: flex-start !important;
+        flex-wrap: wrap;
+      }
+
+      #teamManagementSquad .card .btn {
+        width: 100%;
+        justify-content: center;
       }
     }
   </style>
@@ -2719,15 +2886,14 @@
       </nav>
 
       <div class="sidebar-footer">
-        <div id="adminProfile" style="display: none; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line);">
-          <span style="font-size: 0.7rem; color: var(--cyan); text-transform: uppercase; font-weight: 800;">Logged in as</span>
-          <strong id="adminEmail" style="font-size: 0.85rem; word-break: break-all; display: block;">admin@pakscorer.com</strong>
-          <button class="btn ghost" id="logoutBtn" style="padding: 4px 0; font-size: 0.75rem; color: var(--red); justify-content: flex-start; min-height: auto;">Logout</button>
-        </div>
-        <div style="display: flex; gap: 8px; margin-bottom: 0; position: relative; z-index: 100;">
-          <button class="btn primary" id="showLoginBtn" style="flex: 1; padding: 12px; font-weight: 900; letter-spacing: 0.02em; cursor: pointer !important; pointer-events: auto !important;">Login / Sign Up</button>
-          <button class="btn ghost" id="notifyBtn" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%;" title="Enable Notifications">ðŸ””</button>
-        </div>
+        <button class="btn ghost sidebar-profile-btn" id="sidebarProfileBtn" type="button">
+          <span class="sidebar-profile-avatar" id="sidebarProfileAvatar">P</span>
+          <span class="sidebar-profile-copy">
+            <span id="sidebarProfileLabel">Profile</span>
+            <small id="sidebarProfileMeta">View account</small>
+          </span>
+        </button>
+        <button class="btn ghost" id="notifyBtn" style="width: 44px; height: 44px; display: none; align-items: center; justify-content: center; border-radius: 50%;" title="Enable Notifications">ðŸ””</button>
       </div>
     </aside>
 
@@ -2892,7 +3058,7 @@
             </div>
             <div class="panel-body">
               <p class="muted" style="line-height:1.6; margin-top:0;">Create your team, upload your squad, schedule matches, score live, and share public links with fans.</p>
-              <button class="btn primary" type="button" onclick="document.querySelector('#showLoginBtn').click()">Sign Up Free</button>
+              <button class="btn primary" type="button" data-open-login>Sign Up Free</button>
             </div>
           </section>
         </div>
@@ -3729,7 +3895,7 @@
            <div id="createTourneyLoginPrompt" class="card" style="max-width: 600px; margin: 0 auto; text-align: center; padding: 40px;">
               <h3>Organize a Tournament</h3>
               <p class="muted">Please login to your account to create and manage full competitions.</p>
-              <button class="btn primary" onclick="document.querySelector('#showLoginBtn').click()" style="margin-top: 16px;">Go to Login</button>
+              <button class="btn primary" type="button" data-open-login style="margin-top: 16px;">Go to Login</button>
            </div>
            <section id="createTourneyFormSection" class="panel" style="max-width: 600px; margin: 0 auto; display: none;">
               <div class="panel-head">
@@ -3805,7 +3971,7 @@
             <div id="myTourneyLoginPrompt" class="card" style="text-align: center; padding: 40px;">
               <h3>My Management</h3>
               <p class="muted">Login to see tournaments you are currently organizing.</p>
-              <button class="btn primary" onclick="document.querySelector('#showLoginBtn').click()" style="margin-top: 16px;">Go to Login</button>
+              <button class="btn primary" type="button" data-open-login style="margin-top: 16px;">Go to Login</button>
             </div>
             <section id="myTourneyListSection" class="panel" style="display: none;">
               <div class="panel-head">
@@ -4020,12 +4186,28 @@
        } catch (e) { alert("Error: " + e.message); }
     }
 
+    function refreshSidebarProfileButton() {
+      const label = document.querySelector("#sidebarProfileLabel");
+      const meta = document.querySelector("#sidebarProfileMeta");
+      const avatarEl = document.querySelector("#sidebarProfileAvatar");
+      const profile = state.user ? getUserProfile() : {};
+      const displayName = profile.name || state.user?.email?.split("@")[0] || "Profile";
+      const avatar = profile.avatar || "";
+
+      if (label) label.textContent = state.user ? displayName : "Profile";
+      if (meta) meta.textContent = state.user ? (state.user.email || primaryRoleLabel()) : "Login / Sign Up";
+      if (avatarEl) {
+        avatarEl.innerHTML = avatar ? `<img src="${avatar}" alt="${displayName}">` : initials(displayName);
+      }
+    }
+
     function updateAuthUI() {
       const user = state.user;
-      const adminProfile = document.querySelector("#adminProfile");
       const showLoginBtn = document.querySelector("#showLoginBtn");
-      const adminEmail = document.querySelector("#adminEmail");
       const canUseUploads = Boolean(user && isR2Configured());
+      const notifyBtn = document.querySelector("#notifyBtn");
+      if (notifyBtn) notifyBtn.style.display = user ? "flex" : "none";
+      refreshSidebarProfileButton();
 
       const mobileProfileBtn = document.querySelector("#mobileProfileBtn");
       document.querySelectorAll("[data-auth-only]").forEach(el => {
@@ -4038,9 +4220,6 @@
 
       if (user) {
         document.body.classList.add("is-authenticated");
-        if (adminProfile) adminProfile.style.display = "block";
-        if (showLoginBtn) showLoginBtn.style.display = "none";
-        if (adminEmail) adminEmail.textContent = `${user.email} (${primaryRoleLabel()})`;
         if (isAdmin()) {
           document.body.classList.add("is-admin");
         } else {
@@ -4063,8 +4242,6 @@
         }
       } else {
         document.body.classList.remove("is-authenticated");
-        if (adminProfile) adminProfile.style.display = "none";
-        if (showLoginBtn) showLoginBtn.style.display = "block";
         document.body.classList.remove("is-admin");
         if (mobileProfileBtn) {
           mobileProfileBtn.classList.remove("logged-in");
@@ -4082,7 +4259,7 @@
           const canOpen = page === "requests"
             ? isSuperAdmin() || getMyTeams().length > 0
             : isSuperAdmin() || getAssignedScoringMatches().length > 0 || state.matches.some(m => canManageMatch(m));
-          btn.style.display = canOpen ? "flex" : "none";
+          btn.style.display = user ? "flex" : "none";
         } else if (page === "teams") {
           btn.style.display = user ? "flex" : "none";
         }
@@ -4282,6 +4459,7 @@
       if (avatarPreview) {
         avatarPreview.innerHTML = avatar ? `<img src="${avatar}" alt="${displayName}">` : initials(displayName);
       }
+      refreshSidebarProfileButton();
       const profileName = document.querySelector("#profileName");
       const profilePhone = document.querySelector("#profilePhone");
       const profileCity = document.querySelector("#profileCity");
@@ -8866,6 +9044,14 @@
         return;
       }
 
+      const openLoginBtn = event.target.closest("[data-open-login]");
+      if (openLoginBtn) {
+        setAuthMode("login");
+        const modal = document.querySelector("#loginModal");
+        if (modal) modal.style.display = "grid";
+        return;
+      }
+
       const subJump = event.target.closest("[data-sub-jump]");
       if (subJump) {
         switchTeamsSubPage(subJump.dataset.subJump);
@@ -9404,6 +9590,17 @@
       });
     }
 
+    const sidebarProfileBtn = document.querySelector("#sidebarProfileBtn");
+    if (sidebarProfileBtn) {
+      sidebarProfileBtn.addEventListener("click", () => {
+        const profileNav = document.querySelector('[data-page="profile"]');
+        if (profileNav) {
+          profileNav.style.display = "flex";
+          profileNav.click();
+        }
+      });
+    }
+
     const profileLogoutAction = document.querySelector("#profileLogoutAction");
     if (profileLogoutAction) {
       profileLogoutAction.addEventListener("click", () => {
@@ -9431,13 +9628,6 @@
       closeBtn.addEventListener("click", () => {
         const modal = document.querySelector("#loginModal");
         if (modal) modal.style.display = "none";
-      });
-    }
-
-    const logoutBtnEl = document.querySelector("#logoutBtn");
-    if (logoutBtnEl) {
-      logoutBtnEl.addEventListener("click", () => {
-        handleLogout();
       });
     }
 
