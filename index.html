@@ -2290,7 +2290,8 @@
     @media (max-width: 760px) {
       .match-detail-score {
         grid-template-columns: 1fr;
-        padding: 20px;
+        padding: 18px;
+        gap: 16px;
       }
 
       .match-detail-status {
@@ -2301,16 +2302,34 @@
       }
 
       .match-detail-team-main {
-        grid-template-columns: 64px minmax(0, 1fr);
+        grid-template-columns: 58px minmax(0, 1fr);
+        gap: 12px;
       }
 
       .match-detail-logo {
-        width: 62px;
-        height: 62px;
+        width: 56px;
+        height: 56px;
+      }
+
+      .match-detail-code {
+        font-size: clamp(1.45rem, 9vw, 2.2rem);
+      }
+
+      .match-detail-scoreline {
+        font-size: clamp(2rem, 13vw, 3.2rem);
+      }
+
+      .match-detail-status h3 {
+        font-size: clamp(1.55rem, 9vw, 2.4rem);
       }
 
       .match-detail-metrics {
         grid-template-columns: 1fr;
+      }
+
+      .match-detail-metric {
+        padding: 14px 18px;
+        font-size: 1.05rem;
       }
     }
 
@@ -2360,6 +2379,24 @@
     }
 
     @media (max-width: 768px) {
+      .grid.cols-2,
+      .grid.cols-3,
+      .grid.cols-4 {
+        grid-template-columns: 1fr !important;
+      }
+
+      .topbar {
+        gap: 10px;
+      }
+
+      .title-block h1 {
+        font-size: clamp(1.45rem, 8vw, 2.2rem);
+      }
+
+      .title-block p {
+        font-size: 0.9rem;
+      }
+
       .app {
         display: block;
         padding-bottom: calc(86px + env(safe-area-inset-bottom));
@@ -2468,6 +2505,104 @@
       .card,
       .panel-body {
         padding: 18px;
+      }
+
+      .panel-head {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+        padding: 16px;
+      }
+
+      .viewer-scroll-row {
+        gap: 10px;
+        padding: 2px 4px 12px;
+      }
+
+      .viewer-match-card,
+      .viewer-series-card,
+      .viewer-empty-card {
+        flex-basis: min(330px, 88vw);
+        min-height: 240px;
+        padding: 14px;
+        border-radius: 20px;
+      }
+
+      .viewer-match-card:hover,
+      .viewer-series-card:hover {
+        transform: translateY(-3px);
+      }
+
+      .cricket-card-kicker {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+        font-size: 0.9rem;
+      }
+
+      .cricket-card-body {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .cricket-team-stack {
+        border-right: 0;
+        border-bottom: 1px solid rgba(255,255,255,0.10);
+        padding-right: 0;
+        padding-bottom: 12px;
+      }
+
+      .cricket-team-row {
+        grid-template-columns: 38px minmax(38px, 0.35fr) minmax(0, 1fr);
+        gap: 8px;
+      }
+
+      .cricket-team-mark {
+        width: 38px;
+        height: 38px;
+      }
+
+      .cricket-team-code {
+        font-size: 0.98rem;
+      }
+
+      .cricket-team-score {
+        font-size: 0.98rem;
+      }
+
+      .cricket-card-verdict {
+        min-height: 0;
+        align-items: flex-start;
+        text-align: left;
+        font-size: 1rem;
+      }
+
+      .match-page-scroll {
+        min-height: calc(100vh - 260px);
+        padding-left: max(12px, calc((100% - min(360px, 88vw)) / 2));
+        padding-right: max(12px, calc((100% - min(360px, 88vw)) / 2));
+        scroll-padding-inline: max(12px, calc((100% - min(360px, 88vw)) / 2));
+      }
+
+      .match-page-scroll .viewer-match-card,
+      .match-page-scroll .viewer-empty-card {
+        flex-basis: min(360px, 88vw);
+        min-height: calc(100vh - 310px);
+        justify-content: flex-start;
+      }
+
+      #matches .sub-page > .panel {
+        min-height: calc(100vh - 210px);
+      }
+
+      .ranking-player-row {
+        grid-template-columns: 42px minmax(0, 1fr) !important;
+      }
+
+      .ranking-player-row > span:last-child {
+        grid-column: 2;
+        text-align: left !important;
+        font-size: 0.82rem;
       }
     }
   </style>
