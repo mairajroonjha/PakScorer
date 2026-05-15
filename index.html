@@ -157,6 +157,11 @@
       color: var(--text);
     }
 
+    .nav button.nav-hidden,
+    #mobileProfileBtn.nav-hidden {
+      display: none !important;
+    }
+
     .nav-icon {
       width: 24px;
       height: 24px;
@@ -190,69 +195,6 @@
       display: block;
       margin-top: 6px;
       font-size: 1.35rem;
-    }
-
-    .sidebar-profile-btn {
-      width: 100%;
-      min-height: 54px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      justify-content: flex-start;
-      padding: 8px 10px;
-      text-align: left;
-    }
-
-    .sidebar-footer .sidebar-profile-avatar {
-      width: 36px;
-      height: 36px;
-      flex: 0 0 36px;
-      display: grid;
-      place-items: center;
-      border-radius: 50%;
-      overflow: hidden;
-      background: linear-gradient(135deg, var(--green), var(--cyan));
-      color: #03131a;
-      font-size: 0.82rem;
-      font-weight: 950;
-      letter-spacing: 0;
-      line-height: 1;
-      text-transform: none;
-      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.28);
-    }
-
-    .sidebar-footer .sidebar-profile-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .sidebar-profile-copy {
-      min-width: 0;
-      display: grid;
-      gap: 2px;
-    }
-
-    .sidebar-footer .sidebar-profile-copy span {
-      color: var(--text);
-      font-size: 0.9rem;
-      font-weight: 950;
-      letter-spacing: 0;
-      line-height: 1.1;
-      text-transform: none;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .sidebar-footer .sidebar-profile-copy small {
-      color: var(--muted);
-      font-size: 0.72rem;
-      font-weight: 800;
-      line-height: 1.1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
 
     .main {
@@ -1085,9 +1027,9 @@
         color: var(--cyan);
       }
 
-      /* When logged in, show a different colour for mobile profile icon */
-      #mobileProfileBtn.logged-in .nav-icon,
-      #mobileProfileBtn.logged-in {
+      /* Mobile profile uses active state for the 3D lift, not logout state. */
+      #mobileProfileBtn.active .nav-icon,
+      #mobileProfileBtn.active {
         background: transparent;
         color: var(--green);
       }
@@ -2616,7 +2558,7 @@
 
       .nav button.active,
       .nav button:hover,
-      #mobileProfileBtn.logged-in {
+      #mobileProfileBtn.active {
         color: #06151d;
         background: linear-gradient(135deg, var(--green), var(--cyan));
         border-color: rgba(255,255,255,0.38);
@@ -2626,7 +2568,7 @@
 
       .nav button.active .nav-icon,
       .nav button:hover .nav-icon,
-      #mobileProfileBtn.logged-in .nav-icon {
+      #mobileProfileBtn.active .nav-icon {
         color: #06151d;
         background: rgba(255,255,255,0.40);
       }
@@ -2853,6 +2795,90 @@
         width: 100%;
         justify-content: center;
       }
+
+      .sidebar {
+        left: 8px !important;
+        right: 8px !important;
+        bottom: 8px !important;
+        width: auto !important;
+        padding: 7px !important;
+        border-radius: 22px !important;
+        overflow: visible !important;
+        perspective: 900px;
+      }
+
+      .nav {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+        gap: 5px !important;
+        overflow: visible !important;
+        width: 100%;
+        padding: 0 !important;
+      }
+
+      .nav button {
+        min-width: 0 !important;
+        width: 100% !important;
+        flex: initial !important;
+        min-height: 54px !important;
+        padding: 6px 2px !important;
+        border-radius: 15px !important;
+        font-size: clamp(0.54rem, 2.35vw, 0.66rem) !important;
+        line-height: 1.05 !important;
+        transform: translate3d(0, 0, 0) scale(1);
+        transform-origin: center bottom;
+        transition:
+          transform 220ms cubic-bezier(0.18, 0.9, 0.24, 1.35),
+          box-shadow 220ms ease,
+          background 180ms ease,
+          color 180ms ease;
+        will-change: transform;
+      }
+
+      .nav button span:not(.nav-icon) {
+        max-width: 100% !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+
+      .nav .nav-icon {
+        width: 25px !important;
+        height: 25px !important;
+        border-radius: 12px !important;
+        font-size: 0.68rem !important;
+      }
+
+      .nav button.active,
+      .nav button:hover {
+        transform: translate3d(0, -13px, 34px) scale(1.08) !important;
+        color: #06151d !important;
+        background: linear-gradient(145deg, var(--green), var(--cyan)) !important;
+        border-color: rgba(255, 255, 255, 0.48) !important;
+        box-shadow:
+          0 18px 30px rgba(29, 217, 255, 0.30),
+          0 7px 0 rgba(2, 11, 16, 0.62),
+          inset 0 1px 0 rgba(255, 255, 255, 0.42) !important;
+      }
+
+      .nav button:active {
+        transform: translate3d(0, -8px, 20px) scale(1.02) !important;
+      }
+
+      .nav button.active .nav-icon,
+      .nav button:hover .nav-icon {
+        color: #06151d !important;
+        background: rgba(255, 255, 255, 0.42) !important;
+      }
+
+      .main {
+        padding-bottom: calc(106px + env(safe-area-inset-bottom)) !important;
+      }
+    }
+
+    .nav button.nav-hidden,
+    #mobileProfileBtn.nav-hidden {
+      display: none !important;
     }
   </style>
 </head>
@@ -2871,30 +2897,11 @@
         <button class="active" data-page="home"><span class="nav-icon">H</span>Home</button>
         <button data-page="teams"><span class="nav-icon">T</span>Teams</button>
         <button data-page="matches"><span class="nav-icon">M</span>Matches</button>
-        <button data-page="rankings"><span class="nav-icon">RK</span>Rankings</button>
-        <button data-page="profile" data-auth-only><span class="nav-icon">P</span>Profile</button>
-        <button data-page="requests" data-admin-only><span class="nav-icon">RQ</span>Requests</button>
-        <button data-page="scoring" data-admin-only><span class="nav-icon">SC</span>Scoring</button>
         <button data-page="tournaments"><span class="nav-icon">TR</span>Tournaments</button>
-        <button data-page="public"><span class="nav-icon">LV</span>Live View</button>
-
-        <!-- Mobile-only Profile tab in the bottom bar -->
-        <button id="mobileProfileBtn" aria-label="Profile" style="display:none;">
-          <span class="nav-icon" id="mobileProfileIcon">&#128100;</span>
-          <span id="mobileProfileLabel">Profile</span>
-        </button>
+        <button data-page="public" data-guest-only><span class="nav-icon">LV</span>Live View</button>
+        <button data-page="profile"><span class="nav-icon">P</span>Profile</button>
       </nav>
 
-      <div class="sidebar-footer">
-        <button class="btn ghost sidebar-profile-btn" id="sidebarProfileBtn" type="button">
-          <span class="sidebar-profile-avatar" id="sidebarProfileAvatar">P</span>
-          <span class="sidebar-profile-copy">
-            <span id="sidebarProfileLabel">Profile</span>
-            <small id="sidebarProfileMeta">View account</small>
-          </span>
-        </button>
-        <button class="btn ghost" id="notifyBtn" style="width: 44px; height: 44px; display: none; align-items: center; justify-content: center; border-radius: 50%;" title="Enable Notifications">ðŸ””</button>
-      </div>
     </aside>
 
     <!-- Login/Sign Up Modal -->
@@ -3040,7 +3047,7 @@
           </section>
         </div>
 
-        <div class="grid cols-2 viewer-home" style="margin-bottom: 16px;">
+        <div class="grid viewer-home" style="margin-bottom: 16px;">
           <section class="panel">
             <div class="panel-head">
               <h2>Series Matches</h2>
@@ -3048,17 +3055,6 @@
             </div>
             <div class="panel-body">
               <div class="viewer-scroll-row" id="guestSeriesMatches"></div>
-            </div>
-          </section>
-
-          <section class="panel">
-            <div class="panel-head">
-              <h2>Join PakScorer</h2>
-              <span>For teams and organizers</span>
-            </div>
-            <div class="panel-body">
-              <p class="muted" style="line-height:1.6; margin-top:0;">Create your team, upload your squad, schedule matches, score live, and share public links with fans.</p>
-              <button class="btn primary" type="button" data-open-login>Sign Up Free</button>
             </div>
           </section>
         </div>
@@ -3164,6 +3160,7 @@
 
                 <div class="profile-panel" data-profile-panel-content="notifications" style="display:none;">
                   <h3 style="margin-bottom:12px;">Notifications</h3>
+                  <button class="btn ghost" id="notifyBtn" type="button" style="width:max-content; margin-bottom:12px;">Enable Notifications</button>
                   <ul class="feed" id="profileNotificationsList"></ul>
                 </div>
 
@@ -3195,6 +3192,7 @@
           <button class="btn primary btn-sm sub-nav-btn active" data-sub="profiles">Team Profiles</button>
           <button class="btn ghost btn-sm sub-nav-btn" data-sub="create" data-auth-only>Create New Team</button>
           <button class="btn ghost btn-sm sub-nav-btn" data-sub="management" data-auth-only>Team Management</button>
+          <button class="btn ghost btn-sm sub-nav-btn" data-sub="challenges" data-auth-only>Challenge a Match</button>
           <button class="btn ghost btn-sm sub-nav-btn" data-sub="fixtures">Scheduled Matches</button>
           <button class="btn ghost btn-sm sub-nav-btn" data-sub="admins" data-auth-only>Manage Access</button>
         </div>
@@ -3335,6 +3333,40 @@
           </section>
         </div>
 
+        <div id="sub-challenges" class="sub-page">
+          <div class="split">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Match Challenges</h2>
+                <span id="requestCount">0 pending</span>
+              </div>
+              <div class="panel-body grid" id="requestList"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Challenge a Match</h2>
+                <span>Send from your team only</span>
+              </div>
+              <form class="panel-body grid" id="requestForm">
+                <div class="form-grid">
+                  <label>From your team <select id="requestFrom"></select></label>
+                  <label>Challenge team <select id="requestTo"></select></label>
+                </div>
+                <div class="form-grid">
+                  <label>Overs <input id="requestOvers" type="number" min="5" max="50" value="20" /></label>
+                  <label>Date <input id="requestDate" type="date" /></label>
+                </div>
+                <div class="form-grid">
+                  <label>Match Time <input id="requestTime" type="time" /></label>
+                </div>
+                <label>Venue <input id="requestVenue" value="Model Town Ground" /></label>
+                <button class="btn primary" type="submit">Send Challenge</button>
+              </form>
+            </section>
+          </div>
+        </div>
+
         <div id="sub-fixtures" class="sub-page">
           <section class="panel">
             <div class="panel-head">
@@ -3342,7 +3374,157 @@
               <span id="scheduledMatchCount">0 matches</span>
             </div>
             <div class="panel-body">
-              <ul class="feed" id="scheduledMatchList"></ul>
+              <div class="sub-nav" style="display:flex; gap:10px; overflow-x:auto; margin-bottom:16px; border-bottom:1px solid var(--line); padding-bottom:12px;">
+                <button class="btn primary btn-sm" type="button" data-fixture-tab="list">Scheduled Matches</button>
+                <button class="btn ghost btn-sm" type="button" data-fixture-tab="scoring" data-auth-only>Match Scoring</button>
+              </div>
+
+              <section class="fixture-panel" data-fixture-panel="list">
+                <ul class="feed" id="scheduledMatchList"></ul>
+              </section>
+
+              <section class="fixture-panel" data-fixture-panel="scoring" style="display:none;">
+                <section class="panel" style="margin-bottom: 16px;">
+                  <div class="panel-head">
+                    <h2>Match Setup & Scoring</h2>
+                    <span id="activeMatchStatus">No match selected</span>
+                  </div>
+                  <div class="panel-body">
+                    <div class="form-grid" style="align-items: end; margin-bottom: 12px;">
+                      <label>Select Match
+                        <select id="scoringMatchSelect"><option value="">-- Select a match --</option></select>
+                      </label>
+
+                      <div id="squadSetup" style="display: none; flex-direction: column; gap: 20px; margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--line);">
+                         <h3>Select Playing XI</h3>
+                         <div class="grid cols-2" style="gap: 20px;">
+                            <div id="teamASquad" class="card" style="padding: 12px;">
+                               <h4 id="teamANameHeader">Team A</h4>
+                               <div id="teamAList" style="display: flex; flex-direction: column; gap: 4px; margin-top: 10px; max-height: 300px; overflow-y: auto;"></div>
+                            </div>
+                            <div id="teamBSquad" class="card" style="padding: 12px;">
+                               <h4 id="teamBNameHeader">Team B</h4>
+                               <div id="teamBList" style="display: flex; flex-direction: column; gap: 4px; margin-top: 10px; max-height: 300px; overflow-y: auto;"></div>
+                            </div>
+                         </div>
+                         <p class="muted" style="font-size: 0.8rem;">Select playing eleven for both teams, then choose the toss winner and batting/bowling decision.</p>
+                      </div>
+
+                      <div id="tossSetup" class="form-grid" style="display: none; padding-top: 16px; border-top: 1px solid var(--border);">
+                        <label>Toss Winner
+                          <select id="tossWinnerSelect">
+                            <option value="">-- Select Winner --</option>
+                          </select>
+                        </label>
+                        <label>Elected To
+                          <select id="tossDecisionSelect">
+                            <option value="Bat">Bat</option>
+                            <option value="Bowl">Bowl</option>
+                          </select>
+                        </label>
+                      </div>
+
+                      <div style="display:flex; gap:8px; flex-wrap: wrap;">
+                        <button class="btn primary" id="startMatchBtn" style="flex: 1; min-width: 140px;">Start/Resume</button>
+                        <button class="btn" id="cancelMatchBtn" style="flex: 1;">Cancel</button>
+                        <button class="btn danger" id="endMatchBtn" style="flex: 1;">End Match</button>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <div class="split" id="scoringControls" style="display: none; opacity: 0.5; pointer-events: none;">
+                  <section class="panel">
+                    <div class="panel-head">
+                      <h2>Live Scoring</h2>
+                      <span id="inningsStatus">Pak Lions batting</span>
+                    </div>
+                    <div class="panel-body scorecard">
+                      <div class="scoreboard">
+                        <div class="score-main"><strong id="scoreRuns">87</strong><span>/<span id="scoreWickets">3</span></span></div>
+                        <div class="grid cols-4">
+                          <div class="card"><span class="muted">Overs</span><h3 id="scoreOvers">10.4</h3></div>
+                          <div class="card"><span class="muted">Run rate</span><h3 id="runRate">8.16</h3></div>
+                          <div class="card"><span class="muted">Bowler</span><h3 id="currentBowler">Umar Khan</h3></div>
+                          <div class="card"><span class="muted">Win chance</span><h3 id="winChance">50%</h3></div>
+                        </div>
+                      </div>
+                      <p class="form-message" id="overNotice" aria-live="polite"></p>
+                      <div class="form-grid" id="bowlerChooser" hidden>
+                        <label>
+                          Next bowler from bowling team
+                          <select id="nextBowlerSelect"></select>
+                        </label>
+                        <label>
+                          Confirm
+                          <button class="btn primary" id="confirmBowler" type="button">Set Bowler</button>
+                        </label>
+                      </div>
+                      <div class="form-grid" style="margin-top: 12px;">
+                        <label>Striker
+                          <select id="strikerSelect"></select>
+                        </label>
+                        <label>Non-striker
+                          <select id="nonStrikerSelect"></select>
+                        </label>
+                      </div>
+
+                      <div class="ball-buttons" style="margin-top: 16px;">
+                        <button class="btn" data-ball="0">0</button>
+                        <button class="btn" data-ball="1">1</button>
+                        <button class="btn" data-ball="2">2</button>
+                        <button class="btn" data-ball="3">3</button>
+                        <button class="btn primary" data-ball="4">4</button>
+                        <button class="btn primary" data-ball="6">6</button>
+                        <button class="btn" data-extra="Wd">Wd</button>
+                        <button class="btn" data-extra="Nb">Nb</button>
+                        <select id="noBallBatRuns" title="Runs off bat on no-ball">
+                          <option value="0">Nb + 0 bat</option>
+                          <option value="1">Nb + 1 bat</option>
+                          <option value="2">Nb + 2 bat</option>
+                          <option value="3">Nb + 3 bat</option>
+                          <option value="4">Nb + 4 bat</option>
+                          <option value="6">Nb + 6 bat</option>
+                        </select>
+                        <button class="btn" data-extra="B">B</button>
+                        <button class="btn" data-extra="Lb">Lb</button>
+                        <select id="wicketRunsSelect" title="Runs completed on wicket">
+                          <option value="0">W + 0 runs</option>
+                          <option value="1">W + 1 run</option>
+                          <option value="2">W + 2 runs</option>
+                          <option value="3">W + 3 runs</option>
+                        </select>
+                        <select id="wicketTypeSelect" title="Wicket type">
+                          <option value="bowled">Bowled</option>
+                          <option value="caught">Caught</option>
+                          <option value="run_out">Run out</option>
+                          <option value="lbw">LBW</option>
+                          <option value="stumped">Stumped</option>
+                        </select>
+                        <button class="btn danger" data-wicket="true">Wicket</button>
+                        <button class="btn ghost" id="undoBall">Undo</button>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section class="panel">
+                    <div class="panel-head">
+                      <h2>Ball Feed</h2>
+                      <span>Realtime source</span>
+                    </div>
+                    <div class="panel-body">
+                      <div class="last-balls" id="lastBalls"></div>
+                      <ul class="feed" id="commentary" style="margin-top: 16px;"></ul>
+                      <div class="grid cols-2" style="margin-top: 16px;">
+                        <div class="card"><span class="muted">Batters</span><div id="batterScorecard" class="grid" style="gap: 6px; margin-top: 10px;"></div></div>
+                        <div class="card"><span class="muted">Bowler spell</span><div id="bowlerSpellStats" class="grid" style="gap: 6px; margin-top: 10px;"></div></div>
+                        <div class="card"><span class="muted">Extras</span><div id="extrasBreakdown" class="grid" style="gap: 6px; margin-top: 10px;"></div></div>
+                        <div class="card"><span class="muted">Fall of wickets</span><div id="fallOfWickets" class="grid" style="gap: 6px; margin-top: 10px;"></div></div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              </section>
             </div>
           </section>
         </div>
@@ -3530,193 +3712,6 @@
         <div id="publicEntityDetailContent"></div>
       </section>
 
-      <section class="page" id="requests">
-        <div class="split">
-          <section class="panel">
-            <div class="panel-head">
-              <h2>Match Requests</h2>
-              <span id="requestCount">2 pending</span>
-            </div>
-            <div class="panel-body grid" id="requestList"></div>
-          </section>
-
-          <section class="panel">
-            <div class="panel-head">
-              <h2>Send Request</h2>
-              <span>Team challenge</span>
-            </div>
-            <form class="panel-body grid" id="requestForm">
-              <div class="form-grid">
-                <label>From <select id="requestFrom"></select></label>
-                <label>To <select id="requestTo"></select></label>
-              </div>
-              <div class="form-grid">
-                <label>Overs <input id="requestOvers" type="number" min="5" max="50" value="20" /></label>
-                <label>Date <input id="requestDate" type="date" /></label>
-              </div>
-              <div class="form-grid">
-                <label>Match Time <input id="requestTime" type="time" /></label>
-              </div>
-              <label>Venue <input id="requestVenue" value="Model Town Ground" /></label>
-              <button class="btn primary" type="submit">Send Match Request</button>
-            </form>
-          </section>
-        </div>
-      </section>
-
-      <section class="page" id="scoring">
-        <section class="panel" style="margin-bottom: 16px;">
-          <div class="panel-head">
-            <h2>Match Setup</h2>
-            <span id="activeMatchStatus">No match selected</span>
-          </div>
-          <div class="panel-body">
-            <div class="form-grid" style="align-items: end; margin-bottom: 12px;">
-              <label>Select Match
-                <select id="scoringMatchSelect"><option value="">-- Select a match --</option></select>
-              </label>
-
-              <div id="squadSetup" style="display: none; flex-direction: column; gap: 20px; margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--line);">
-                 <h3>Select Playing XI</h3>
-                 <div class="grid cols-2" style="gap: 20px;">
-                    <div id="teamASquad" class="card" style="padding: 12px;">
-                       <h4 id="teamANameHeader">Team A</h4>
-                       <div id="teamAList" style="display: flex; flex-direction: column; gap: 4px; margin-top: 10px; max-height: 300px; overflow-y: auto;"></div>
-                    </div>
-                    <div id="teamBSquad" class="card" style="padding: 12px;">
-                       <h4 id="teamBNameHeader">Team B</h4>
-                       <div id="teamBList" style="display: flex; flex-direction: column; gap: 4px; margin-top: 10px; max-height: 300px; overflow-y: auto;"></div>
-                    </div>
-                 </div>
-                 <p class="muted" style="font-size: 0.8rem;">Select the players for each team to proceed.</p>
-              </div>
-
-              <div id="tossSetup" class="form-grid" style="display: none; padding-top: 16px; border-top: 1px solid var(--border);">
-              <label>Toss Winner
-                <select id="tossWinnerSelect">
-                  <option value="">-- Select Winner --</option>
-                </select>
-              </label>
-              <label>Elected To
-                <select id="tossDecisionSelect">
-                  <option value="Bat">Bat</option>
-                  <option value="Bowl">Bowl</option>
-                </select>
-              </label>
-            </div>
-
-              <div style="display:flex; gap:8px; flex-wrap: wrap;">
-                <button class="btn primary" id="startMatchBtn" style="flex: 1; min-width: 140px;">Start/Resume</button>
-                <button class="btn" id="cancelMatchBtn" style="flex: 1;">Cancel</button>
-                <button class="btn danger" id="endMatchBtn" style="flex: 1;">End Match</button>
-              </div>
-            </div>
-
-          </div>
-        </section>
-
-        <div class="split" id="scoringControls" style="display: none; opacity: 0.5; pointer-events: none;">
-          <section class="panel">
-            <div class="panel-head">
-              <h2>Live Scoring</h2>
-              <span id="inningsStatus">Pak Lions batting</span>
-            </div>
-            <div class="panel-body scorecard">
-              <div class="scoreboard">
-                <div class="score-main"><strong id="scoreRuns">87</strong><span>/<span id="scoreWickets">3</span></span></div>
-                <div class="grid cols-4">
-                  <div class="card"><span class="muted">Overs</span><h3 id="scoreOvers">10.4</h3></div>
-                  <div class="card"><span class="muted">Run rate</span><h3 id="runRate">8.16</h3></div>
-                  <div class="card"><span class="muted">Bowler</span><h3 id="currentBowler">Umar Khan</h3></div>
-                  <div class="card"><span class="muted">Win chance</span><h3 id="winChance">50%</h3></div>
-                </div>
-              </div>
-              <p class="form-message" id="overNotice" aria-live="polite"></p>
-              <div class="form-grid" id="bowlerChooser" hidden>
-                <label>
-                  Next bowler from bowling team
-                  <select id="nextBowlerSelect"></select>
-                </label>
-                <label>
-                  Confirm
-                  <button class="btn primary" id="confirmBowler" type="button">Set Bowler</button>
-                </label>
-              </div>
-              <div class="form-grid" style="margin-top: 12px;">
-                <label>Striker
-                  <select id="strikerSelect"></select>
-                </label>
-                <label>Non-striker
-                  <select id="nonStrikerSelect"></select>
-                </label>
-              </div>
-
-              <div class="ball-buttons" style="margin-top: 16px;">
-                <button class="btn" data-ball="0">0</button>
-                <button class="btn" data-ball="1">1</button>
-                <button class="btn" data-ball="2">2</button>
-                <button class="btn" data-ball="3">3</button>
-                <button class="btn primary" data-ball="4">4</button>
-                <button class="btn primary" data-ball="6">6</button>
-                <button class="btn" data-extra="Wd">Wd</button>
-                <button class="btn" data-extra="Nb">Nb</button>
-                <select id="noBallBatRuns" title="Runs off bat on no-ball">
-                  <option value="0">Nb + 0 bat</option>
-                  <option value="1">Nb + 1 bat</option>
-                  <option value="2">Nb + 2 bat</option>
-                  <option value="3">Nb + 3 bat</option>
-                  <option value="4">Nb + 4 bat</option>
-                  <option value="6">Nb + 6 bat</option>
-                </select>
-                <button class="btn" data-extra="B">B</button>
-                <button class="btn" data-extra="Lb">Lb</button>
-                <select id="wicketRunsSelect" title="Runs completed on wicket">
-                  <option value="0">W + 0 runs</option>
-                  <option value="1">W + 1 run</option>
-                  <option value="2">W + 2 runs</option>
-                  <option value="3">W + 3 runs</option>
-                </select>
-                <select id="wicketTypeSelect" title="Wicket type">
-                  <option value="bowled">Bowled</option>
-                  <option value="caught">Caught</option>
-                  <option value="run_out">Run out</option>
-                  <option value="lbw">LBW</option>
-                  <option value="stumped">Stumped</option>
-                </select>
-                <button class="btn danger" data-wicket="true">Wicket</button>
-                <button class="btn ghost" id="undoBall">Undo</button>
-              </div>
-            </div>
-          </section>
-
-          <section class="panel">
-            <div class="panel-head">
-              <h2>Ball Feed</h2>
-              <span>Realtime source</span>
-            </div>
-            <div class="panel-body">
-              <div class="last-balls" id="lastBalls"></div>
-              <ul class="feed" id="commentary" style="margin-top: 16px;"></ul>
-              <div class="grid cols-2" style="margin-top: 16px;">
-                <div class="card">
-                  <span class="muted">Batters</span>
-                  <div id="batterScorecard" class="grid" style="gap: 6px; margin-top: 10px;"></div>
-                </div>
-                <div class="card">
-                  <span class="muted">Bowler spell</span>
-                  <div id="bowlerSpellStats" class="grid" style="gap: 6px; margin-top: 10px;"></div>
-                </div>
-                <div class="card">
-                  <span class="muted">Extras</span>
-                  <div id="extrasBreakdown" class="grid" style="gap: 6px; margin-top: 10px;"></div>
-                </div>
-                <div class="card">
-                  <span class="muted">Fall of wickets</span>
-                  <div id="fallOfWickets" class="grid" style="gap: 6px; margin-top: 10px;"></div>
-                </div>
-              </div>
-      </section>
-
       <section class="page" id="public">
         <div id="publicGridContainer" class="panel" style="background: transparent; border: none;">
           <div class="panel-head" style="margin-bottom: 24px;">
@@ -3814,16 +3809,23 @@
 
       <section class="page" id="tournaments">
         <div class="sub-nav" style="margin-bottom: 24px; display: flex; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 12px; overflow-x: auto;">
-          <button class="btn primary sub-nav-btn active" data-tourney-sub="active">Active Tournaments</button>
-          <button class="btn ghost sub-nav-btn" data-tourney-sub="standings">Standings</button>
-          <button class="btn ghost sub-nav-btn" data-tourney-sub="stats">Stats</button>
-          <button class="btn ghost sub-nav-btn" data-tourney-sub="my" data-admin-only>My Tournaments</button>
-          <button class="btn ghost sub-nav-btn" data-tourney-sub="create" data-auth-only>Create Tournament</button>
-          <button class="btn ghost sub-nav-btn" data-tourney-sub="series">Series</button>
-          <button class="btn ghost sub-nav-btn" data-tourney-sub="applications" data-admin-only>Applications</button>
+          <button class="btn primary sub-nav-btn active" data-tourney-sub="active">Tournaments</button>
+          <button class="btn ghost sub-nav-btn" data-tourney-sub="series" data-auth-only>Series</button>
+        </div>
+
+        <div class="sub-nav" id="tournamentHubSubnav" style="display:flex; gap:10px; overflow-x:auto; margin-bottom:16px; border-bottom:1px solid var(--line); padding-bottom:12px;">
+            <button class="btn primary btn-sm" type="button" data-tournament-home-tab="current">Current Tournaments</button>
+            <button class="btn ghost btn-sm sub-nav-btn" type="button" data-tourney-sub="all">All Tournaments</button>
+            <button class="btn ghost btn-sm sub-nav-btn" type="button" data-tourney-sub="my" data-auth-only>My Tournaments</button>
+            <button class="btn ghost btn-sm sub-nav-btn" type="button" data-tourney-sub="applied" data-auth-only>My Applied Tournaments</button>
+            <button class="btn ghost btn-sm sub-nav-btn" type="button" data-tourney-sub="applications" data-auth-only>Apply Requests</button>
+            <button class="btn ghost btn-sm sub-nav-btn" type="button" data-tourney-sub="standings">Standings</button>
+            <button class="btn ghost btn-sm sub-nav-btn" type="button" data-tourney-sub="stats">Stats</button>
+            <button class="btn ghost btn-sm" type="button" data-tournament-home-tab="create" data-auth-only>Create Tournament</button>
         </div>
 
         <div id="tourney-sub-active" class="tourney-sub-page active">
+          <section class="tournament-home-panel" data-tournament-home-panel="current">
           <div class="split">
             <section class="panel">
               <div class="panel-head">
@@ -3855,6 +3857,86 @@
               </section>
             </div>
           </div>
+          </section>
+
+          <section class="tournament-home-panel" data-tournament-home-panel="create" style="display:none;">
+            <div id="createTourneyLoginPrompt" class="card" style="max-width: 760px; margin: 0 auto; text-align: center; padding: 40px;">
+              <h3>Organize a Tournament</h3>
+              <p class="muted">Please login to your account to create and manage full competitions.</p>
+              <button class="btn primary" type="button" data-open-login style="margin-top: 16px;">Go to Login</button>
+            </div>
+            <section id="createTourneyFormSection" class="panel" style="max-width: 860px; margin: 0 auto; display: none;">
+              <div class="panel-head">
+                <h2>Official Tournament Form</h2>
+                <span>Complete organizer, format, venue, and registration details</span>
+              </div>
+              <form class="panel-body grid" id="tournamentForm">
+                <div class="form-grid">
+                  <label>Tournament Name <input id="newTournamentName" value="Punjab Super Cup" required /></label>
+                  <label>Organizer / Club Name <input id="newTournamentOrganizer" placeholder="Official organizer name" required /></label>
+                </div>
+                <div class="form-grid">
+                  <label>Organizer Email <input id="newTournamentEmail" type="email" placeholder="organizer@example.com" /></label>
+                  <label>Organizer Phone <input id="newTournamentPhone" placeholder="+92..." /></label>
+                </div>
+                <div class="form-grid">
+                  <label>City <input id="newTournamentCity" placeholder="Lahore" /></label>
+                  <label>Primary Venue <input id="newTournamentVenue" value="Multiple venues" /></label>
+                </div>
+                <label>Venue Details <input id="newTournamentVenueDetails" placeholder="Ground names, pitch type, address, parking, etc." /></label>
+                <div class="form-grid">
+                  <label>Format
+                    <select id="newTournamentFormat">
+                      <option>Group + knockout</option>
+                      <option>Round robin</option>
+                      <option>Knockout</option>
+                      <option>League</option>
+                    </select>
+                  </label>
+                  <label>Overs <input id="newTournamentOvers" type="number" min="5" max="50" value="20" /></label>
+                  <label>Number of Groups
+                    <select id="newTournamentGroups">
+                      <option value="1">1 Group</option>
+                      <option value="2">2 Groups</option>
+                      <option value="4">4 Groups</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="form-grid">
+                  <label>Team Limit <input id="newTournamentTeamLimit" type="number" min="2" max="64" value="8" /></label>
+                  <label>Ball Type
+                    <select id="newTournamentBallType">
+                      <option>Tape ball</option>
+                      <option>Hard ball</option>
+                      <option>Tennis ball</option>
+                      <option>Other</option>
+                    </select>
+                  </label>
+                  <label>Application Deadline <input id="newTournamentDeadline" type="date" /></label>
+                </div>
+                <div class="form-grid">
+                  <label>Start Date <input id="newTournamentStart" type="date" /></label>
+                  <label>End Date <input id="newTournamentEnd" type="date" /></label>
+                </div>
+                <label>Entry / Registration Notes <input id="newTournamentEntryNotes" placeholder="Fee, documents required, eligibility, contact instructions" /></label>
+                <label>Rules Summary <textarea id="newTournamentRules" rows="4" placeholder="Powerplay, player eligibility, tie-breakers, rain rules, umpire rules"></textarea></label>
+                <label>Banner URL <input id="newTournamentBanner" placeholder="https://... or upload below" /></label>
+                <label>Upload Banner <input id="newTournamentBannerFile" type="file" accept="image/*"></label>
+                <p class="form-message" id="tournamentFormMessage" aria-live="polite"></p>
+                <button class="btn primary" type="submit">Create Tournament</button>
+              </form>
+            </section>
+          </section>
+        </div>
+
+        <div id="tourney-sub-all" class="tourney-sub-page">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>All Tournaments</h2>
+              <span id="allTournamentCount">0 tournaments</span>
+            </div>
+            <div class="panel-body grid" id="allTournamentList"></div>
+          </section>
         </div>
 
         <div id="tourney-sub-standings" class="tourney-sub-page">
@@ -3891,52 +3973,57 @@
             </section>
         </div>
 
-        <div id="tourney-sub-create" class="tourney-sub-page">
-           <div id="createTourneyLoginPrompt" class="card" style="max-width: 600px; margin: 0 auto; text-align: center; padding: 40px;">
-              <h3>Organize a Tournament</h3>
-              <p class="muted">Please login to your account to create and manage full competitions.</p>
-              <button class="btn primary" type="button" data-open-login style="margin-top: 16px;">Go to Login</button>
-           </div>
-           <section id="createTourneyFormSection" class="panel" style="max-width: 600px; margin: 0 auto; display: none;">
-              <div class="panel-head">
-                <h2>New Tournament</h2>
-                <span>Create a full competition</span>
-              </div>
-              <form class="panel-body grid" id="tournamentForm">
-                <label>Tournament Name <input id="newTournamentName" value="Punjab Super Cup" /></label>
-                <div class="form-grid">
-                  <label>Format
-                    <select id="newTournamentFormat">
-                      <option>Group + knockout</option>
-                      <option>Round robin</option>
-                      <option>Knockout</option>
-                      <option>League</option>
-                    </select>
-                  </label>
-                  <label>Overs <input id="newTournamentOvers" type="number" min="5" max="50" value="20" /></label>
-                  <label>Number of Groups
-                    <select id="newTournamentGroups">
-                      <option value="1">1 Group</option>
-                      <option value="2">2 Groups</option>
-                      <option value="4">4 Groups</option>
-                    </select>
-                  </label>
-                </div>
-                <div class="form-grid">
-                  <label>Start Date <input id="newTournamentStart" type="date" /></label>
-                  <label>End Date <input id="newTournamentEnd" type="date" /></label>
-                </div>
-                <label>Venue <input id="newTournamentVenue" value="Multiple venues" /></label>
-                <label>Banner URL <input id="newTournamentBanner" placeholder="https://... or upload below" /></label>
-                <label>Upload Banner <input id="newTournamentBannerFile" type="file" accept="image/*"></label>
-                <p class="form-message" id="tournamentFormMessage" aria-live="polite"></p>
-                <button class="btn primary" type="submit">Create Tournament</button>
-              </form>
-            </section>
-        </div>
-
         <div id="tourney-sub-series" class="tourney-sub-page">
-           <div class="split">
+           <div class="sub-nav" style="display:flex; gap:10px; overflow-x:auto; margin-bottom:16px; border-bottom:1px solid var(--line); padding-bottom:12px;">
+             <button class="btn primary btn-sm" type="button" data-series-tab="requests">Series Requests</button>
+             <button class="btn ghost btn-sm" type="button" data-series-tab="mine">My Series</button>
+             <button class="btn ghost btn-sm" type="button" data-series-tab="challenge">Challenge a Series</button>
+             <button class="btn ghost btn-sm" type="button" data-series-tab="list">Series List</button>
+           </div>
+
+           <section class="series-panel" data-series-panel="requests">
+             <section class="panel">
+                <div class="panel-head">
+                  <h2>Series Requests</h2>
+                  <span id="seriesRequestCount">0 pending</span>
+                </div>
+                <div class="panel-body grid" id="seriesRequestList"></div>
+             </section>
+           </section>
+
+           <section class="series-panel" data-series-panel="challenge" style="display:none;">
+             <section class="panel">
+                <div class="panel-head">
+                  <h2>Challenge a Series</h2>
+                  <span>Send from your team only</span>
+                </div>
+                <form class="panel-body grid" id="seriesForm">
+                   <label>Series Name <input id="newSeriesName" value="Lions vs Kings Derby" /></label>
+                   <div class="form-grid">
+                     <label>From your team <select id="seriesTeamA"></select></label>
+                     <label>Challenge team <select id="seriesTeamB"></select></label>
+                   </div>
+                   <div class="form-grid">
+                     <label>No. of Matches <input id="seriesMatches" type="number" value="3" min="1" max="11" /></label>
+                     <label>Overs <input id="seriesOvers" type="number" value="20" min="1" max="50" /></label>
+                   </div>
+                   <label>Venue <input id="seriesVenue" value="National Stadium" /></label>
+                   <button class="btn primary" type="submit">Send Series Challenge</button>
+                </form>
+             </section>
+           </section>
+
+           <section class="series-panel" data-series-panel="mine" style="display:none;">
+             <section class="panel">
+                <div class="panel-head">
+                  <h2>My Series</h2>
+                  <span id="mySeriesCount">0 series</span>
+                </div>
+                <div class="panel-body grid" id="mySeriesList"></div>
+             </section>
+           </section>
+
+           <section class="series-panel" data-series-panel="list" style="display:none;">
              <section class="panel">
                 <div class="panel-head">
                   <h2>Active Series</h2>
@@ -3944,27 +4031,7 @@
                 </div>
                 <div class="panel-body grid" id="seriesList"></div>
              </section>
-
-             <section class="panel" data-admin-only>
-                <div class="panel-head">
-                  <h2>Create New Series</h2>
-                  <span>Team vs Team series</span>
-                </div>
-                <form class="panel-body grid" id="seriesForm">
-                   <label>Series Name <input id="newSeriesName" value="Lions vs Kings Derby" /></label>
-                   <div class="form-grid">
-                     <label>Team A <select id="seriesTeamA"></select></label>
-                     <label>Team B <select id="seriesTeamB"></select></label>
-                   </div>
-                   <div class="form-grid">
-                     <label>No. of Matches <input id="seriesMatches" type="number" value="3" min="1" max="11" /></label>
-                     <label>Overs <input id="seriesOvers" type="number" value="20" min="1" max="50" /></label>
-                   </div>
-                   <label>Venue <input id="seriesVenue" value="National Stadium" /></label>
-                   <button class="btn primary" type="submit">Generate Series</button>
-                </form>
-             </section>
-           </div>
+           </section>
         </div>
 
         <div id="tourney-sub-my" class="tourney-sub-page">
@@ -3979,6 +4046,18 @@
                 <span id="myTournamentCount">0 managed</span>
               </div>
               <div class="panel-body grid" id="myTournamentList"></div>
+            </section>
+        </div>
+
+        <div id="tourney-sub-applied" class="tourney-sub-page">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>My Applied Tournaments</h2>
+                <span id="myAppliedTournamentCount">0 applications</span>
+              </div>
+              <div class="panel-body">
+                <ul class="feed" id="myAppliedTournamentList"></ul>
+              </div>
             </section>
         </div>
 
@@ -4114,6 +4193,7 @@
       button.addEventListener("click", () => {
         const page = button.dataset.page;
         document.querySelectorAll(".nav button").forEach((item) => item.classList.remove("active"));
+        document.querySelector("#mobileProfileBtn")?.classList.remove("active");
         document.querySelectorAll(".page").forEach((item) => item.classList.remove("active"));
         button.classList.add("active");
         const targetPage = document.querySelector(`#${page}`);
@@ -4147,6 +4227,37 @@
       scoringSelect.addEventListener("change", updateStartButtonText);
     }
 
+    function openRankingsPage(type = "batters") {
+      document.querySelectorAll(".nav button").forEach((item) => item.classList.remove("active"));
+      document.querySelectorAll(".page").forEach((item) => item.classList.remove("active"));
+      const rankingsPage = document.querySelector("#rankings");
+      if (rankingsPage) rankingsPage.classList.add("active");
+      const title = document.querySelector("#pageTitle");
+      const subtitle = document.querySelector("#pageSubtitle");
+      if (title) title.textContent = pages.rankings[0];
+      if (subtitle) subtitle.textContent = pages.rankings[1];
+      renderPlayerRankings();
+      const subMap = {
+        batters: "rank-batters",
+        bowlers: "rank-bowlers",
+        allrounders: "rank-allrounders"
+      };
+      const subBtn = document.querySelector(`[data-sub="${subMap[type] || subMap.batters}"]`);
+      if (subBtn) subBtn.click();
+    }
+
+    function openPublicMatchPage(matchId) {
+      publicActiveMatchId = matchId;
+      document.querySelectorAll(".nav button").forEach((item) => item.classList.remove("active"));
+      document.querySelector("#mobileProfileBtn")?.classList.remove("active");
+      document.querySelectorAll(".page").forEach((item) => item.classList.remove("active"));
+      const publicPage = document.querySelector("#public");
+      if (publicPage) publicPage.classList.add("active");
+      safeSetText("#pageTitle", "Match Detail");
+      safeSetText("#pageSubtitle", "Live score, scorecard, commentary, and match info.");
+      renderPublicMatchDetail(matchId);
+    }
+
     // Sub-navigation logic for Teams
     document.querySelectorAll(".sub-nav-btn").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -4165,6 +4276,16 @@
         parentPage.querySelectorAll(".sub-page, .tourney-sub-page").forEach(p => p.classList.remove("active"));
         const target = document.getElementById(`${subPageType}-${subId}`);
         if (target) target.classList.add("active");
+        if (parentPage?.id === "tournaments" && btn.dataset.tourneySub && subId !== "active") {
+          parentPage.querySelectorAll("[data-tournament-home-tab]").forEach(button => {
+            button.classList.remove("primary");
+            button.classList.add("ghost");
+          });
+        }
+        if (parentPage?.id === "tournaments" && btn.dataset.tourneySub) {
+          const tournamentHubSubnav = document.querySelector("#tournamentHubSubnav");
+          if (tournamentHubSubnav) tournamentHubSubnav.style.display = subId === "series" ? "none" : "flex";
+        }
 
         if (subId === "standings") renderStandingsUI();
         if (subId === "stats") renderTournamentStatsUI();
@@ -4174,31 +4295,21 @@
     async function approveWithGroup(appId, index) {
        const groupId = document.querySelector(`#group-assign-${appId}`).value;
        try {
+          const application = state.applications.find(item => String(item.id) === String(appId)) || state.applications[index];
           if (state.usingDatabase) {
              await approveApplicationInDatabase(appId, groupId);
+             if (application) await notifyTournamentApplicant(application, "Approved");
              await loadApplicationsFromDatabase();
           } else {
-             state.applications[index].status = "Approved";
-             state.applications[index].groupId = groupId;
+             if (application) {
+               application.status = "Approved";
+               application.groupId = groupId;
+               await notifyTournamentApplicant(application, "Approved");
+             }
           }
           renderTournaments();
           alert("Team approved and assigned to Group " + groupId);
        } catch (e) { alert("Error: " + e.message); }
-    }
-
-    function refreshSidebarProfileButton() {
-      const label = document.querySelector("#sidebarProfileLabel");
-      const meta = document.querySelector("#sidebarProfileMeta");
-      const avatarEl = document.querySelector("#sidebarProfileAvatar");
-      const profile = state.user ? getUserProfile() : {};
-      const displayName = profile.name || state.user?.email?.split("@")[0] || "Profile";
-      const avatar = profile.avatar || "";
-
-      if (label) label.textContent = state.user ? displayName : "Profile";
-      if (meta) meta.textContent = state.user ? (state.user.email || primaryRoleLabel()) : "Login / Sign Up";
-      if (avatarEl) {
-        avatarEl.innerHTML = avatar ? `<img src="${avatar}" alt="${displayName}">` : initials(displayName);
-      }
     }
 
     function updateAuthUI() {
@@ -4207,11 +4318,13 @@
       const canUseUploads = Boolean(user && isR2Configured());
       const notifyBtn = document.querySelector("#notifyBtn");
       if (notifyBtn) notifyBtn.style.display = user ? "flex" : "none";
-      refreshSidebarProfileButton();
 
       const mobileProfileBtn = document.querySelector("#mobileProfileBtn");
       document.querySelectorAll("[data-auth-only]").forEach(el => {
         el.style.display = user ? "" : "none";
+      });
+      document.querySelectorAll("[data-guest-only]").forEach(el => {
+        el.style.display = user ? "none" : "";
       });
       document.querySelectorAll("input[type='file']").forEach(el => {
         el.disabled = !canUseUploads;
@@ -4229,8 +4342,8 @@
           mobileProfileBtn.classList.add("logged-in");
           const label = document.querySelector("#mobileProfileLabel");
           const icon = document.querySelector("#mobileProfileIcon");
-          if (label) label.textContent = "Logout";
-          if (icon) icon.innerHTML = "&#10006;"; /* X icon */
+          if (label) label.textContent = "Profile";
+          if (icon) icon.innerHTML = "&#128100;";
         }
 
         // Populate team management dropdown
@@ -4255,19 +4368,30 @@
       const restrictedPages = ["requests", "scoring"];
       document.querySelectorAll(".nav button").forEach(btn => {
         const page = btn.dataset.page;
+        let shouldHide = false;
         if (restrictedPages.includes(page)) {
-          const canOpen = page === "requests"
-            ? isSuperAdmin() || getMyTeams().length > 0
-            : isSuperAdmin() || getAssignedScoringMatches().length > 0 || state.matches.some(m => canManageMatch(m));
-          btn.style.display = user ? "flex" : "none";
+          shouldHide = !user;
         } else if (page === "teams") {
-          btn.style.display = user ? "flex" : "none";
+          shouldHide = !user;
+        } else if (btn.hasAttribute("data-guest-only")) {
+          shouldHide = Boolean(user);
+        }
+        btn.classList.toggle("nav-hidden", shouldHide);
+        if (!shouldHide && ["teams", "profile", "public", ...restrictedPages].includes(page)) {
+          btn.style.display = "flex";
         }
       });
+
+      if (mobileProfileBtn) {
+        mobileProfileBtn.classList.toggle("nav-hidden", !user);
+      }
 
       const activePageEl = document.querySelector(".page.active");
       const activePage = activePageEl ? activePageEl.id : "dashboard";
       if (!user && restrictedPages.includes(activePage)) {
+        document.querySelector("[data-page='home']").click();
+      }
+      if (user && activePage === "public") {
         document.querySelector("[data-page='home']").click();
       }
       const profileForm = document.querySelector("#profileForm");
@@ -4459,7 +4583,6 @@
       if (avatarPreview) {
         avatarPreview.innerHTML = avatar ? `<img src="${avatar}" alt="${displayName}">` : initials(displayName);
       }
-      refreshSidebarProfileButton();
       const profileName = document.querySelector("#profileName");
       const profilePhone = document.querySelector("#profilePhone");
       const profileCity = document.querySelector("#profileCity");
@@ -4494,6 +4617,25 @@
 
     function storageKey(name) {
       return state.user ? `pakscorer_${name}_${state.user.id}` : `pakscorer_${name}_guest`;
+    }
+
+    function getTournamentMetaMap() {
+      try {
+        return JSON.parse(localStorage.getItem(storageKey("tournament_meta")) || "{}");
+      } catch {
+        return {};
+      }
+    }
+
+    function saveTournamentMeta(tournamentId, meta) {
+      if (!tournamentId) return;
+      const map = getTournamentMetaMap();
+      map[tournamentId] = meta;
+      localStorage.setItem(storageKey("tournament_meta"), JSON.stringify(map));
+    }
+
+    function getTournamentMeta(tournamentId) {
+      return getTournamentMetaMap()[tournamentId] || {};
     }
 
     function getUserProfile() {
@@ -4662,6 +4804,18 @@
         if (error) throw error;
       } catch (error) {
         console.warn("Could not create notification:", error.message);
+      }
+    }
+
+    async function notifyTournamentApplicant(application, status) {
+      const tournament = state.tournaments.find(item => String(item.id) === String(application.tournamentId));
+      const team = state.teams.find(item => String(item.id) === String(application.teamId));
+      const targetUserId = team?.user_id || application.user_id || application.userId;
+      const title = status === "Approved" ? "Tournament request accepted" : "Tournament request rejected";
+      const message = `${application.team || "Your team"} was ${status.toLowerCase()} for ${tournament?.name || application.tournamentName || "the tournament"}.`;
+      await createNotification(targetUserId, "tournament_application", { title, message, status, tournamentId: application.tournamentId, teamId: application.teamId });
+      if (!state.usingDatabase || !targetUserId || String(targetUserId) === String(state.user?.id)) {
+        sendLocalNotification(title, message);
       }
     }
 
@@ -5100,15 +5254,17 @@
 
 
     function renderTeamSelects() {
-      const myTeams = state.teams.filter(t => isOwner(t));
+      const myTeams = getMyTeams();
       const options = myTeams.map((team) => `<option>${team.name}</option>`).join("");
-      ["#newPlayerTeam", "#requestFrom", "#applyTeam"].forEach((selector) => {
+      ["#newPlayerTeam", "#applyTeam"].forEach((selector) => {
         const el = document.querySelector(selector);
         if (el) el.innerHTML = options;
       });
+      const requestFromEl = document.querySelector("#requestFrom");
+      if (requestFromEl) requestFromEl.innerHTML = myTeams.map((team) => `<option value="${team.id}">${team.name}</option>`).join("");
 
       // Request 'To' can still be any team (to challenge others)
-      const allOptions = state.teams.map((team) => `<option>${team.name}</option>`).join("");
+      const allOptions = state.teams.map((team) => `<option value="${team.id}">${team.name}</option>`).join("");
       const toEl = document.querySelector("#requestTo");
       if (toEl) {
         toEl.innerHTML = allOptions;
@@ -5407,12 +5563,23 @@
           num_matches: seriesData.numMatches,
           overs: seriesData.overs,
           venue: seriesData.venue,
-          status: "Scheduled",
+          status: seriesData.status || "Pending",
           user_id: state.user?.id
         })
         .select()
         .single();
 
+      if (error) throw error;
+      return data;
+    }
+
+    async function updateSeriesStatusInDatabase(id, status) {
+      const { data, error } = await supabase
+        .from("series")
+        .update({ status })
+        .eq("id", id)
+        .select()
+        .single();
       if (error) throw error;
       return data;
     }
@@ -5453,6 +5620,18 @@
         .update({ status: "Approved", group_id: groupId, decided_at: new Date().toISOString() })
         .eq("id", id)
         .select("id,status,group_id")
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+
+    async function rejectApplicationInDatabase(id) {
+      const { data, error } = await supabase
+        .from("tournament_applications")
+        .update({ status: "Rejected", decided_at: new Date().toISOString() })
+        .eq("id", id)
+        .select("id,status")
         .single();
 
       if (error) throw error;
@@ -5822,7 +6001,10 @@
         ? `<option value="">-- Select tournament --</option>` + state.tournaments.map((t) => `<option value="${t.id}">${t.name}</option>`).join("")
         : `<option value="">No tournaments yet</option>`;
 
-      teamSelect.innerHTML = state.teams.map((t) => `<option value="${t.id || ""}">${t.name}</option>`).join("");
+      const myTeams = state.user ? state.teams.filter(team => canManageTeam(team)) : [];
+      teamSelect.innerHTML = myTeams.length
+        ? `<option value="">-- Select your team --</option>` + myTeams.map((t) => `<option value="${t.id || ""}">${t.name}</option>`).join("")
+        : `<option value="">Create or manage a team first</option>`;
     }
 
     function ownsTeam(teamId) {
@@ -5830,27 +6012,105 @@
       return isOwner(team);
     }
 
+    function canSendChallengeForTeam(teamId) {
+      const team = state.teams.find(t => String(t.id) === String(teamId));
+      return canManageTeam(team);
+    }
+
+    function isChallengeSender(request) {
+      return isSuperAdmin() || canSendChallengeForTeam(request.fromTeamId);
+    }
+
+    function isChallengeReceiver(request) {
+      return isSuperAdmin() || canSendChallengeForTeam(request.toTeamId);
+    }
+
+    function challengeStatusText(request) {
+      if (request.status === "Accepted") return "Challenge accepted";
+      if (request.status === "Rejected") return "Challenge rejected";
+      if (isChallengeSender(request)) return "Challenge sent";
+      if (isChallengeReceiver(request)) return "Challenge received";
+      return "Pending";
+    }
+
+    function seriesTeamAId(series) {
+      return series.team_a_id || series.teamAId;
+    }
+
+    function seriesTeamBId(series) {
+      return series.team_b_id || series.teamBId;
+    }
+
+    function isSeriesChallengeSender(series) {
+      return isSuperAdmin() || canSendChallengeForTeam(seriesTeamAId(series));
+    }
+
+    function isSeriesChallengeReceiver(series) {
+      return isSuperAdmin() || canSendChallengeForTeam(seriesTeamBId(series));
+    }
+
+    async function createSeriesMatches(series) {
+      const teamAId = seriesTeamAId(series);
+      const teamBId = seriesTeamBId(series);
+      const teamAName = series.team_a_name || series.teamAName || state.teams.find(t => String(t.id) === String(teamAId))?.name || "Team A";
+      const teamBName = series.team_b_name || series.teamBName || state.teams.find(t => String(t.id) === String(teamBId))?.name || "Team B";
+      const existing = state.matches.filter(match => String(match.seriesId || match.series_id || "") === String(series.id));
+      if (existing.length) return;
+      const total = Number(series.num_matches || series.numMatches || 1);
+      for (let i = 1; i <= total; i += 1) {
+        const payload = {
+          fromTeamId: teamAId,
+          toTeamId: teamBId,
+          from: teamAName,
+          to: teamBName,
+          seriesId: series.id,
+          venue: series.venue || "Local Ground",
+          overs: Number(series.overs || 20),
+          status: "Scheduled"
+        };
+        if (state.usingDatabase) {
+          state.matches.unshift(await createMatchInDatabase(payload));
+        } else {
+          state.matches.unshift({
+            id: `${series.id}-${i}`,
+            teamAId,
+            teamBId,
+            teamA: teamAName,
+            teamB: teamBName,
+            seriesId: series.id,
+            venue: payload.venue,
+            overs: payload.overs,
+            status: "Scheduled"
+          });
+        }
+      }
+    }
+
     function renderRequests() {
-      const pending = state.requests.filter((request) => request.status === "Pending").length;
+      const visibleRequests = state.user
+        ? state.requests.filter(request => isChallengeSender(request) || isChallengeReceiver(request))
+        : [];
+      const pending = visibleRequests.filter((request) => request.status === "Pending").length;
       const requestCountEl = document.querySelector("#requestCount");
       const requestListEl = document.querySelector("#requestList");
       if (!requestCountEl || !requestListEl) return;
 
       requestCountEl.textContent = `${pending} pending`;
-      requestListEl.innerHTML = state.requests.map((request) => `
+      requestListEl.innerHTML = visibleRequests.length ? visibleRequests.map((request) => `
         <article class="card">
           <h3>${request.from} vs ${request.to}</h3>
-          <p class="muted">${request.overs} overs at ${request.venue}</p>
+          <p class="muted">${request.overs} overs at ${request.venue}${formatMatchDateTime(request.matchDate, request.matchTime) ? ` - ${formatMatchDateTime(request.matchDate, request.matchTime)}` : ""}</p>
           <div class="actions" style="margin-top: 12px;">
             <span class="tag ${request.status === "Accepted" ? "green" : request.status === "Rejected" ? "red" : "gold"}">${request.status}</span>
-            ${request.status === "Pending" && (isSuperAdmin() || isOwner(request) || ownsTeam(request.toTeamId)) ? `
+            <span class="muted" style="font-weight:800;">${challengeStatusText(request)}</span>
+            ${request.status === "Pending" && isChallengeReceiver(request) && !isChallengeSender(request) ? `
               <button class="btn primary" data-request-action="Accepted" data-id="${request.id}">Accept</button>
               <button class="btn danger" data-request-action="Rejected" data-id="${request.id}">Reject</button>
             ` : ""}
-            ${isSuperAdmin() || isOwner(request) ? `<button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem; margin-left: auto;" data-delete-request="${request.id}">Delete</button>` : ""}
+            ${request.status === "Pending" && isChallengeSender(request) ? `<button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem; margin-left: auto;" data-delete-request="${request.id}">Cancel</button>` : ""}
           </div>
         </article>
-      `).join("");
+      `).join("") : `<article class="card"><h3>No challenges yet</h3><p class="muted">Send a challenge from your team, or wait for another team to challenge you.</p></article>`;
     }
 
     function formatMatchDateTime(matchDate, matchTime) {
@@ -5898,6 +6158,7 @@
             <span class="tag ${tagClass}" style="font-size: 0.65rem;">${match.status}</span>
             ${match.status === "Live" ? `<button class="btn ghost" style="padding: 4px 8px; font-size: 0.75rem;" data-view-match="${match.id}">Watch</button>` : ""}
             ${match.status === "Completed" ? `<button class="btn ghost" style="font-size: 0.75rem; padding: 4px 8px;" onclick="renderMatchSummary('${match.id}')">Highlights</button>` : ""}
+            ${options.management && canScoreMatch(match) && ["Scheduled", "Setup", "Live"].includes(match.status) ? `<button class="btn primary" style="padding: 4px 8px; font-size: 0.75rem;" data-score-match="${match.id}">Match Scoring</button>` : ""}
             ${options.management && canManage ? `<input type="date" data-match-date-edit="${match.id}" value="${match.matchDate || ""}" style="max-width: 150px; padding: 4px 8px; font-size: 0.75rem;">` : ""}
             ${options.management && canManage ? `<input type="time" data-match-time-edit="${match.id}" value="${match.matchTime || ""}" style="max-width: 120px; padding: 4px 8px; font-size: 0.75rem;">` : ""}
             ${options.management && canManage ? `<select data-assign-scorer="${match.id}" style="max-width: 180px; padding: 4px 8px; font-size: 0.75rem;"><option value="">Assign scorer</option>${state.players.map(p => `<option value="${p.user_id || ""}">${p.name}</option>`).join("")}</select>` : ""}
@@ -6437,6 +6698,66 @@
       }
     }
 
+    function switchFixturePanel(panelName) {
+      document.querySelectorAll("[data-fixture-tab]").forEach(button => {
+        const isActive = button.dataset.fixtureTab === panelName;
+        button.classList.toggle("primary", isActive);
+        button.classList.toggle("ghost", !isActive);
+      });
+      document.querySelectorAll("[data-fixture-panel]").forEach(panel => {
+        panel.style.display = panel.dataset.fixturePanel === panelName ? "" : "none";
+      });
+    }
+
+    function switchSeriesPanel(panelName) {
+      document.querySelectorAll("[data-series-tab]").forEach(button => {
+        const isActive = button.dataset.seriesTab === panelName;
+        button.classList.toggle("primary", isActive);
+        button.classList.toggle("ghost", !isActive);
+      });
+      document.querySelectorAll("[data-series-panel]").forEach(panel => {
+        panel.style.display = panel.dataset.seriesPanel === panelName ? "" : "none";
+      });
+      renderSeries();
+    }
+
+    function switchTournamentHomePanel(panelName) {
+      const tournamentsPage = document.querySelector("#tournaments");
+      if (tournamentsPage) {
+        const tournamentHubSubnav = tournamentsPage.querySelector("#tournamentHubSubnav");
+        if (tournamentHubSubnav) tournamentHubSubnav.style.display = "flex";
+        tournamentsPage.querySelectorAll(".tourney-sub-page").forEach(panel => panel.classList.remove("active"));
+        tournamentsPage.querySelector("#tourney-sub-active")?.classList.add("active");
+        tournamentsPage.querySelectorAll(".sub-nav-btn[data-tourney-sub]").forEach(button => {
+          const isActive = button.dataset.tourneySub === "active";
+          button.classList.toggle("primary", isActive);
+          button.classList.toggle("ghost", !isActive);
+          button.classList.toggle("active", isActive);
+        });
+      }
+      document.querySelectorAll("[data-tournament-home-tab]").forEach(button => {
+        const isActive = button.dataset.tournamentHomeTab === panelName;
+        button.classList.toggle("primary", isActive);
+        button.classList.toggle("ghost", !isActive);
+      });
+      document.querySelectorAll("[data-tournament-home-panel]").forEach(panel => {
+        panel.style.display = panel.dataset.tournamentHomePanel === panelName ? "" : "none";
+      });
+    }
+
+    function openMatchScoring(matchId) {
+      const teamsNav = document.querySelector('[data-page="teams"]');
+      if (teamsNav) teamsNav.click();
+      switchTeamsSubPage("fixtures");
+      switchFixturePanel("scoring");
+      renderScoringMatchSelect();
+      const select = document.querySelector("#scoringMatchSelect");
+      if (select) {
+        select.value = String(matchId);
+        select.dispatchEvent(new Event("change"));
+      }
+    }
+
     async function renderMatchSummary(matchId) {
        const match = state.matches.find(m => String(m.id) === String(matchId));
        if (!match) return;
@@ -6751,14 +7072,18 @@
       const count = state.tournaments.length;
       const tournamentCountEl = document.querySelector("#tournamentCount");
       const tournamentListEl = document.querySelector("#tournamentList");
+      const allTournamentCountEl = document.querySelector("#allTournamentCount");
+      const allTournamentListEl = document.querySelector("#allTournamentList");
       if (!tournamentCountEl || !tournamentListEl) return;
 
       tournamentCountEl.textContent = `${count} tournament${count !== 1 ? "s" : ""}`;
+      if (allTournamentCountEl) allTournamentCountEl.textContent = `${count} tournament${count !== 1 ? "s" : ""}`;
       const applyPanel = document.querySelector("#applyTournamentPanel");
       if (applyPanel) applyPanel.style.display = state.user ? "" : "none";
 
       if (!count) {
         tournamentListEl.innerHTML = `<div class="card">No tournaments created yet.</div>`;
+        if (allTournamentListEl) allTournamentListEl.innerHTML = `<div class="card">No tournaments created yet.</div>`;
       } else {
         const cards = await Promise.all(state.tournaments.map(async (tournament) => {
           const tournamentMatches = state.matches.filter(m => String(m.tournamentId || "") === String(tournament.id));
@@ -6768,6 +7093,7 @@
           const status = tournament.status || "Applications Open";
           const statusClass = status === "Live" || status === "Running" || status === "Ongoing" ? "green" : status === "Completed" ? "cyan" : "gold";
           const standings = await calculateStandings(tournament.id);
+          const officialMeta = getTournamentMeta(tournament.id);
 
           const standingsHtml = standings.length ? `
             <div style="margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px;">
@@ -6852,6 +7178,20 @@
                   <strong style="display:block; font-size: 1.1rem;">${tournamentMatches.length}</strong>
                 </div>
               </div>
+              ${(officialMeta.organizer || officialMeta.teamLimit || officialMeta.ballType || officialMeta.applicationDeadline) ? `
+                <div class="card" style="margin-top:12px;background:rgba(255,255,255,0.025);">
+                  <span class="muted">Official details</span>
+                  <div class="grid cols-2" style="gap:8px;margin-top:8px;">
+                    ${officialMeta.organizer ? `<p><strong>Organizer:</strong> ${officialMeta.organizer}</p>` : ""}
+                    ${officialMeta.city ? `<p><strong>City:</strong> ${officialMeta.city}</p>` : ""}
+                    ${officialMeta.teamLimit ? `<p><strong>Team limit:</strong> ${officialMeta.teamLimit}</p>` : ""}
+                    ${officialMeta.ballType ? `<p><strong>Ball:</strong> ${officialMeta.ballType}</p>` : ""}
+                    ${officialMeta.applicationDeadline ? `<p><strong>Deadline:</strong> ${officialMeta.applicationDeadline}</p>` : ""}
+                    ${officialMeta.organizerPhone ? `<p><strong>Phone:</strong> ${officialMeta.organizerPhone}</p>` : ""}
+                  </div>
+                  ${officialMeta.rules ? `<p class="muted" style="margin-top:8px;">${officialMeta.rules}</p>` : ""}
+                </div>
+              ` : ""}
               ${tournament.end_date ? `<p class="muted" style="font-size:0.82rem; margin-top: 10px;">Ends: ${new Date(tournament.end_date).toLocaleDateString("en-PK", { day:"numeric", month:"short", year:"numeric" })}</p>` : ""}
             </div>
             ${standingsHtml || `<div style="margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px;"><p class="muted">No points table yet.</p></div>`}
@@ -6875,6 +7215,8 @@
                 <span class="tag">${approvedTeams.length} registered</span>
                 <span class="tag">${tournamentMatches.length} matches</span>
                 <button class="btn ghost" type="button" data-view-tournament="${tournament.id}" style="padding: 4px 10px; font-size: 0.78rem;">${isSelected ? "Hide Details" : "View Details"}</button>
+                <button class="btn ghost" type="button" data-open-tournament-standings="${tournament.id}" style="padding: 4px 10px; font-size: 0.78rem;">Standings</button>
+                <button class="btn ghost" type="button" data-open-tournament-stats="${tournament.id}" style="padding: 4px 10px; font-size: 0.78rem;">Stats</button>
               </div>
               ${detailsHtml}
               <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line);">
@@ -6891,14 +7233,19 @@
           `;
         }));
         tournamentListEl.innerHTML = cards.join("");
+        if (allTournamentListEl) allTournamentListEl.innerHTML = cards.join("");
       }
 
       const appCountEl = document.querySelector("#applicationCountDisplay");
-      if (appCountEl) appCountEl.textContent = `${state.applications.length} team${state.applications.length !== 1 ? "s" : ""}`;
+      const managedApplications = state.applications.filter(application => {
+        const tournament = state.tournaments.find(t => String(t.id) === String(application.tournamentId));
+        return canManageTournament(tournament);
+      });
+      if (appCountEl) appCountEl.textContent = `${managedApplications.length} request${managedApplications.length !== 1 ? "s" : ""}`;
 
       const appListEl = document.querySelector("#applicationList");
       if (appListEl) {
-        appListEl.innerHTML = state.applications.length ? state.applications.map((application, index) => {
+        appListEl.innerHTML = managedApplications.length ? managedApplications.map((application, index) => {
           const tournament = state.tournaments.find(t => t.id === application.tournamentId);
           const canManageApp = canManageTournament(tournament);
           return `
@@ -6921,7 +7268,27 @@
               </span>
             </li>
           `;
-        }).join("") : `<li><strong>No applications yet</strong><span>Teams apply after tournaments are created</span></li>`;
+        }).join("") : `<li><strong>No application requests yet</strong><span>Teams that apply to your tournaments will appear here.</span></li>`;
+      }
+
+      const myTeamIds = state.user ? state.teams.filter(team => canManageTeam(team)).map(team => String(team.id)) : [];
+      const myApplied = state.applications.filter(application => myTeamIds.includes(String(application.teamId)));
+      safeSetText("#myAppliedTournamentCount", `${myApplied.length} application${myApplied.length !== 1 ? "s" : ""}`);
+      const myAppliedList = document.querySelector("#myAppliedTournamentList");
+      if (myAppliedList) {
+        myAppliedList.innerHTML = myApplied.length ? myApplied.map(application => {
+          const tournament = state.tournaments.find(item => String(item.id) === String(application.tournamentId));
+          const tagClass = application.status === "Approved" ? "green" : application.status === "Rejected" ? "red" : "gold";
+          return `
+            <li>
+              <strong>${tournament?.name || application.tournamentName || "Tournament"}</strong>
+              <span>
+                <span>${application.team}</span>
+                <span class="tag ${tagClass}">${application.status}</span>
+              </span>
+            </li>
+          `;
+        }).join("") : `<li><strong>No applications yet</strong><span>Apply to tournaments with one of your teams to track requests here.</span></li>`;
       }
 
       renderTournamentSelects();
@@ -7127,35 +7494,101 @@
       const count = state.series.length;
       safeSetText("#seriesCount", `${count} series`);
       const seriesListEl = document.querySelector("#seriesList");
-      if (!seriesListEl) return;
+      const seriesRequestListEl = document.querySelector("#seriesRequestList");
+      if (!seriesListEl && !seriesRequestListEl) return;
 
       const renderSeriesTeamSelects = () => {
-        ["#seriesTeamA", "#seriesTeamB"].forEach(selId => {
-           const el = document.querySelector(selId);
-           if (el) {
-              const currentVal = el.value;
-              el.innerHTML = '<option value="">-- Select Team --</option>' + state.teams.map(t => `<option value="${t.id}">${t.name}</option>`).join("");
-              el.value = currentVal;
-           }
-        });
+        const fromEl = document.querySelector("#seriesTeamA");
+        const toEl = document.querySelector("#seriesTeamB");
+        if (fromEl) {
+          const currentVal = fromEl.value;
+          const myTeams = state.teams.filter(team => canManageTeam(team));
+          fromEl.innerHTML = '<option value="">-- Select your team --</option>' + myTeams.map(t => `<option value="${t.id}">${t.name}</option>`).join("");
+          fromEl.value = currentVal;
+        }
+        if (toEl) {
+          const currentVal = toEl.value;
+          toEl.innerHTML = '<option value="">-- Select opponent --</option>' + state.teams.map(t => `<option value="${t.id}">${t.name}</option>`).join("");
+          toEl.value = currentVal;
+        }
       };
 
-      if (!count) {
-        seriesListEl.innerHTML = `<div class="card">No series created yet.</div>`;
-        renderSeriesTeamSelects();
-        return;
+      const currentSeries = state.series.filter(s => s.status === "Live" || s.status === "Running" || s.status === "Ongoing");
+      const pendingSeries = state.series.filter(s => (s.status || "Pending") === "Pending");
+      const scheduledSeries = state.series.filter(s => !["Pending", "Rejected", "Live", "Running", "Ongoing", "Completed"].includes(s.status || "Scheduled"));
+      const completedSeries = state.series.filter(s => s.status === "Completed");
+      const visiblePendingSeries = state.user
+        ? pendingSeries.filter(series => isSeriesChallengeSender(series) || isSeriesChallengeReceiver(series))
+        : [];
+      safeSetText("#seriesRequestCount", `${visiblePendingSeries.length} pending`);
+
+      const seriesRequestCard = (s) => {
+        const sender = isSeriesChallengeSender(s);
+        const receiver = isSeriesChallengeReceiver(s);
+        return `
+          <article class="card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+              <div>
+                <h3 style="margin:0;">${s.name || "Series Challenge"}</h3>
+                <p class="muted" style="margin:4px 0;">${s.team_a_name || "Team A"} challenged ${s.team_b_name || "Team B"}</p>
+                <p class="muted">${s.num_matches || 1} matches - ${s.overs || 20} overs${s.venue ? ` - ${s.venue}` : ""}</p>
+              </div>
+              <span class="tag gold">Pending</span>
+            </div>
+            <p class="muted" style="font-weight:800;margin-top:10px;">${sender ? "Series challenge sent" : receiver ? "Series challenge received" : "Pending challenge"}</p>
+            ${receiver && !sender ? `
+              <div class="actions" style="margin-top:12px;">
+                <button class="btn primary" data-series-action="Accepted" data-id="${s.id}">Accept</button>
+                <button class="btn danger" data-series-action="Rejected" data-id="${s.id}">Reject</button>
+              </div>
+            ` : ""}
+            ${sender ? `<button class="btn ghost danger" style="margin-top:12px;font-size:0.75rem;" data-cancel-series="${s.id}">Cancel Challenge</button>` : ""}
+          </article>
+        `;
+      };
+
+      if (seriesRequestListEl) {
+        seriesRequestListEl.innerHTML = visiblePendingSeries.length
+          ? visiblePendingSeries.map(seriesRequestCard).join("")
+          : `<article class="card"><h3>No series requests</h3><p class="muted">Series challenges you send or receive will appear here.</p></article>`;
       }
 
-      const currentSeries = state.series.filter(s => s.status === "Live" || s.status === "Running" || s.status === "Ongoing");
-      const scheduledSeries = state.series.filter(s => !["Live", "Running", "Ongoing", "Completed"].includes(s.status || "Scheduled"));
-      const completedSeries = state.series.filter(s => s.status === "Completed");
+      const mySeries = state.user
+        ? state.series.filter(series => isSeriesChallengeSender(series) || isSeriesChallengeReceiver(series))
+        : [];
+      safeSetText("#mySeriesCount", `${mySeries.length} series`);
+      const mySeriesList = document.querySelector("#mySeriesList");
+      if (mySeriesList) {
+        mySeriesList.innerHTML = mySeries.length ? mySeries.map(series => {
+          const matches = state.matches.filter(match => String(match.seriesId || match.series_id || "") === String(series.id));
+          const tagClass = series.status === "Rejected" ? "red" : series.status === "Completed" ? "cyan" : series.status === "Pending" ? "gold" : "green";
+          return `
+            <article class="card">
+              <div style="display:flex;justify-content:space-between;gap:12px;">
+                <div>
+                  <h3 style="margin:0;">${series.name || "Series"}</h3>
+                  <p class="muted">${series.team_a_name || "Team A"} vs ${series.team_b_name || "Team B"}</p>
+                </div>
+                <span class="tag ${tagClass}">${series.status || "Scheduled"}</span>
+              </div>
+              <p class="muted" style="margin-top:8px;">${series.num_matches || matches.length || 0} matches - ${series.overs || 20} overs${series.venue ? ` - ${series.venue}` : ""}</p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+                <span class="tag">${matches.filter(match => match.status === "Live").length} live</span>
+                <span class="tag">${matches.filter(match => match.status === "Completed").length} completed</span>
+                <span class="tag">${matches.length} total</span>
+              </div>
+            </article>
+          `;
+        }).join("") : `<article class="card"><h3>No series yet</h3><p class="muted">Series you challenge or receive will appear here.</p></article>`;
+      }
+
       const groups = [
         ["Current Series", currentSeries],
         ["Scheduled Series", scheduledSeries],
         ["Completed Series", completedSeries]
       ];
 
-      seriesListEl.innerHTML = groups.map(([heading, list]) => `
+      if (seriesListEl) seriesListEl.innerHTML = groups.map(([heading, list]) => `
         <div style="display:flex; flex-direction:column; gap: 10px;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <h3 style="margin:0; font-size: 1rem;">${heading}</h3>
@@ -7165,6 +7598,8 @@
             const seriesMatches = state.matches.filter(m => String(m.seriesId || m.series_id || "") === String(s.id));
             const liveCount = seriesMatches.filter(m => m.status === "Live").length;
             const completedCount = seriesMatches.filter(m => m.status === "Completed").length;
+            const sender = isSeriesChallengeSender(s);
+            const receiver = isSeriesChallengeReceiver(s);
             return `
               <article class="card">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -7175,12 +7610,21 @@
                   <span class="tag ${s.status === 'Live' || s.status === 'Running' || s.status === 'Ongoing' ? 'green' : s.status === 'Completed' ? 'cyan' : 'gold'}">${s.status || "Scheduled"}</span>
                 </div>
                 <p style="font-weight: 700; margin: 8px 0;">${s.team_a_name} vs ${s.team_b_name}</p>
+                ${s.status === "Pending" ? `<p class="muted" style="font-weight:800;">${sender ? "Series challenge sent" : receiver ? "Series challenge received" : "Pending challenge"}</p>` : ""}
+                ${s.status === "Accepted" || s.status === "Scheduled" ? `<p class="muted" style="font-weight:800;color:var(--green);">Series challenge accepted</p>` : ""}
                 ${s.venue ? `<p class="muted" style="font-size:0.82rem;">${s.venue}</p>` : ""}
                 <div style="display:flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
                   <span class="tag">${liveCount} live</span>
                   <span class="tag">${completedCount} completed</span>
                   <span class="tag">${seriesMatches.length} total</span>
                 </div>
+                ${s.status === "Pending" && receiver && !sender ? `
+                  <div class="actions" style="margin-top:12px;">
+                    <button class="btn primary" data-series-action="Accepted" data-id="${s.id}">Accept</button>
+                    <button class="btn danger" data-series-action="Rejected" data-id="${s.id}">Reject</button>
+                  </div>
+                ` : ""}
+                ${s.status === "Pending" && sender ? `<button class="btn ghost danger" style="margin-top: 12px; font-size: 0.75rem; align-self: flex-end;" data-cancel-series="${s.id}">Cancel Challenge</button>` : ""}
                 <div style="margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px;">
                    <p class="muted" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase;">Matches</p>
                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
@@ -7192,7 +7636,7 @@
                       `).join("") : `<li class="muted">No matches created yet.</li>`}
                    </ul>
                 </div>
-                ${isSuperAdmin() || isOwner(s) ? `<button class="btn ghost danger" style="margin-top: 12px; font-size: 0.7rem; align-self: flex-end;" data-delete-series="${s.id}">Delete Series</button>` : ""}
+                ${(isSuperAdmin() || isOwner(s)) && s.status !== "Pending" ? `<button class="btn ghost danger" style="margin-top: 12px; font-size: 0.7rem; align-self: flex-end;" data-delete-series="${s.id}">Delete Series</button>` : ""}
               </article>
             `;
           }).join("") : `<div class="card"><p class="muted">No ${heading.toLowerCase()} yet.</p></div>`}
@@ -8399,10 +8843,12 @@
 
     document.querySelector("#requestForm").addEventListener("submit", async (event) => {
       event.preventDefault();
-      const from = document.querySelector("#requestFrom").value;
-      const to = document.querySelector("#requestTo").value;
-      const fromTeam = state.teams.find((team) => team.name === from);
-      const toTeam = state.teams.find((team) => team.name === to);
+      const fromTeamId = document.querySelector("#requestFrom").value;
+      const toTeamId = document.querySelector("#requestTo").value;
+      const fromTeam = state.teams.find((team) => String(team.id) === String(fromTeamId));
+      const toTeam = state.teams.find((team) => String(team.id) === String(toTeamId));
+      const from = fromTeam?.name || "";
+      const to = toTeam?.name || "";
       const venue = document.querySelector("#requestVenue").value || "Local Ground";
       const overs = Number(document.querySelector("#requestOvers").value || 20);
       const matchDate = document.querySelector("#requestDate").value || null;
@@ -8414,7 +8860,17 @@
         return;
       }
 
-      if (from === to) {
+      if (!fromTeam || !toTeam) {
+        alert("Please select both teams.");
+        return;
+      }
+
+      if (!canSendChallengeForTeam(fromTeam.id)) {
+        alert("You can only send a challenge from a team you own or manage.");
+        return;
+      }
+
+      if (String(fromTeam.id) === String(toTeam.id)) {
         alert("Please select two different teams.");
         return;
       }
@@ -8422,14 +8878,15 @@
       const request = {
         from,
         to,
-        fromTeamId: fromTeam && isUuid(fromTeam.id) ? fromTeam.id : null,
-        toTeamId: toTeam && isUuid(toTeam.id) ? toTeam.id : null,
+        fromTeamId: fromTeam && isUuid(String(fromTeam.id)) ? fromTeam.id : fromTeam?.id || null,
+        toTeamId: toTeam && isUuid(String(toTeam.id)) ? toTeam.id : toTeam?.id || null,
         venue,
         overs,
         matchDate,
         matchTime,
         format: "T20",
         status: "Pending",
+        user_id: state.user?.id || null,
       };
 
       if (state.usingDatabase) {
@@ -8462,10 +8919,13 @@
       // Handle Delete
       const deleteBtn = event.target.closest("[data-delete-request]");
       if (deleteBtn) {
+        event.stopPropagation();
         const requestId = deleteBtn.dataset.deleteRequest;
-        if (!confirm("Are you sure you want to permanently delete this match request?")) return;
+        const request = state.requests.find((item) => String(item.id) === String(requestId));
+        if (!request || request.status !== "Pending" || !isChallengeSender(request)) return;
+        if (!confirm("Cancel this match challenge?")) return;
 
-        deleteBtn.textContent = "Deleting...";
+        deleteBtn.textContent = "Cancelling...";
         deleteBtn.disabled = true;
 
         try {
@@ -8473,7 +8933,7 @@
             const count = await deleteMatchRequestFromDatabase(requestId);
             if (count === 0 && isNaN(requestId)) {
               alert("Wait! The request was not deleted from the database. This usually happens if you haven't enabled 'Delete' permissions in your Supabase RLS policies.");
-              deleteBtn.textContent = "Delete";
+              deleteBtn.textContent = "Cancel";
               deleteBtn.disabled = false;
               return;
             }
@@ -8482,7 +8942,7 @@
           renderRequests();
         } catch (error) {
           alert("Failed to delete request: " + error.message);
-          deleteBtn.textContent = "Delete";
+          deleteBtn.textContent = "Cancel";
           deleteBtn.disabled = false;
         }
         return;
@@ -8491,8 +8951,13 @@
       // Handle Accept/Reject
       const actionBtn = event.target.closest("[data-request-action]");
       if (!actionBtn) return;
+      event.stopPropagation();
       const request = state.requests.find((item) => String(item.id) === String(actionBtn.dataset.id));
       if (!request || request.status !== "Pending") return;
+      if (!isChallengeReceiver(request) || isChallengeSender(request)) {
+        alert("Only the challenged team can accept or reject this challenge.");
+        return;
+      }
 
       const nextStatus = actionBtn.dataset.requestAction;
 
@@ -8517,6 +8982,8 @@
             matchRequestId: request.id,
             teamA: request.from,
             teamB: request.to,
+            teamAId: request.fromTeamId,
+            teamBId: request.toTeamId,
             venue: request.venue,
             overs: request.overs,
             status: "Scheduled",
@@ -8665,6 +9132,18 @@
       const groupCount = Number(document.querySelector("#newTournamentGroups")?.value || 1);
       const bannerInput = document.querySelector("#newTournamentBanner");
       const bannerFile = selectedFile("#newTournamentBannerFile");
+      const officialMeta = {
+        organizer: document.querySelector("#newTournamentOrganizer")?.value.trim() || "",
+        organizerEmail: document.querySelector("#newTournamentEmail")?.value.trim() || "",
+        organizerPhone: document.querySelector("#newTournamentPhone")?.value.trim() || "",
+        city: document.querySelector("#newTournamentCity")?.value.trim() || "",
+        venueDetails: document.querySelector("#newTournamentVenueDetails")?.value.trim() || "",
+        teamLimit: document.querySelector("#newTournamentTeamLimit")?.value || "",
+        ballType: document.querySelector("#newTournamentBallType")?.value || "",
+        applicationDeadline: document.querySelector("#newTournamentDeadline")?.value || "",
+        entryNotes: document.querySelector("#newTournamentEntryNotes")?.value.trim() || "",
+        rules: document.querySelector("#newTournamentRules")?.value.trim() || ""
+      };
 
       message.className = "form-message";
 
@@ -8719,6 +9198,7 @@
         try {
           const newTournament = await createTournamentInDatabase(tournament);
           state.tournaments.unshift(newTournament);
+          saveTournamentMeta(newTournament.id, officialMeta);
           if (state.user) await saveTournamentAdminAssignment(newTournament.id, state.user.email, "owner");
         } catch (error) {
           message.textContent = error.code === "23505" ? "This tournament already exists in the database." : "Could not save tournament to Supabase.";
@@ -8728,6 +9208,7 @@
       } else {
         const localTournament = { id: Date.now(), ...tournament };
         state.tournaments.unshift(localTournament);
+        saveTournamentMeta(localTournament.id, officialMeta);
         if (state.user) await saveTournamentAdminAssignment(localTournament.id, state.user.email, "owner");
       }
 
@@ -8948,10 +9429,7 @@
       const card = event.target.closest(".public-match-card");
       if (!card) return;
 
-      publicActiveMatchId = card.dataset.matchId;
-      document.querySelector("#publicGridContainer").style.display = "none";
-      document.querySelector("#publicDetailContainer").style.display = "block";
-      renderPublicMatchDetail(publicActiveMatchId);
+      openPublicMatchPage(card.dataset.matchId);
     });
 
     document.querySelector("#sharePublicMatchBtn").addEventListener("click", async () => {
@@ -8998,7 +9476,7 @@
 
         const match = event.target.closest("[data-view-match]");
         if (match) {
-          renderPublicMatchDetail(match.dataset.viewMatch);
+          openPublicMatchPage(match.dataset.viewMatch);
           return;
         }
 
@@ -9076,6 +9554,54 @@
         return;
       }
 
+      const fixtureTab = event.target.closest("[data-fixture-tab]");
+      if (fixtureTab) {
+        switchFixturePanel(fixtureTab.dataset.fixtureTab);
+        return;
+      }
+
+      const seriesTab = event.target.closest("[data-series-tab]");
+      if (seriesTab) {
+        switchSeriesPanel(seriesTab.dataset.seriesTab);
+        return;
+      }
+
+      const tournamentHomeTab = event.target.closest("[data-tournament-home-tab]");
+      if (tournamentHomeTab) {
+        switchTournamentHomePanel(tournamentHomeTab.dataset.tournamentHomeTab);
+        return;
+      }
+
+      const openTournamentStandings = event.target.closest("[data-open-tournament-standings]");
+      if (openTournamentStandings) {
+        const subBtn = document.querySelector('[data-tourney-sub="standings"]');
+        if (subBtn) subBtn.click();
+        const select = document.querySelector("#standingsTournamentSelect");
+        if (select) {
+          select.value = openTournamentStandings.dataset.openTournamentStandings;
+          renderStandingsUI();
+        }
+        return;
+      }
+
+      const openTournamentStats = event.target.closest("[data-open-tournament-stats]");
+      if (openTournamentStats) {
+        const subBtn = document.querySelector('[data-tourney-sub="stats"]');
+        if (subBtn) subBtn.click();
+        const select = document.querySelector("#statsTournamentSelect");
+        if (select) {
+          select.value = openTournamentStats.dataset.openTournamentStats;
+          renderTournamentStatsUI();
+        }
+        return;
+      }
+
+      const scoreMatchBtn = event.target.closest("[data-score-match]");
+      if (scoreMatchBtn) {
+        openMatchScoring(scoreMatchBtn.dataset.scoreMatch);
+        return;
+      }
+
       const shareMatchBtn = event.target.closest("[data-share-match]");
       if (shareMatchBtn) {
         const url = shareMatchBtn.dataset.shareUrl || `${window.location.origin}${window.location.pathname}#match-${shareMatchBtn.dataset.shareMatch}`;
@@ -9112,16 +9638,7 @@
 
       const openRanking = event.target.closest("[data-open-ranking]");
       if (openRanking) {
-        const type = openRanking.dataset.openRanking;
-        const rankingsNav = document.querySelector('[data-page="rankings"]');
-        if (rankingsNav) rankingsNav.click();
-        const subMap = {
-          batters: "rank-batters",
-          bowlers: "rank-bowlers",
-          allrounders: "rank-allrounders"
-        };
-        const subBtn = document.querySelector(`[data-sub="${subMap[type]}"]`);
-        if (subBtn) subBtn.click();
+        openRankingsPage(openRanking.dataset.openRanking);
         return;
       }
 
@@ -9129,8 +9646,7 @@
       const matchViewBtn = event.target.closest("[data-view-match]");
       if (matchViewBtn) {
         const id = matchViewBtn.dataset.viewMatch;
-        publicActiveMatchId = id;
-        renderPublicMatchDetail(id);
+        openPublicMatchPage(id);
         return;
       }
 
@@ -9234,7 +9750,9 @@
       button = event.target.closest("[data-delete-request]");
       if (button) {
         const reqId = button.dataset.deleteRequest;
-        if (!confirm("Are you sure you want to delete this match request?")) return;
+        const request = state.requests.find((item) => String(item.id) === String(reqId));
+        if (!request || request.status !== "Pending" || !isChallengeSender(request)) return;
+        if (!confirm("Cancel this match challenge?")) return;
         button.disabled = true;
         try {
           if (state.usingDatabase) {
@@ -9285,11 +9803,16 @@
         const appId = button.dataset.rejectApp;
         if (confirm("Reject this application?")) {
           try {
+            const application = state.applications.find(app => String(app.id) === String(appId));
             if (state.usingDatabase) {
-               await supabase.from("tournament_applications").delete().eq("id", appId);
+               await rejectApplicationInDatabase(appId);
+               if (application) await notifyTournamentApplicant(application, "Rejected");
                await loadApplicationsFromDatabase();
             } else {
-               state.applications = state.applications.filter(a => String(a.id) !== String(appId));
+               if (application) {
+                 application.status = "Rejected";
+                 await notifyTournamentApplicant(application, "Rejected");
+               }
             }
             renderTournaments();
           } catch (e) { alert("Error rejecting app: " + e.message); }
@@ -9298,6 +9821,63 @@
       }
 
       // DELETE SERIES
+      button = event.target.closest("[data-series-action]");
+      if (button) {
+        const series = state.series.find(item => String(item.id) === String(button.dataset.id));
+        if (!series || (series.status || "Pending") !== "Pending") return;
+        if (!isSeriesChallengeReceiver(series) || isSeriesChallengeSender(series)) {
+          alert("Only the challenged team can accept or reject this series challenge.");
+          return;
+        }
+        const nextStatus = button.dataset.seriesAction;
+        button.disabled = true;
+        try {
+          if (state.usingDatabase) {
+            await updateSeriesStatusInDatabase(series.id, nextStatus);
+            series.status = nextStatus;
+            if (nextStatus === "Accepted") {
+              await createSeriesMatches(series);
+            }
+            await loadSeriesFromDatabase();
+            await loadMatchesFromDatabase();
+          } else {
+            series.status = nextStatus;
+            if (nextStatus === "Accepted") {
+              await createSeriesMatches(series);
+            }
+          }
+          renderSeries();
+          renderMatches();
+          alert(nextStatus === "Accepted" ? "Series challenge accepted. Matches created." : "Series challenge rejected.");
+        } catch (error) {
+          alert("Could not update series challenge: " + error.message);
+          button.disabled = false;
+        }
+        return;
+      }
+
+      button = event.target.closest("[data-cancel-series]");
+      if (button) {
+        const seriesId = button.dataset.cancelSeries;
+        const series = state.series.find(item => String(item.id) === String(seriesId));
+        if (!series || (series.status || "Pending") !== "Pending" || !isSeriesChallengeSender(series)) return;
+        if (!confirm("Cancel this series challenge?")) return;
+        button.disabled = true;
+        try {
+          if (state.usingDatabase) {
+            await supabase.from("series").delete().eq("id", seriesId);
+            await loadSeriesFromDatabase();
+          } else {
+            state.series = state.series.filter(item => String(item.id) !== String(seriesId));
+          }
+          renderSeries();
+        } catch (error) {
+          alert("Could not cancel series challenge: " + error.message);
+          button.disabled = false;
+        }
+        return;
+      }
+
       button = event.target.closest("[data-delete-series]");
       if (button) {
         const seriesId = button.dataset.deleteSeries;
@@ -9476,7 +10056,7 @@
         e.preventDefault();
         const btn = seriesForm.querySelector("button");
         btn.disabled = true;
-        btn.textContent = "Generating...";
+        btn.textContent = "Sending...";
 
         const name = document.querySelector("#newSeriesName").value;
         const teamAId = document.querySelector("#seriesTeamA").value;
@@ -9488,7 +10068,14 @@
         if (!teamAId || !teamBId || teamAId === teamBId) {
           alert("Please select two different teams.");
           btn.disabled = false;
-          btn.textContent = "Generate Series";
+          btn.textContent = "Send Series Challenge";
+          return;
+        }
+
+        if (!canSendChallengeForTeam(teamAId)) {
+          alert("You can only send a series challenge from a team you own or manage.");
+          btn.disabled = false;
+          btn.textContent = "Send Series Challenge";
           return;
         }
 
@@ -9496,32 +10083,30 @@
           const teamAName = state.teams.find(t => String(t.id) === String(teamAId))?.name;
           const teamBName = state.teams.find(t => String(t.id) === String(teamBId))?.name;
 
-          const series = await createSeriesInDatabase({
-            name, teamAId, teamBId, teamAName, teamBName, numMatches, overs, venue
-          });
-
-          for (let i = 1; i <= numMatches; i++) {
-             await createMatchInDatabase({
-               fromTeamId: teamAId,
-               toTeamId: teamBId,
-               from: teamAName,
-               to: teamBName,
-               seriesId: series.id,
-               venue: venue,
-               overs: overs,
-               status: "Scheduled"
-             });
+          const payload = { name, teamAId, teamBId, teamAName, teamBName, numMatches, overs, venue, status: "Pending" };
+          if (state.usingDatabase) {
+            await createSeriesInDatabase(payload);
+            await loadSeriesFromDatabase();
+          } else {
+            state.series.unshift({
+              id: Date.now(),
+              team_a_id: teamAId,
+              team_b_id: teamBId,
+              team_a_name: teamAName,
+              team_b_name: teamBName,
+              user_id: state.user?.id || null,
+              ...payload
+            });
+            renderSeries();
           }
 
-          await loadSeriesFromDatabase();
-          await loadMatchesFromDatabase();
-          alert(`${numMatches} matches generated for ${name}!`);
+          alert("Series challenge sent.");
           seriesForm.reset();
         } catch (error) {
-          alert("Error creating series: " + error.message);
+          alert("Error sending series challenge: " + error.message);
         } finally {
           btn.disabled = false;
-          btn.textContent = "Generate Series";
+          btn.textContent = "Send Series Challenge";
         }
       });
     }
@@ -9590,17 +10175,6 @@
       });
     }
 
-    const sidebarProfileBtn = document.querySelector("#sidebarProfileBtn");
-    if (sidebarProfileBtn) {
-      sidebarProfileBtn.addEventListener("click", () => {
-        const profileNav = document.querySelector('[data-page="profile"]');
-        if (profileNav) {
-          profileNav.style.display = "flex";
-          profileNav.click();
-        }
-      });
-    }
-
     const profileLogoutAction = document.querySelector("#profileLogoutAction");
     if (profileLogoutAction) {
       profileLogoutAction.addEventListener("click", () => {
@@ -9611,15 +10185,19 @@
     const mobileBtn = document.querySelector("#mobileProfileBtn");
     if (mobileBtn) {
       mobileBtn.addEventListener("click", () => {
-        if (state.user) {
-          if (confirm("Are you sure you want to log out?")) {
-            handleLogout();
-          }
-        } else {
+        if (!state.user) {
           setAuthMode('login');
           const modal = document.querySelector("#loginModal");
           if (modal) modal.style.display = "grid";
+          return;
         }
+        document.querySelectorAll(".nav button").forEach((item) => item.classList.remove("active"));
+        document.querySelectorAll(".page").forEach((item) => item.classList.remove("active"));
+        mobileBtn.classList.add("active");
+        document.querySelector("#profile")?.classList.add("active");
+        safeSetText("#pageTitle", pages.profile[0]);
+        safeSetText("#pageSubtitle", pages.profile[1]);
+        renderProfile();
       });
     }
 
@@ -10153,11 +10731,7 @@
     if (window.location.hash.startsWith("#match-")) {
       const matchId = window.location.hash.replace("#match-", "");
       setTimeout(() => {
-        document.querySelector("[data-page='public']").click();
-        publicActiveMatchId = matchId;
-        document.querySelector("#publicGridContainer").style.display = "none";
-        document.querySelector("#publicDetailContainer").style.display = "block";
-        renderPublicMatchDetail(matchId);
+        openPublicMatchPage(matchId);
       }, 300);
     }
   </script>
