@@ -4284,7 +4284,7 @@
         }
         if (parentPage?.id === "tournaments" && btn.dataset.tourneySub) {
           const tournamentHubSubnav = document.querySelector("#tournamentHubSubnav");
-          if (tournamentHubSubnav) tournamentHubSubnav.style.display = subId === "series" ? "none" : "flex";
+          if (tournamentHubSubnav) tournamentHubSubnav.style.display = subId === "series" || !state.user ? "none" : "flex";
         }
 
         if (subId === "standings") renderStandingsUI();
@@ -4414,6 +4414,10 @@
             document.querySelector("[data-tourney-sub='active']").click();
          }
       }
+
+      const tournamentHubSubnav = document.querySelector("#tournamentHubSubnav");
+      const activeTournamentSub = document.querySelector("#tournaments .sub-nav-btn.active")?.dataset?.tourneySub;
+      if (tournamentHubSubnav) tournamentHubSubnav.style.display = user && activeTournamentSub !== "series" ? "flex" : "none";
 
       // Trigger re-renders to show/hide owner-only buttons
       renderMatches();
@@ -6725,7 +6729,7 @@
       const tournamentsPage = document.querySelector("#tournaments");
       if (tournamentsPage) {
         const tournamentHubSubnav = tournamentsPage.querySelector("#tournamentHubSubnav");
-        if (tournamentHubSubnav) tournamentHubSubnav.style.display = "flex";
+        if (tournamentHubSubnav) tournamentHubSubnav.style.display = state.user ? "flex" : "none";
         tournamentsPage.querySelectorAll(".tourney-sub-page").forEach(panel => panel.classList.remove("active"));
         tournamentsPage.querySelector("#tourney-sub-active")?.classList.add("active");
         tournamentsPage.querySelectorAll(".sub-nav-btn[data-tourney-sub]").forEach(button => {
@@ -7068,6 +7072,68 @@
       `;
     }
 
+    function publicStatusBucket(status, startDate, endDate) {
+      const value = String(status || "").toLowerCase();
+      if (["live", "running", "ongoing", "in progress"].some(item => value.includes(item))) return "progress";
+      if (["completed", "finished", "ended"].some(item => value.includes(item))) return "finished";
+      const now = new Date();
+      const starts = startDate ? new Date(startDate) : null;
+      const ends = endDate ? new Date(endDate) : null;
+      if (starts && starts <= now && (!ends || ends >= now)) return "progress";
+      if (ends && ends < now) return "finished";
+      return "upcoming";
+    }
+
+    function publicStatusLabel(bucket) {
+      if (bucket === "progress") return "In Progress";
+      if (bucket === "finished") return "Finished";
+      return "Upcoming";
+    }
+
+    function renderPublicTournamentListHtml(tournaments) {
+      const groups = [
+        ["In Progress", tournaments.filter(t => publicStatusBucket(t.status, t.start_date, t.end_date) === "progress")],
+        ["Upcoming", tournaments.filter(t => publicStatusBucket(t.status, t.start_date, t.end_date) === "upcoming")],
+        ["Finished", tournaments.filter(t => publicStatusBucket(t.status, t.start_date, t.end_date) === "finished")]
+      ];
+
+      return groups.map(([heading, list]) => `
+        <section style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <h3 style="margin:0;">${heading} Tournaments</h3>
+            <span class="tag">${list.length}</span>
+          </div>
+          <div class="grid cols-2">
+            ${list.length ? list.map(tournament => {
+              const approvedTeams = state.applications.filter(a => String(a.tournamentId) === String(tournament.id) && a.status === "Approved");
+              const fixtures = state.matches.filter(match => String(match.tournamentId || "") === String(tournament.id));
+              const bucket = publicStatusBucket(tournament.status, tournament.start_date, tournament.end_date);
+              const statusClass = bucket === "progress" ? "green" : bucket === "finished" ? "cyan" : "gold";
+              return `
+                <article class="card" data-view-tournament="${tournament.id}" style="cursor:pointer;display:flex;flex-direction:column;gap:12px;">
+                  ${tournament.banner_url ? `<img src="${tournament.banner_url}" alt="${tournament.name}" style="width:100%;height:150px;object-fit:cover;border-radius:8px;">` : ""}
+                  <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+                    <div>
+                      <h3 style="margin:0;">${tournament.name}</h3>
+                      <p class="muted" style="margin-top:4px;">${tournament.format || "Cricket"} - ${tournament.venue || "Venue TBA"}</p>
+                    </div>
+                    <span class="tag ${statusClass}">${publicStatusLabel(bucket)}</span>
+                  </div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <span class="tag">${approvedTeams.length} teams</span>
+                    <span class="tag">${fixtures.length} matches</span>
+                    <span class="tag">${tournament.overs || 20} overs</span>
+                  </div>
+                  <p class="muted" style="font-size:0.84rem;">${tournament.start_date ? `Starts ${new Date(tournament.start_date).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}` : "Schedule will be announced soon."}</p>
+                  <button class="btn ghost" type="button" data-view-tournament="${tournament.id}">View Tournament Details</button>
+                </article>
+              `;
+            }).join("") : `<article class="card"><h3>No ${heading.toLowerCase()} tournaments</h3><p class="muted">Public tournaments will appear here when available.</p></article>`}
+          </div>
+        </section>
+      `).join("");
+    }
+
     async function renderTournaments() {
       const count = state.tournaments.length;
       const tournamentCountEl = document.querySelector("#tournamentCount");
@@ -7080,6 +7146,20 @@
       if (allTournamentCountEl) allTournamentCountEl.textContent = `${count} tournament${count !== 1 ? "s" : ""}`;
       const applyPanel = document.querySelector("#applyTournamentPanel");
       if (applyPanel) applyPanel.style.display = state.user ? "" : "none";
+      const tournamentHubSubnav = document.querySelector("#tournamentHubSubnav");
+      const activeTournamentTop = document.querySelector("#tournaments > .sub-nav .sub-nav-btn.active")?.dataset?.tourneySub;
+      if (tournamentHubSubnav) tournamentHubSubnav.style.display = state.user && activeTournamentTop !== "series" ? "flex" : "none";
+
+      if (!state.user) {
+        const publicHtml = count
+          ? renderPublicTournamentListHtml(state.tournaments)
+          : `<div class="card"><h3>No tournaments yet</h3><p class="muted">In progress, upcoming, and finished tournaments will appear here.</p></div>`;
+        tournamentListEl.innerHTML = publicHtml;
+        if (allTournamentListEl) allTournamentListEl.innerHTML = publicHtml;
+        renderTournamentSelects();
+        renderMyTournaments();
+        return;
+      }
 
       if (!count) {
         tournamentListEl.innerHTML = `<div class="card">No tournaments created yet.</div>`;
@@ -7496,6 +7576,14 @@
       const seriesListEl = document.querySelector("#seriesList");
       const seriesRequestListEl = document.querySelector("#seriesRequestList");
       if (!seriesListEl && !seriesRequestListEl) return;
+      const seriesSubnav = document.querySelector("#tourney-sub-series > .sub-nav");
+      const seriesPanels = document.querySelectorAll("#tourney-sub-series .series-panel");
+      if (seriesSubnav) seriesSubnav.style.display = state.user ? "flex" : "none";
+      if (!state.user) {
+        seriesPanels.forEach(panel => {
+          panel.style.display = panel.dataset.seriesPanel === "list" ? "" : "none";
+        });
+      }
 
       const renderSeriesTeamSelects = () => {
         const fromEl = document.querySelector("#seriesTeamA");
@@ -7521,6 +7609,54 @@
         ? pendingSeries.filter(series => isSeriesChallengeSender(series) || isSeriesChallengeReceiver(series))
         : [];
       safeSetText("#seriesRequestCount", `${visiblePendingSeries.length} pending`);
+
+      const publicSeriesCard = (s) => {
+        const seriesMatches = state.matches.filter(m => String(m.seriesId || m.series_id || "") === String(s.id));
+        const bucket = publicStatusBucket(s.status, s.start_date, s.end_date);
+        const tagClass = bucket === "progress" ? "green" : bucket === "finished" ? "cyan" : "gold";
+        return `
+          <article class="card" data-view-series="${s.id}" style="cursor:pointer;display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+              <div>
+                <h3 style="margin:0;">${s.name || "Cricket Series"}</h3>
+                <p class="muted" style="margin-top:4px;">${s.team_a_name || "Team A"} vs ${s.team_b_name || "Team B"}</p>
+              </div>
+              <span class="tag ${tagClass}">${publicStatusLabel(bucket)}</span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <span class="tag">${s.num_matches || seriesMatches.length || 0} matches</span>
+              <span class="tag">${seriesMatches.filter(match => match.status === "Live").length} live</span>
+              <span class="tag">${seriesMatches.filter(match => match.status === "Completed").length} finished</span>
+            </div>
+            <p class="muted" style="font-size:0.84rem;">${s.venue || "Venue TBA"}${s.overs ? ` - ${s.overs} overs` : ""}</p>
+            <button class="btn ghost" type="button" data-view-series="${s.id}">View Series Details</button>
+          </article>
+        `;
+      };
+
+      if (!state.user) {
+        const groups = [
+          ["In Progress", currentSeries],
+          ["Upcoming", scheduledSeries],
+          ["Finished", completedSeries]
+        ];
+        if (seriesRequestListEl) seriesRequestListEl.innerHTML = "";
+        if (seriesListEl) {
+          seriesListEl.innerHTML = groups.map(([heading, list]) => `
+            <section style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <h3 style="margin:0;">${heading} Series</h3>
+                <span class="tag">${list.length}</span>
+              </div>
+              <div class="grid cols-2">
+                ${list.length ? list.map(publicSeriesCard).join("") : `<article class="card"><h3>No ${heading.toLowerCase()} series</h3><p class="muted">Public series will appear here when available.</p></article>`}
+              </div>
+            </section>
+          `).join("");
+        }
+        renderSeriesTeamSelects();
+        return;
+      }
 
       const seriesRequestCard = (s) => {
         const sender = isSeriesChallengeSender(s);
@@ -8692,6 +8828,43 @@
       });
     }
 
+    function renderPublicSeriesDetail(seriesId) {
+      const series = state.series.find(item => String(item.id) === String(seriesId));
+      if (!series) return;
+      const fixtures = state.matches.filter(match => String(match.seriesId || match.series_id || "") === String(series.id));
+      const completed = fixtures.filter(match => match.status === "Completed");
+      const live = fixtures.filter(match => match.status === "Live");
+      const bucket = publicStatusBucket(series.status, series.start_date, series.end_date);
+      detailPageShell({
+        label: "Series Detail",
+        title: series.name || "Cricket Series",
+        subtitle: `${publicStatusLabel(bucket)} - ${series.team_a_name || "Team A"} vs ${series.team_b_name || "Team B"}`,
+        imageHtml: `<div class="avatar" style="width:72px;height:72px;">SR</div>`,
+        tabs: [
+          { id: "overview", label: "Overview", html: `
+            <div class="grid cols-3">
+              <div class="card"><span class="muted">Matches</span><h3>${series.num_matches || fixtures.length || 0}</h3></div>
+              <div class="card"><span class="muted">Live</span><h3>${live.length}</h3></div>
+              <div class="card"><span class="muted">Finished</span><h3>${completed.length}</h3></div>
+            </div>
+            <div class="card" style="margin-top:16px;">
+              <span class="muted">Series Info</span>
+              <h3>${series.team_a_name || "Team A"} vs ${series.team_b_name || "Team B"}</h3>
+              <p class="muted">${series.venue || "Venue TBA"}${series.overs ? ` - ${series.overs} overs` : ""}</p>
+            </div>
+          `},
+          { id: "matches", label: "Matches", html: `<ul class="feed">${fixtures.length ? fixtures.map((match, index) => `<li data-view-match="${match.id}" style="cursor:pointer;"><strong>Match ${index + 1}: ${match.teamA} vs ${match.teamB}</strong><span>${match.status} - ${formatMatchDateTime(match.matchDate, match.matchTime) || match.venue}</span></li>`).join("") : `<li><strong>No matches yet</strong><span>Series matches will appear after scheduling.</span></li>`}</ul>`},
+          { id: "results", label: "Results", html: `<ul class="feed">${completed.length ? completed.map(match => `<li data-view-match="${match.id}" style="cursor:pointer;"><strong>${match.teamA} vs ${match.teamB}</strong><span>${match.result_text || "Completed"}</span></li>`).join("") : `<li><strong>No finished matches</strong><span>Finished scorecards will appear here.</span></li>`}</ul>`},
+          { id: "teams", label: "Teams", html: `
+            <div class="grid cols-2">
+              <div class="card"><span class="muted">Team A</span><h3>${series.team_a_name || "Team A"}</h3></div>
+              <div class="card"><span class="muted">Team B</span><h3>${series.team_b_name || "Team B"}</h3></div>
+            </div>
+          `}
+        ]
+      });
+    }
+
     function showMatchResultSummary(resultText) {
       const modal = document.querySelector("#matchSummaryModal");
       const content = document.querySelector("#highlightsContent");
@@ -9495,6 +9668,12 @@
         const tournament = event.target.closest("[data-view-tournament]");
         if (tournament) {
           renderPublicTournamentDetail(tournament.dataset.viewTournament);
+          return;
+        }
+
+        const series = event.target.closest("[data-view-series]");
+        if (series) {
+          renderPublicSeriesDetail(series.dataset.viewSeries);
         }
       });
     }
@@ -9668,6 +9847,12 @@
       if (tourneyViewBtn && !tournamentActionBtn) {
         const id = tourneyViewBtn.dataset.viewTournament;
         renderPublicTournamentDetail(id);
+        return;
+      }
+
+      const seriesViewBtn = event.target.closest("[data-view-series]");
+      if (seriesViewBtn) {
+        renderPublicSeriesDetail(seriesViewBtn.dataset.viewSeries);
         return;
       }
 
