@@ -3192,7 +3192,7 @@
           <button class="btn primary btn-sm sub-nav-btn active" data-sub="profiles">Team Profiles</button>
           <button class="btn ghost btn-sm sub-nav-btn" data-sub="create" data-auth-only>Create New Team</button>
           <button class="btn ghost btn-sm sub-nav-btn" data-sub="management" data-auth-only>Team Management</button>
-          <button class="btn ghost btn-sm sub-nav-btn" data-sub="challenges" data-auth-only>Challenge a Match</button>
+          <button class="btn ghost btn-sm sub-nav-btn" data-sub="challenges" data-auth-only>Challenge a Match <span class="tag gold" id="matchChallengeNavCount" style="margin-left:6px;">0</span></button>
           <button class="btn ghost btn-sm sub-nav-btn" data-sub="fixtures">Scheduled Matches</button>
           <button class="btn ghost btn-sm sub-nav-btn" data-sub="admins" data-auth-only>Manage Access</button>
         </div>
@@ -3975,7 +3975,7 @@
 
         <div id="tourney-sub-series" class="tourney-sub-page">
            <div class="sub-nav" style="display:flex; gap:10px; overflow-x:auto; margin-bottom:16px; border-bottom:1px solid var(--line); padding-bottom:12px;">
-             <button class="btn primary btn-sm" type="button" data-series-tab="requests">Series Requests</button>
+             <button class="btn primary btn-sm" type="button" data-series-tab="requests">Series Requests <span class="tag gold" id="seriesChallengeNavCount" style="margin-left:6px;">0</span></button>
              <button class="btn ghost btn-sm" type="button" data-series-tab="mine">My Series</button>
              <button class="btn ghost btn-sm" type="button" data-series-tab="challenge">Challenge a Series</button>
              <button class="btn ghost btn-sm" type="button" data-series-tab="list">Series List</button>
@@ -4610,7 +4610,7 @@
       const notificationsList = document.querySelector("#profileNotificationsList");
       if (notificationsList) {
         notificationsList.innerHTML = state.notifications.length
-          ? state.notifications.map(item => `<li><strong>${item.type || "Notification"}</strong><span>${item.payload?.message || item.payload?.title || new Date(item.created_at || Date.now()).toLocaleString()}</span></li>`).join("")
+          ? state.notifications.map(item => `<li><strong>${item.payload?.title || item.type || "Notification"}${(!item.read_at && !item.readAt) ? ` <span class="tag gold">New</span>` : ""}</strong><span>${item.payload?.message || new Date(item.created_at || Date.now()).toLocaleString()}</span></li>`).join("")
           : `<li><strong>No notifications</strong><span>Match requests and role updates will appear here.</span></li>`;
       }
       if (historyEl) {
@@ -4809,6 +4809,74 @@
       } catch (error) {
         console.warn("Could not create notification:", error.message);
       }
+    }
+
+    function notificationUserIdsForTeam(teamId) {
+      const ids = new Set();
+      const team = state.teams.find(item => String(item.id) === String(teamId));
+      if (team?.user_id) ids.add(String(team.user_id));
+      state.teamAdmins
+        .filter(admin => String(admin.teamId || admin.team_id) === String(teamId) && (admin.userId || admin.user_id))
+        .forEach(admin => ids.add(String(admin.userId || admin.user_id)));
+      return [...ids];
+    }
+
+    async function notifyTeamUsers(teamId, type, payload = {}) {
+      const userIds = notificationUserIdsForTeam(teamId);
+      if (state.usingDatabase) {
+        await Promise.all(userIds.map(userId => createNotification(userId, type, payload)));
+      }
+      if (!state.usingDatabase || userIds.includes(String(state.user?.id))) {
+        sendLocalNotification(payload.title || "PakScorer notification", payload.message || "You have a new update.");
+        await loadNotificationsFromDatabase();
+        renderProfile();
+      }
+    }
+
+    async function notifyMatchChallengeCreated(request) {
+      await notifyTeamUsers(request.toTeamId, "match_challenge", {
+        title: "New match challenge",
+        message: `${request.from || "A team"} challenged ${request.to || "your team"} for a ${request.overs || 20}-over match${request.venue ? ` at ${request.venue}` : ""}.`,
+        requestId: request.id,
+        fromTeamId: request.fromTeamId,
+        toTeamId: request.toTeamId,
+        status: "Pending"
+      });
+    }
+
+    async function notifyMatchChallengeDecision(request, status) {
+      const accepted = status === "Accepted";
+      await notifyTeamUsers(request.fromTeamId, "match_challenge_decision", {
+        title: accepted ? "Match challenge accepted" : "Match challenge rejected",
+        message: `${request.to || "Opponent"} ${accepted ? "accepted" : "rejected"} your match challenge against ${request.from || "your team"}.`,
+        requestId: request.id,
+        fromTeamId: request.fromTeamId,
+        toTeamId: request.toTeamId,
+        status
+      });
+    }
+
+    async function notifySeriesChallengeCreated(series) {
+      await notifyTeamUsers(seriesTeamBId(series), "series_challenge", {
+        title: "New series challenge",
+        message: `${series.team_a_name || series.teamAName || "A team"} challenged ${series.team_b_name || series.teamBName || "your team"} for ${series.num_matches || series.numMatches || 1} matches.`,
+        seriesId: series.id,
+        fromTeamId: seriesTeamAId(series),
+        toTeamId: seriesTeamBId(series),
+        status: "Pending"
+      });
+    }
+
+    async function notifySeriesChallengeDecision(series, status) {
+      const accepted = status === "Accepted";
+      await notifyTeamUsers(seriesTeamAId(series), "series_challenge_decision", {
+        title: accepted ? "Series challenge accepted" : "Series challenge rejected",
+        message: `${series.team_b_name || series.teamBName || "Opponent"} ${accepted ? "accepted" : "rejected"} your series challenge.`,
+        seriesId: series.id,
+        fromTeamId: seriesTeamAId(series),
+        toTeamId: seriesTeamBId(series),
+        status
+      });
     }
 
     async function notifyTournamentApplicant(application, status) {
@@ -6096,10 +6164,15 @@
         : [];
       const pending = visibleRequests.filter((request) => request.status === "Pending").length;
       const requestCountEl = document.querySelector("#requestCount");
+      const requestNavCountEl = document.querySelector("#matchChallengeNavCount");
       const requestListEl = document.querySelector("#requestList");
       if (!requestCountEl || !requestListEl) return;
 
       requestCountEl.textContent = `${pending} pending`;
+      if (requestNavCountEl) {
+        requestNavCountEl.textContent = String(pending);
+        requestNavCountEl.style.display = pending ? "inline-flex" : "none";
+      }
       requestListEl.innerHTML = visibleRequests.length ? visibleRequests.map((request) => `
         <article class="card">
           <h3>${request.from} vs ${request.to}</h3>
@@ -7609,6 +7682,11 @@
         ? pendingSeries.filter(series => isSeriesChallengeSender(series) || isSeriesChallengeReceiver(series))
         : [];
       safeSetText("#seriesRequestCount", `${visiblePendingSeries.length} pending`);
+      const seriesNavCountEl = document.querySelector("#seriesChallengeNavCount");
+      if (seriesNavCountEl) {
+        seriesNavCountEl.textContent = String(visiblePendingSeries.length);
+        seriesNavCountEl.style.display = visiblePendingSeries.length ? "inline-flex" : "none";
+      }
 
       const publicSeriesCard = (s) => {
         const seriesMatches = state.matches.filter(m => String(m.seriesId || m.series_id || "") === String(s.id));
@@ -8385,6 +8463,12 @@
              sendLocalNotification("ðŸ† Match Completed!", `${payload.new.team_a} vs ${payload.new.team_b}: ${payload.new.result_text}`);
           }
         })
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, async payload => {
+          if (!state.user || String(payload.new.user_id) !== String(state.user.id)) return;
+          await loadNotificationsFromDatabase();
+          renderProfile();
+          sendLocalNotification(payload.new.payload?.title || "New PakScorer notification", payload.new.payload?.message || "You have a new update.");
+        })
         .subscribe();
     }
 
@@ -9062,9 +9146,10 @@
         user_id: state.user?.id || null,
       };
 
+      let savedRequest;
       if (state.usingDatabase) {
         try {
-          state.requests.unshift(await createMatchRequestInDatabase({
+          savedRequest = await createMatchRequestInDatabase({
             from_team_id: request.fromTeamId,
             to_team_id: request.toTeamId,
             from_team: request.from,
@@ -9076,16 +9161,20 @@
             format: request.format,
             status: request.status,
             user_id: state.user?.id || null,
-          }));
+          });
+          state.requests.unshift(savedRequest);
         } catch (error) {
           alert("Could not save match request to Supabase.");
           return;
         }
       } else {
-        state.requests.unshift({ id: Date.now(), ...request });
+        savedRequest = { id: Date.now(), ...request };
+        state.requests.unshift(savedRequest);
       }
 
+      await notifyMatchChallengeCreated(savedRequest);
       renderRequests();
+      renderProfile();
     });
 
     document.querySelector("#requestList").addEventListener("click", async (event) => {
@@ -9167,9 +9256,11 @@
       }
 
       request.status = nextStatus;
+      await notifyMatchChallengeDecision(request, nextStatus);
       sendLocalNotification("Match request updated", `${request.from} vs ${request.to} was ${nextStatus.toLowerCase()}.`);
       renderRequests();
       renderMatches();
+      renderProfile();
     });
 
     const publicSearchInput = document.querySelector("#publicSearchInput");
@@ -10031,8 +10122,10 @@
               await createSeriesMatches(series);
             }
           }
+          await notifySeriesChallengeDecision(series, nextStatus);
           renderSeries();
           renderMatches();
+          renderProfile();
           alert(nextStatus === "Accepted" ? "Series challenge accepted. Matches created." : "Series challenge rejected.");
         } catch (error) {
           alert("Could not update series challenge: " + error.message);
@@ -10269,11 +10362,12 @@
           const teamBName = state.teams.find(t => String(t.id) === String(teamBId))?.name;
 
           const payload = { name, teamAId, teamBId, teamAName, teamBName, numMatches, overs, venue, status: "Pending" };
+          let savedSeries;
           if (state.usingDatabase) {
-            await createSeriesInDatabase(payload);
+            savedSeries = await createSeriesInDatabase(payload);
             await loadSeriesFromDatabase();
           } else {
-            state.series.unshift({
+            savedSeries = {
               id: Date.now(),
               team_a_id: teamAId,
               team_b_id: teamBId,
@@ -10281,10 +10375,13 @@
               team_b_name: teamBName,
               user_id: state.user?.id || null,
               ...payload
-            });
+            };
+            state.series.unshift(savedSeries);
             renderSeries();
           }
 
+          await notifySeriesChallengeCreated(savedSeries);
+          renderProfile();
           alert("Series challenge sent.");
           seriesForm.reset();
         } catch (error) {

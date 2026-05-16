@@ -565,5 +565,6 @@ begin;
     public.innings, 
     public.balls, 
     public.players,
-    public.series;
+    public.series,
+    public.notifications;
 commit;
