@@ -3461,6 +3461,7 @@
                       <label>Select Match
                         <select id="scoringMatchSelect"><option value="">-- Select a match --</option></select>
                       </label>
+                      <button class="btn ghost" id="transferScoringBtn" type="button" style="display:none;">Transfer scoring to opponent</button>
 
                       <div id="squadSetup" style="display: none; flex-direction: column; gap: 20px; margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--line);">
                          <h3>Select Playing XI</h3>
@@ -3518,6 +3519,8 @@
                       </div>
                       <p class="form-message" id="overNotice" aria-live="polite"></p>
                       <div class="form-grid" id="bowlerChooser" hidden>
+                        <h3 style="margin:0;">Over complete</h3>
+                        <p class="muted" style="margin:0;">Select a different bowler before scoring the next ball.</p>
                         <label>
                           Next bowler from bowling team
                           <select id="nextBowlerSelect"></select>
@@ -6114,6 +6117,29 @@
       if (match) match.scoringLockedBy = null;
     }
 
+    async function transferMatchScoring(match) {
+      if (!match || !canManageScoringTeam(match)) return alert("Only the current scoring team can transfer scoring.");
+      const nextTeamId = String(scoringTeamId(match)) === String(match.teamAId) ? match.teamBId : match.teamAId;
+      const nextTeamName = String(nextTeamId) === String(match.teamAId) ? match.teamA : match.teamB;
+      if (!confirm(`Transfer scoring control to ${nextTeamName}?`)) return;
+      try {
+        if (state.usingDatabase) {
+          await updateMatchScoringOwnerInDatabase(match.id, nextTeamId);
+          match.scoringTeamId = nextTeamId;
+          match.scoringLockedBy = null;
+          await loadMatchesFromDatabase();
+        } else {
+          match.scoringTeamId = nextTeamId;
+          match.scoringLockedBy = null;
+        }
+        renderMatches();
+        renderScoringMatchSelect();
+        alert(`Scoring transferred to ${nextTeamName}.`);
+      } catch (error) {
+        alert("Could not transfer scoring: " + error.message);
+      }
+    }
+
     async function updateMatchStatusInDatabase(id, status) {
       const { data, error } = await supabase
         .from("matches")
@@ -7018,6 +7044,7 @@
     function updateStartButtonText() {
       const select = document.querySelector("#scoringMatchSelect");
       const btn = document.querySelector("#startMatchBtn");
+      const transferBtn = document.querySelector("#transferScoringBtn");
       if (!select || !btn) return;
 
       const matchId = select.value;
@@ -7025,17 +7052,25 @@
         btn.textContent = "Start Match";
         btn.disabled = true;
         btn.style.opacity = "0.5";
+        if (transferBtn) transferBtn.style.display = "none";
         return;
       }
 
       btn.disabled = false;
       btn.style.opacity = "1";
       const match = state.matches.find(m => String(m.id) === String(matchId));
+      const currentScoringTeam = state.teams.find(team => String(team.id) === String(scoringTeamId(match)));
+      const opponentName = String(scoringTeamId(match)) === String(match?.teamAId) ? match?.teamB : match?.teamA;
+      if (transferBtn) {
+        const canTransfer = match && canManageScoringTeam(match);
+        transferBtn.style.display = canTransfer ? "" : "none";
+        transferBtn.textContent = `Transfer scoring to ${opponentName || "opponent"}`;
+      }
 
       if (match && (match.status === "Live" || match.status === "Setup")) {
         btn.textContent = "Resume Match";
       } else {
-        btn.textContent = "Start Match";
+        btn.textContent = currentScoringTeam ? `Start Match (${currentScoringTeam.name} scoring)` : "Start Match";
       }
     }
 
@@ -8810,6 +8845,9 @@
       const notice = document.querySelector("#overNotice");
       notice.textContent = `Over ${finishedOver} complete. Select next bowler from ${score.bowlingTeam}.`;
       notice.className = "form-message success";
+      setTimeout(() => {
+        document.querySelector("#nextBowlerSelect")?.focus();
+      }, 0);
     }
 
     async function addLegalBall(label, runs, isWicket = false) {
@@ -9844,7 +9882,17 @@
         tossSetup.style.display = "none";
         document.querySelector("#squadSetup").style.display = "none";
       }
+      updateStartButtonText();
     });
+
+    const transferScoringBtn = document.querySelector("#transferScoringBtn");
+    if (transferScoringBtn) {
+      transferScoringBtn.addEventListener("click", async () => {
+        const matchId = document.querySelector("#scoringMatchSelect")?.value;
+        const match = state.matches.find(m => String(m.id) === String(matchId));
+        await transferMatchScoring(match);
+      });
+    }
 
     document.querySelector("#startMatchBtn").addEventListener("click", async () => {
       const select = document.querySelector("#scoringMatchSelect");
@@ -10189,26 +10237,7 @@
       const transferScoringBtn = event.target.closest("[data-transfer-scoring]");
       if (transferScoringBtn) {
         const match = state.matches.find(m => String(m.id) === String(transferScoringBtn.dataset.transferScoring));
-        if (!match || !canManageScoringTeam(match)) return alert("Only the current scoring team can transfer scoring.");
-        const nextTeamId = String(scoringTeamId(match)) === String(match.teamAId) ? match.teamBId : match.teamAId;
-        const nextTeamName = String(nextTeamId) === String(match.teamAId) ? match.teamA : match.teamB;
-        if (!confirm(`Transfer scoring control to ${nextTeamName}?`)) return;
-        try {
-          if (state.usingDatabase) {
-            await updateMatchScoringOwnerInDatabase(match.id, nextTeamId);
-            match.scoringTeamId = nextTeamId;
-            match.scoringLockedBy = null;
-            await loadMatchesFromDatabase();
-          } else {
-            match.scoringTeamId = nextTeamId;
-            match.scoringLockedBy = null;
-          }
-          renderMatches();
-          renderScoringMatchSelect();
-          alert(`Scoring transferred to ${nextTeamName}.`);
-        } catch (error) {
-          alert("Could not transfer scoring: " + error.message);
-        }
+        await transferMatchScoring(match);
         return;
       }
 
