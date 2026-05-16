@@ -2898,6 +2898,7 @@
         <button data-page="teams"><span class="nav-icon">T</span>Teams</button>
         <button data-page="matches"><span class="nav-icon">M</span>Matches</button>
         <button data-page="tournaments"><span class="nav-icon">TR</span>Tournaments</button>
+        <button data-page="profile" data-profile-jump="notifications" data-auth-only><span class="nav-icon">N</span>Notifications <span class="tag gold" id="navNotificationCount" style="margin-left:6px;">0</span></button>
         <button data-page="public" data-guest-only><span class="nav-icon">LV</span>Live View</button>
         <button data-page="profile"><span class="nav-icon">P</span>Profile</button>
       </nav>
@@ -4219,6 +4220,16 @@
         if (page === "public") {
           renderPublicLiveView();
         }
+
+        if (page === "profile") {
+          renderProfile();
+          const profilePanel = button.dataset.profileJump;
+          if (profilePanel) {
+            document.querySelectorAll("[data-profile-panel-content]").forEach(item => {
+              item.style.display = item.dataset.profilePanelContent === profilePanel ? "block" : "none";
+            });
+          }
+        }
       });
     });
 
@@ -4372,6 +4383,8 @@
         if (restrictedPages.includes(page)) {
           shouldHide = !user;
         } else if (page === "teams") {
+          shouldHide = !user;
+        } else if (btn.hasAttribute("data-auth-only")) {
           shouldHide = !user;
         } else if (btn.hasAttribute("data-guest-only")) {
           shouldHide = Boolean(user);
@@ -4600,7 +4613,7 @@
       safeSetText("#profileScorerCount", scoringMatches.length);
       safeSetText("#profileMatchesCount", scoringMatches.length + state.matches.filter(isUserMatch).length);
       safeSetText("#profileTeamMenuCount", myTeams.length);
-      safeSetText("#profileNotificationCount", state.notifications.filter(item => !item.read_at && !item.readAt).length);
+      updateNotificationBadge();
       safeSetText("#profileGlobalRole", roleLabel());
       const loginAction = document.querySelector("#profileLoginAction");
       if (loginAction) {
@@ -4751,15 +4764,20 @@
 
     function updateNotificationBadge() {
       const btn = document.querySelector("#notifyBtn");
-      if (!btn) return;
       const unread = state.notifications.filter(item => !item.read_at && !item.readAt).length;
-      btn.title = unread ? `${unread} unread notifications` : "Notifications";
-      if (unread) {
-        btn.textContent = unread > 9 ? "9+" : String(unread);
-      } else if ("Notification" in window && Notification.permission === "granted") {
-        btn.textContent = "ðŸ”•";
-      } else {
-        btn.textContent = "ðŸ””";
+      safeSetText("#profileNotificationCount", unread);
+      safeSetText("#navNotificationCount", unread);
+      const navCount = document.querySelector("#navNotificationCount");
+      if (navCount) navCount.style.display = unread ? "inline-flex" : "none";
+      if (btn) {
+        btn.title = unread ? `${unread} unread notifications` : "Notifications";
+        if (unread) {
+          btn.textContent = unread > 9 ? "9+" : String(unread);
+        } else if ("Notification" in window && Notification.permission === "granted") {
+          btn.textContent = "Notifications On";
+        } else {
+          btn.textContent = "Enable Notifications";
+        }
       }
     }
 
