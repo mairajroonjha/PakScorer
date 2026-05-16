@@ -151,6 +151,12 @@
       font-weight: 800;
     }
 
+    .nav button .nav-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .nav button:hover,
     .nav button.active {
       background: var(--surface-2);
@@ -163,6 +169,7 @@
     }
 
     .nav-icon {
+      position: relative;
       width: 24px;
       height: 24px;
       display: grid;
@@ -669,6 +676,20 @@
       font-size: 1.05rem;
     }
 
+    #bowlerChooser:not([hidden]) {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      z-index: 8000;
+      width: min(420px, calc(100vw - 28px));
+      transform: translate(-50%, -50%);
+      padding: 18px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 14px;
+      background: rgba(10, 20, 29, 0.98);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.75), 0 0 0 9999px rgba(0,0,0,0.58);
+    }
+
     .feed {
       display: grid;
       gap: 10px;
@@ -976,7 +997,7 @@
       }
 
       /* Make sure text doesn't overflow container */
-      .nav button span:not(.nav-icon),
+      .nav button span:not(.nav-icon):not(.nav-count),
       #mobileProfileLabel {
         max-width: 100%;
         overflow: hidden;
@@ -1749,6 +1770,26 @@
       background: rgba(29,217,255,0.14);
       color: #dffcff;
       font-weight: 950;
+    }
+
+    .nav-count {
+      position: absolute;
+      right: -7px;
+      bottom: -7px;
+      min-width: 17px;
+      height: 17px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      border: 2px solid rgba(6, 22, 32, 0.96);
+      border-radius: 999px;
+      background: var(--gold);
+      color: #06151d;
+      font-size: 0.62rem;
+      line-height: 1;
+      font-weight: 950;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.25);
     }
 
     .feature-card strong {
@@ -2539,7 +2580,7 @@
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 8px 18px rgba(0,0,0,0.18);
       }
 
-      .nav button span:not(.nav-icon),
+      .nav button span:not(.nav-icon):not(.nav-count),
       #mobileProfileLabel {
         display: block;
         max-width: 68px;
@@ -2549,11 +2590,20 @@
       }
 
       .nav-icon {
+        position: relative;
         width: 26px;
         height: 26px;
         font-size: 0.72rem;
         border-radius: 10px;
         background: linear-gradient(145deg, rgba(49,255,154,0.22), rgba(29,217,255,0.12));
+      }
+
+      .nav-count {
+        right: -8px;
+        bottom: -8px;
+        min-width: 18px;
+        height: 18px;
+        font-size: 0.58rem;
       }
 
       .nav button.active,
@@ -2835,7 +2885,7 @@
         will-change: transform;
       }
 
-      .nav button span:not(.nav-icon) {
+      .nav button span:not(.nav-icon):not(.nav-count) {
         max-width: 100% !important;
         white-space: nowrap !important;
         overflow: hidden !important;
@@ -2843,6 +2893,7 @@
       }
 
       .nav .nav-icon {
+        position: relative !important;
         width: 25px !important;
         height: 25px !important;
         border-radius: 12px !important;
@@ -2898,7 +2949,7 @@
         <button data-page="teams"><span class="nav-icon">T</span>Teams</button>
         <button data-page="matches"><span class="nav-icon">M</span>Matches</button>
         <button data-page="tournaments"><span class="nav-icon">TR</span>Tournaments</button>
-        <button data-page="profile" data-profile-jump="notifications" data-auth-only><span class="nav-icon">N</span>Notifications <span class="tag gold" id="navNotificationCount" style="margin-left:6px;">0</span></button>
+        <button data-page="notifications" data-auth-only><span class="nav-icon">N<span class="nav-count" id="navNotificationCount">0</span></span><span class="nav-label">Notifications</span></button>
         <button data-page="public" data-guest-only><span class="nav-icon">LV</span>Live View</button>
         <button data-page="profile"><span class="nav-icon">P</span>Profile</button>
       </nav>
@@ -3134,7 +3185,7 @@
                 <ul class="profile-menu">
                   <li><button type="button" data-profile-panel="edit">Edit Profile<span>›</span></button></li>
                   <li><button type="button" data-page-jump="teams">My Teams<span id="profileTeamMenuCount">0</span></button></li>
-                  <li><button type="button" data-profile-panel="notifications">Notifications<span id="profileNotificationCount">0</span></button></li>
+                  <li><button type="button" data-page-jump="notifications">Notifications<span id="profileNotificationCount">0</span></button></li>
                   <li><button type="button" data-profile-panel="settings">Settings<span>›</span></button></li>
                   <li><button type="button" data-profile-panel="support">Support<span>›</span></button></li>
                   <li><button type="button" id="profileLogoutAction">Logout<span>↗</span></button></li>
@@ -3184,6 +3235,21 @@
               <span class="muted">Role History & Invitations</span>
               <ul class="feed" id="profileRoleHistory" style="margin-top: 10px;"></ul>
             </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="page" id="notifications">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Notifications</h2>
+              <span>Match challenges, series requests, tournament updates, and role alerts.</span>
+            </div>
+            <button class="btn ghost btn-sm" id="markAllNotificationsRead" type="button">Mark all read</button>
+          </div>
+          <div class="panel-body">
+            <ul class="feed" id="notificationsPageList"></ul>
           </div>
         </section>
       </section>
@@ -3384,7 +3450,7 @@
                 <ul class="feed" id="scheduledMatchList"></ul>
               </section>
 
-              <section class="fixture-panel" data-fixture-panel="scoring" style="display:none;">
+              <section class="fixture-panel" id="fixtureScoringPanel" data-fixture-panel="scoring" style="display:none;">
                 <section class="panel" style="margin-bottom: 16px;">
                   <div class="panel-head">
                     <h2>Match Setup & Scoring</h2>
@@ -3434,7 +3500,7 @@
                   </div>
                 </section>
 
-                <div class="split" id="scoringControls" style="display: none; opacity: 0.5; pointer-events: none;">
+                <div id="scoringControls" style="display: none; opacity: 0.5; pointer-events: none;">
                   <section class="panel">
                     <div class="panel-head">
                       <h2>Live Scoring</h2>
@@ -3480,6 +3546,7 @@
                         <button class="btn" data-extra="Wd">Wd</button>
                         <button class="btn" data-extra="Nb">Nb</button>
                         <select id="noBallBatRuns" title="Runs off bat on no-ball">
+                          <option value="">No-ball options</option>
                           <option value="0">Nb + 0 bat</option>
                           <option value="1">Nb + 1 bat</option>
                           <option value="2">Nb + 2 bat</option>
@@ -3490,6 +3557,7 @@
                         <button class="btn" data-extra="B">B</button>
                         <button class="btn" data-extra="Lb">Lb</button>
                         <select id="wicketRunsSelect" title="Runs completed on wicket">
+                          <option value="">Wicket options</option>
                           <option value="0">W + 0 runs</option>
                           <option value="1">W + 1 run</option>
                           <option value="2">W + 2 runs</option>
@@ -3508,7 +3576,7 @@
                     </div>
                   </section>
 
-                  <section class="panel">
+                  <section class="panel" style="display:none;">
                     <div class="panel-head">
                       <h2>Ball Feed</h2>
                       <span>Realtime source</span>
@@ -3529,7 +3597,6 @@
             </div>
           </section>
         </div>
-
         <div id="sub-admins" class="sub-page">
           <section class="panel">
             <div class="panel-head">
@@ -3571,6 +3638,18 @@
             </div>
           </section>
         </div>
+      </section>
+
+      <section class="page" id="scoring">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Match Scoring</h2>
+            <span>Only the current scoring team or assigned scorer can control a match.</span>
+          </div>
+          <div class="panel-body grid">
+            <div id="scoringStandaloneMount"></div>
+          </div>
+        </section>
       </section>
 
       <section class="page" id="matches">
@@ -4112,6 +4191,7 @@
       rankings: ["Career Player Rankings", "Explore career leaders for batters, bowlers, and all-rounders."],
       detail: ["Detail", "Public cricket detail view."],
       profile: ["Profile", "Manage your account, avatar, roles, and access."],
+      notifications: ["Notifications", "Open match challenges, series requests, tournament updates, and role alerts."],
       requests: ["Match Requests", "Send, accept, or reject team challenges."],
       scoring: ["Live Scoring", "Record every ball with match setup, innings, wickets, extras, and undo tools."],
       public: ["Public Live View", "A clean spectator experience with live score, scorecard, and commentary."],
@@ -4187,6 +4267,8 @@
 
     const title = document.querySelector("#pageTitle");
     const subtitle = document.querySelector("#pageSubtitle");
+    const scoringPanel = document.querySelector("#fixtureScoringPanel");
+    const scoringPanelOriginalParent = scoringPanel?.parentElement || null;
 
     let publicViewInterval = null;
 
@@ -4221,14 +4303,16 @@
           renderPublicLiveView();
         }
 
+        if (page === "notifications") {
+          renderNotificationsPage();
+        }
+
+        if (page === "scoring") {
+          openStandaloneScoringPage();
+        }
+
         if (page === "profile") {
           renderProfile();
-          const profilePanel = button.dataset.profileJump;
-          if (profilePanel) {
-            document.querySelectorAll("[data-profile-panel-content]").forEach(item => {
-              item.style.display = item.dataset.profilePanelContent === profilePanel ? "block" : "none";
-            });
-          }
         }
       });
     });
@@ -4376,7 +4460,7 @@
         }
       }
 
-      const restrictedPages = ["requests", "scoring"];
+      const restrictedPages = ["requests", "scoring", "notifications"];
       document.querySelectorAll(".nav button").forEach(btn => {
         const page = btn.dataset.page;
         let shouldHide = false;
@@ -4439,6 +4523,7 @@
       renderRequests();
       renderTournaments();
       renderProfile();
+      renderNotificationsPage();
 
       // Show/Hide sub-page login prompts
       const createPrompt = document.querySelector("#createTourneyLoginPrompt");
@@ -4514,7 +4599,7 @@
       const localIds = localStorage.getItem(`pakscorer_match_scorers_${match.id}`);
       const saved = localIds ? localIds.split(",").filter(Boolean) : [];
       const dbIds = state.matchScorers
-        .filter(row => String(row.matchId) === String(match.id))
+        .filter(row => String(row.matchId) === String(match.id) && row.userId)
         .map(row => String(row.userId));
       const fromRecord = [match.scorerId, match.scorer_id].filter(Boolean).map(String);
       return [...new Set([...saved, ...dbIds, ...fromRecord])];
@@ -4545,8 +4630,22 @@
       return isSuperAdmin() || isOwner(match) || ownsTeam(match.teamAId) || ownsTeam(match.teamBId) || canManageTournament(state.tournaments.find(t => String(t.id) === String(match.tournamentId || "")));
     }
 
+    function scoringTeamId(match) {
+      return match?.scoringTeamId || match?.scoring_team_id || match?.teamAId || match?.team_a_id;
+    }
+
+    function canManageScoringTeam(match) {
+      const team = state.teams.find(t => String(t.id) === String(scoringTeamId(match)));
+      return canManageTeam(team);
+    }
+
+    function isScoringLockedByOther(match) {
+      const lockedBy = match?.scoringLockedBy || match?.scoring_locked_by;
+      return Boolean(lockedBy && state.user && String(lockedBy) !== String(state.user.id));
+    }
+
     function canScoreMatch(match) {
-      return canManageMatch(match) || isAssignedScorer(match);
+      return Boolean(match && (isSuperAdmin() || isAssignedScorer(match) || canManageScoringTeam(match)));
     }
 
     function getMyTournaments() {
@@ -4622,9 +4721,7 @@
       }
       const notificationsList = document.querySelector("#profileNotificationsList");
       if (notificationsList) {
-        notificationsList.innerHTML = state.notifications.length
-          ? state.notifications.map(item => `<li><strong>${item.payload?.title || item.type || "Notification"}${(!item.read_at && !item.readAt) ? ` <span class="tag gold">New</span>` : ""}</strong><span>${item.payload?.message || new Date(item.created_at || Date.now()).toLocaleString()}</span></li>`).join("")
-          : `<li><strong>No notifications</strong><span>Match requests and role updates will appear here.</span></li>`;
+        notificationsList.innerHTML = notificationRowsHtml({ compact: true });
       }
       if (historyEl) {
         const history = getRoleHistory();
@@ -4781,6 +4878,80 @@
       }
     }
 
+    function notificationRowsHtml(options = {}) {
+      if (!state.notifications.length) {
+        return `<li><strong>No notifications</strong><span>Match requests and role updates will appear here.</span></li>`;
+      }
+      return state.notifications.map((item, index) => {
+        const unread = !item.read_at && !item.readAt;
+        const created = item.created_at || item.createdAt || item.at;
+        const time = created ? new Date(created).toLocaleString("en-PK", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : "";
+        const title = item.payload?.title || item.type || "Notification";
+        const message = item.payload?.message || "Open this notification for details.";
+        return `
+          <li data-open-notification="${item.id || index}" data-notification-index="${index}" style="cursor:pointer;">
+            <strong>${title}${unread ? ` <span class="tag gold">New</span>` : ""}</strong>
+            <span>${message}${options.compact ? "" : time ? ` - ${time}` : ""}</span>
+          </li>
+        `;
+      }).join("");
+    }
+
+    function renderNotificationsPage() {
+      const list = document.querySelector("#notificationsPageList");
+      if (list) list.innerHTML = notificationRowsHtml();
+      updateNotificationBadge();
+    }
+
+    async function markNotificationRead(notification) {
+      if (!notification || notification.read_at || notification.readAt) return;
+      notification.read_at = new Date().toISOString();
+      if (state.usingDatabase && notification.id) {
+        try {
+          await supabase
+            .from("notifications")
+            .update({ read_at: notification.read_at })
+            .eq("id", notification.id)
+            .eq("user_id", state.user.id);
+        } catch (error) {
+          console.warn("Could not mark notification as read:", error.message);
+        }
+      }
+      updateNotificationBadge();
+      renderNotificationsPage();
+      renderProfile();
+    }
+
+    async function openNotification(notification) {
+      if (!notification) return;
+      await markNotificationRead(notification);
+      const type = notification.type || "";
+      const payload = notification.payload || {};
+
+      if (type.includes("match_challenge")) {
+        document.querySelector('[data-page="teams"]')?.click();
+        switchTeamsSubPage("challenges");
+        return;
+      }
+
+      if (type.includes("series_challenge")) {
+        document.querySelector('[data-page="tournaments"]')?.click();
+        document.querySelector('[data-tourney-sub="series"]')?.click();
+        switchSeriesPanel("requests");
+        return;
+      }
+
+      if (type.includes("tournament_application")) {
+        document.querySelector('[data-page="tournaments"]')?.click();
+        if (payload.tournamentId) {
+          renderPublicTournamentDetail(payload.tournamentId);
+        }
+        return;
+      }
+
+      document.querySelector('[data-page="profile"]')?.click();
+    }
+
     async function loadNotificationsFromDatabase() {
       if (!state.user) {
         state.notifications = [];
@@ -4813,6 +4984,7 @@
         state.notifications = [];
       }
       updateNotificationBadge();
+      renderNotificationsPage();
     }
 
     async function createNotification(userId, type, payload = {}) {
@@ -5466,10 +5638,17 @@
     }
 
     async function loadMatchesFromDatabase() {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from("matches")
-        .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date,match_time,tournament_id,series_id,winner_team_id,result_text,format,user_id")
+        .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date,match_time,tournament_id,series_id,winner_team_id,result_text,format,user_id,scoring_team_id,scoring_locked_by")
         .order("created_at", { ascending: false });
+
+      if (error && String(error.message || "").includes("scoring_")) {
+        ({ data, error } = await supabase
+          .from("matches")
+          .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date,match_time,tournament_id,series_id,winner_team_id,result_text,format,user_id")
+          .order("created_at", { ascending: false }));
+      }
 
       if (error) throw error;
 
@@ -5490,6 +5669,8 @@
         winnerTeamId: match.winner_team_id,
         resultText: match.result_text,
         format: match.format,
+        scoringTeamId: match.scoring_team_id,
+        scoringLockedBy: match.scoring_locked_by,
         user_id: match.user_id
       }));
 
@@ -5592,6 +5773,7 @@
 
     async function saveMatchScorerAssignment(matchId, userId, email = null) {
       if (state.usingDatabase) {
+        await supabase.from("match_scorers").delete().eq("match_id", matchId);
         const { error } = await supabase.from("match_scorers").insert({
           match_id: matchId,
           user_id: userId || null,
@@ -5601,9 +5783,7 @@
         if (error) throw error;
         await loadAdminAssignmentsFromDatabase();
       } else {
-        const current = getAssignedScorerIds({ id: matchId });
-        if (userId && !current.includes(String(userId))) current.push(String(userId));
-        localStorage.setItem(`pakscorer_match_scorers_${matchId}`, current.join(","));
+        localStorage.setItem(`pakscorer_match_scorers_${matchId}`, userId ? String(userId) : "");
       }
     }
 
@@ -5834,25 +6014,36 @@
     }
 
     async function createMatchInDatabase(request) {
-      const { data, error } = await supabase
+      const insertPayload = {
+        match_request_id: request.id,
+        team_a_id: request.fromTeamId,
+        team_b_id: request.toTeamId,
+        team_a: request.from,
+        team_b: request.to,
+        venue: request.venue,
+        overs: request.overs,
+        status: "Scheduled",
+        match_date: request.matchDate || null,
+        match_time: request.matchTime || null,
+        tournament_id: request.tournamentId || null,
+        series_id: request.seriesId || null,
+        scoring_team_id: request.scoringTeamId || request.fromTeamId || null,
+        user_id: state.user?.id || null
+      };
+      let { data, error } = await supabase
         .from("matches")
-        .insert({
-          match_request_id: request.id,
-          team_a_id: request.fromTeamId,
-          team_b_id: request.toTeamId,
-          team_a: request.from,
-          team_b: request.to,
-          venue: request.venue,
-          overs: request.overs,
-          status: "Scheduled",
-          match_date: request.matchDate || null,
-          match_time: request.matchTime || null,
-          tournament_id: request.tournamentId || null,
-          series_id: request.seriesId || null,
-          user_id: state.user?.id || null
-        })
-        .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date,match_time,tournament_id,series_id,user_id")
+        .insert(insertPayload)
+        .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date,match_time,tournament_id,series_id,user_id,scoring_team_id,scoring_locked_by")
         .single();
+
+      if (error && String(error.message || "").includes("scoring_")) {
+        delete insertPayload.scoring_team_id;
+        ({ data, error } = await supabase
+          .from("matches")
+          .insert(insertPayload)
+          .select("id,match_request_id,team_a_id,team_b_id,team_a,team_b,venue,overs,status,match_date,match_time,tournament_id,series_id,user_id")
+          .single());
+      }
 
       if (error) throw error;
 
@@ -5869,8 +6060,58 @@
         matchDate: data.match_date,
         matchTime: data.match_time,
         tournamentId: data.tournament_id,
+        seriesId: data.series_id,
+        scoringTeamId: data.scoring_team_id,
+        scoringLockedBy: data.scoring_locked_by,
         user_id: data.user_id,
       };
+    }
+
+    async function updateMatchScoringOwnerInDatabase(matchId, teamId) {
+      const { data, error } = await supabase
+        .from("matches")
+        .update({ scoring_team_id: teamId, scoring_locked_by: null })
+        .eq("id", matchId)
+        .select("id,scoring_team_id,scoring_locked_by")
+        .single();
+      if (error) {
+        if (String(error.message || "").includes("scoring_")) return null;
+        throw error;
+      }
+      return data;
+    }
+
+    async function lockMatchScoringInDatabase(matchId) {
+      if (!state.user) return null;
+      const { data, error } = await supabase
+        .from("matches")
+        .update({ scoring_locked_by: state.user.id })
+        .eq("id", matchId)
+        .or(`scoring_locked_by.is.null,scoring_locked_by.eq.${state.user.id}`)
+        .select("id,scoring_locked_by")
+        .single();
+      if (error) {
+        if (String(error.message || "").includes("scoring_")) return { scoring_locked_by: state.user.id };
+        throw error;
+      }
+      return data;
+    }
+
+    async function releaseMatchScoringLock(matchId) {
+      if (!matchId) return;
+      if (state.usingDatabase && state.user) {
+        try {
+          await supabase
+            .from("matches")
+            .update({ scoring_locked_by: null })
+            .eq("id", matchId)
+            .eq("scoring_locked_by", state.user.id);
+        } catch (error) {
+          if (!String(error.message || "").includes("scoring_")) console.warn("Could not release scoring lock:", error.message);
+        }
+      }
+      const match = state.matches.find(m => String(m.id) === String(matchId));
+      if (match) match.scoringLockedBy = null;
     }
 
     async function updateMatchStatusInDatabase(id, status) {
@@ -6163,12 +6404,13 @@
         } else {
           state.matches.unshift({
             id: `${series.id}-${i}`,
-            teamAId,
-            teamBId,
-            teamA: teamAName,
-            teamB: teamBName,
-            seriesId: series.id,
-            venue: payload.venue,
+          teamAId,
+          teamBId,
+          teamA: teamAName,
+          teamB: teamBName,
+          seriesId: series.id,
+          scoringTeamId: teamAId,
+          venue: payload.venue,
             overs: payload.overs,
             status: "Scheduled"
           });
@@ -6229,6 +6471,8 @@
       return matches.map((match) => {
         const dateTime = formatMatchDateTime(match.matchDate, match.matchTime);
         const canManage = canManageMatch(match);
+        const currentScoringTeam = state.teams.find(team => String(team.id) === String(scoringTeamId(match)));
+        const canTransferScoring = canManageScoringTeam(match) && String(scoringTeamId(match)) === String(match.teamAId);
         const scorerIds = getAssignedScorerIds(match);
         const tagClass = match.status === "Live" ? "green" : match.status === "Completed" ? "cyan" : match.status === "Cancelled" ? "red" : "gold";
         const isCurrentMatch = state.currentMatch && String(state.currentMatch.id) === String(match.id);
@@ -6246,6 +6490,7 @@
             <strong>${match.teamA} vs ${match.teamB}</strong>
             <span class="muted" style="font-size:0.75rem;">${match.status} Â· ${match.overs} overs Â· ${match.venue}</span>
             ${dateTime ? `<span style="color:var(--cyan);font-size:0.82rem;font-weight:800;">${dateTime}</span>` : ""}
+            <span class="muted" style="font-size:0.75rem;">Scoring: ${currentScoringTeam?.name || match.teamA}</span>
             ${scorerIds.length ? `<span class="muted" style="font-size:0.75rem;">${scorerIds.length} scorer assigned</span>` : ""}
             ${lastBalls.length ? `<span class="cricket-ball-strip" style="margin-top:6px;">${lastBalls.map(ball => `<span class="cricket-ball-chip ${feedBallClass(ball)}">${ball}</span>`).join("")}</span>` : ""}
           </div>
@@ -6254,9 +6499,10 @@
             ${match.status === "Live" ? `<button class="btn ghost" style="padding: 4px 8px; font-size: 0.75rem;" data-view-match="${match.id}">Watch</button>` : ""}
             ${match.status === "Completed" ? `<button class="btn ghost" style="font-size: 0.75rem; padding: 4px 8px;" onclick="renderMatchSummary('${match.id}')">Highlights</button>` : ""}
             ${options.management && canScoreMatch(match) && ["Scheduled", "Setup", "Live"].includes(match.status) ? `<button class="btn primary" style="padding: 4px 8px; font-size: 0.75rem;" data-score-match="${match.id}">Match Scoring</button>` : ""}
+            ${options.management && canTransferScoring ? `<button class="btn ghost" style="padding: 4px 8px; font-size: 0.75rem;" data-transfer-scoring="${match.id}">Transfer Scoring</button>` : ""}
             ${options.management && canManage ? `<input type="date" data-match-date-edit="${match.id}" value="${match.matchDate || ""}" style="max-width: 150px; padding: 4px 8px; font-size: 0.75rem;">` : ""}
             ${options.management && canManage ? `<input type="time" data-match-time-edit="${match.id}" value="${match.matchTime || ""}" style="max-width: 120px; padding: 4px 8px; font-size: 0.75rem;">` : ""}
-            ${options.management && canManage ? `<select data-assign-scorer="${match.id}" style="max-width: 180px; padding: 4px 8px; font-size: 0.75rem;"><option value="">Assign scorer</option>${state.players.map(p => `<option value="${p.user_id || ""}">${p.name}</option>`).join("")}</select>` : ""}
+            ${options.management && canManageScoringTeam(match) ? `<select data-assign-scorer="${match.id}" style="max-width: 180px; padding: 4px 8px; font-size: 0.75rem;"><option value="">Assign one scorer</option>${state.players.map(p => `<option value="${p.user_id || ""}">${p.name}</option>`).join("")}</select>` : ""}
             ${canManage ? `<button class="btn ghost danger" style="padding: 4px 8px; font-size: 0.75rem;" data-delete-match="${match.id}">Delete</button>` : ""}
           </div>
         </li>
@@ -6794,6 +7040,7 @@
     }
 
     function switchFixturePanel(panelName) {
+      if (panelName === "scoring") placeScoringPanel(scoringPanelOriginalParent);
       document.querySelectorAll("[data-fixture-tab]").forEach(button => {
         const isActive = button.dataset.fixtureTab === panelName;
         button.classList.toggle("primary", isActive);
@@ -6802,6 +7049,27 @@
       document.querySelectorAll("[data-fixture-panel]").forEach(panel => {
         panel.style.display = panel.dataset.fixturePanel === panelName ? "" : "none";
       });
+    }
+
+    function placeScoringPanel(parent) {
+      if (!scoringPanel || !parent || scoringPanel.parentElement === parent) return;
+      parent.appendChild(scoringPanel);
+    }
+
+    function openStandaloneScoringPage(matchId = null) {
+      placeScoringPanel(document.querySelector("#scoringStandaloneMount"));
+      if (scoringPanel) {
+        scoringPanel.style.display = "";
+        scoringPanel.classList.add("active");
+      }
+      renderScoringMatchSelect();
+      if (matchId) {
+        const select = document.querySelector("#scoringMatchSelect");
+        if (select) {
+          select.value = String(matchId);
+          select.dispatchEvent(new Event("change"));
+        }
+      }
     }
 
     function switchSeriesPanel(panelName) {
@@ -6841,16 +7109,9 @@
     }
 
     function openMatchScoring(matchId) {
-      const teamsNav = document.querySelector('[data-page="teams"]');
-      if (teamsNav) teamsNav.click();
-      switchTeamsSubPage("fixtures");
-      switchFixturePanel("scoring");
-      renderScoringMatchSelect();
-      const select = document.querySelector("#scoringMatchSelect");
-      if (select) {
-        select.value = String(matchId);
-        select.dispatchEvent(new Event("change"));
-      }
+      const scoringNav = document.querySelector('[data-page="scoring"]');
+      if (scoringNav) scoringNav.click();
+      openStandaloneScoringPage(matchId);
     }
 
     async function renderMatchSummary(matchId) {
@@ -9264,6 +9525,7 @@
             teamB: request.to,
             teamAId: request.fromTeamId,
             teamBId: request.toTeamId,
+            scoringTeamId: request.fromTeamId,
             venue: request.venue,
             overs: request.overs,
             status: "Scheduled",
@@ -9307,6 +9569,24 @@
       }
       if (button.dataset.wicket) addLegalBall("W", Number(document.querySelector("#wicketRunsSelect")?.value || 0), true);
     });
+
+    const noBallBatRunsSelect = document.querySelector("#noBallBatRuns");
+    if (noBallBatRunsSelect) {
+      noBallBatRunsSelect.addEventListener("change", async (event) => {
+        if (event.target.value === "") return;
+        await addExtra("Nb", Number(event.target.value || 0));
+        event.target.value = "";
+      });
+    }
+
+    const wicketRunsSelect = document.querySelector("#wicketRunsSelect");
+    if (wicketRunsSelect) {
+      wicketRunsSelect.addEventListener("change", async (event) => {
+        if (event.target.value === "") return;
+        await addLegalBall("W", Number(event.target.value || 0), true);
+        event.target.value = "";
+      });
+    }
 
     document.querySelector("#undoBall").addEventListener("click", async () => {
       const previous = state.score.undoStack.pop();
@@ -9574,6 +9854,7 @@
       const match = state.matches.find(m => m.id === matchId || m.id === Number(matchId));
       if (!match) return;
       if (!canScoreMatch(match)) return alert("You are not assigned to score this match.");
+      if (isScoringLockedByOther(match)) return alert("This match is already being scored by another scorer.");
 
       let battingTeamId = match.teamAId;
       let bowlingTeamId = match.teamBId;
@@ -9621,6 +9902,8 @@
 
       if (state.usingDatabase) {
         try {
+          const lock = await lockMatchScoringInDatabase(match.id);
+          match.scoringLockedBy = lock?.scoring_locked_by || state.user?.id || null;
           if (match.status !== "Live") {
             await startMatchInDatabase(match.id, tossWinnerId, battingFirstId);
             match.status = "Live";
@@ -9655,7 +9938,7 @@
           }));
           rebuildScoreMetaFromBalls(balls);
           state.score.undoStack = [];
-          state.score.needsBowler = (innings.legal_balls % 6 === 0);
+          state.score.needsBowler = innings.legal_balls > 0 && (innings.legal_balls % 6 === 0);
 
           safeSetText("#activeMatchStatus", `Live: ${match.teamA} vs ${match.teamB}`);
           document.querySelector("#scoringControls").style.display = "";
@@ -9668,6 +9951,8 @@
           alert("Error starting match: " + error.message);
         }
       } else {
+         if (isScoringLockedByOther(match)) return alert("This match is already being scored by another scorer.");
+         match.scoringLockedBy = state.user?.id || "local-scorer";
          state.currentMatch = match;
           safeSetText("#activeMatchStatus", `Local: ${match.teamA} vs ${match.teamB}`);
          document.querySelector("#scoringControls").style.display = "";
@@ -9681,8 +9966,10 @@
     document.querySelector("#endMatchBtn").addEventListener("click", async () => {
        if (!state.currentMatch) return;
        if (confirm("Are you sure you want to end this match?")) {
+         const matchId = state.currentMatch.id;
          if (state.usingDatabase) await updateMatchStatusInDatabase(state.currentMatch.id, "Completed");
          state.currentMatch.status = "Completed";
+         await releaseMatchScoringLock(matchId);
          showMatchResultSummary("Match ended by scorer.");
          state.currentMatch = null;
          state.currentInnings = null;
@@ -9696,8 +9983,10 @@
     document.querySelector("#cancelMatchBtn").addEventListener("click", async () => {
        if (!state.currentMatch) return;
        if (confirm("Are you sure you want to cancel this match?")) {
+         const matchId = state.currentMatch.id;
          if (state.usingDatabase) await updateMatchStatusInDatabase(state.currentMatch.id, "Cancelled");
          state.currentMatch.status = "Cancelled";
+         await releaseMatchScoringLock(matchId);
          state.currentMatch = null;
          state.currentInnings = null;
          document.querySelector("#scoringControls").style.opacity = "0.5";
@@ -9810,6 +10099,13 @@
         return;
       }
 
+      const notificationItem = event.target.closest("[data-open-notification]");
+      if (notificationItem) {
+        const notification = state.notifications[Number(notificationItem.dataset.notificationIndex)];
+        await openNotification(notification);
+        return;
+      }
+
       const openLoginBtn = event.target.closest("[data-open-login]");
       if (openLoginBtn) {
         setAuthMode("login");
@@ -9887,6 +10183,32 @@
       const scoreMatchBtn = event.target.closest("[data-score-match]");
       if (scoreMatchBtn) {
         openMatchScoring(scoreMatchBtn.dataset.scoreMatch);
+        return;
+      }
+
+      const transferScoringBtn = event.target.closest("[data-transfer-scoring]");
+      if (transferScoringBtn) {
+        const match = state.matches.find(m => String(m.id) === String(transferScoringBtn.dataset.transferScoring));
+        if (!match || !canManageScoringTeam(match)) return alert("Only the current scoring team can transfer scoring.");
+        const nextTeamId = String(scoringTeamId(match)) === String(match.teamAId) ? match.teamBId : match.teamAId;
+        const nextTeamName = String(nextTeamId) === String(match.teamAId) ? match.teamA : match.teamB;
+        if (!confirm(`Transfer scoring control to ${nextTeamName}?`)) return;
+        try {
+          if (state.usingDatabase) {
+            await updateMatchScoringOwnerInDatabase(match.id, nextTeamId);
+            match.scoringTeamId = nextTeamId;
+            match.scoringLockedBy = null;
+            await loadMatchesFromDatabase();
+          } else {
+            match.scoringTeamId = nextTeamId;
+            match.scoringLockedBy = null;
+          }
+          renderMatches();
+          renderScoringMatchSelect();
+          alert(`Scoring transferred to ${nextTeamName}.`);
+        } catch (error) {
+          alert("Could not transfer scoring: " + error.message);
+        }
         return;
       }
 
@@ -10267,7 +10589,7 @@
         const matchId = scorerSelect.dataset.assignScorer;
         const userId = scorerSelect.value;
         const match = state.matches.find(m => String(m.id) === String(matchId));
-        if (!match || !userId || !canManageMatch(match)) return;
+        if (!match || !userId || !canManageScoringTeam(match)) return;
 
         try {
           await saveMatchScorerAssignment(match.id, userId);
@@ -10607,6 +10929,28 @@
       if (Notification.permission === "granted") {
         nBtn.textContent = "ðŸ”•";
       }
+    }
+
+    const markAllNotificationsReadBtn = document.querySelector("#markAllNotificationsRead");
+    if (markAllNotificationsReadBtn) {
+      markAllNotificationsReadBtn.addEventListener("click", async () => {
+        const now = new Date().toISOString();
+        const unread = state.notifications.filter(item => !item.read_at && !item.readAt);
+        unread.forEach(item => { item.read_at = now; });
+        if (state.usingDatabase && state.user) {
+          try {
+            await supabase
+              .from("notifications")
+              .update({ read_at: now })
+              .eq("user_id", state.user.id)
+              .is("read_at", null);
+          } catch (error) {
+            console.warn("Could not mark all notifications read:", error.message);
+          }
+        }
+        renderNotificationsPage();
+        renderProfile();
+      });
     }
 
     // --- Team Admin Management & Editing Logic ---

@@ -160,7 +160,16 @@ alter table public.matches
   add column if not exists share_card_url text,
   add column if not exists share_card_r2_key text,
   add column if not exists highlight_video_url text,
-  add column if not exists highlight_video_r2_key text;
+  add column if not exists highlight_video_r2_key text,
+  add column if not exists scoring_team_id uuid references public.teams(id) on delete set null,
+  add column if not exists scoring_locked_by uuid references auth.users(id) on delete set null;
+
+create index if not exists matches_scoring_team_idx
+on public.matches (scoring_team_id);
+
+update public.matches
+set scoring_team_id = team_a_id
+where scoring_team_id is null and team_a_id is not null;
 
 -- Playing XI for match setup
 create table if not exists public.match_players (
