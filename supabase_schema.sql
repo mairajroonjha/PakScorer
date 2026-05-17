@@ -399,11 +399,17 @@ create table if not exists public.series (
   num_matches integer not null default 3,
   overs integer not null default 20,
   venue text not null default 'Local Ground',
+  start_date date,
+  start_time time,
   status text not null default 'Scheduled',
   winner_team_id uuid references public.teams(id),
   user_id uuid references auth.users(id),
   created_at timestamptz not null default now()
 );
+
+alter table public.series
+  add column if not exists start_date date,
+  add column if not exists start_time time;
 
 -- Add series_id to matches
 alter table public.matches add column if not exists series_id uuid references public.series(id) on delete set null;
@@ -414,7 +420,7 @@ create table if not exists public.team_admins (
   team_id uuid not null references public.teams(id) on delete cascade,
   user_id uuid references auth.users(id) on delete cascade,
   email text,
-  role text not null default 'co_admin' check (role in ('owner', 'co_admin')),
+  role text not null default 'co_admin' check (role in ('owner', 'co_admin', 'squad_manager', 'match_manager', 'scorer_manager')),
   invited_by uuid references auth.users(id),
   created_at timestamptz not null default now(),
   constraint team_admin_identity check (user_id is not null or email is not null)
@@ -427,6 +433,11 @@ where user_id is not null;
 create unique index if not exists team_admins_team_email_unique
 on public.team_admins (team_id, lower(email))
 where email is not null;
+
+alter table public.team_admins drop constraint if exists team_admins_role_check;
+alter table public.team_admins
+  add constraint team_admins_role_check
+  check (role in ('owner', 'co_admin', 'squad_manager', 'match_manager', 'scorer_manager'));
 
 create table if not exists public.tournament_admins (
   id uuid primary key default gen_random_uuid(),
