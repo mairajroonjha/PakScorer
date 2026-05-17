@@ -2567,6 +2567,7 @@
       object-fit: cover;
       object-position: center;
       padding: 0;
+      display: block;
       background: rgba(255,255,255,0.08);
     }
 
@@ -11295,22 +11296,14 @@
       if (match.status !== "Live") {
         const selectedXI = Array.from(document.querySelectorAll("input[name='playingXI']:checked"));
         if (selectedXI.length === 0) return alert("Please select some players for the match.");
+        const teamAXI = selectedXI.filter(el => String(el.dataset.teamId) === String(match.teamAId));
+        const teamBXI = selectedXI.filter(el => String(el.dataset.teamId) === String(match.teamBId));
+        if (!teamAXI.length || !teamBXI.length) return alert("Select playing XI for both teams before starting.");
 
         tossWinnerId = document.querySelector("#tossWinnerSelect").value;
         const tossDecision = document.querySelector("#tossDecisionSelect").value;
 
         if (!tossWinnerId) return alert("Please select the Toss Winner before starting the match.");
-
-        // Save Playing XI to database
-        if (state.usingDatabase) {
-           const matchPlayers = selectedXI.map(el => ({
-              match_id: match.id,
-              player_id: el.dataset.playerId,
-              player_name: el.dataset.playerName || el.parentElement.textContent.trim(),
-              team_id: el.dataset.teamId
-           }));
-           await supabase.from("match_players").insert(matchPlayers);
-        }
 
         if ((tossWinnerId === String(match.teamAId) && tossDecision === "Bat") || (tossWinnerId === String(match.teamBId) && tossDecision === "Bowl")) {
           battingFirstId = match.teamAId;
@@ -11334,6 +11327,17 @@
         state.score.striker = openingStriker;
         state.score.nonStriker = openingNonStriker;
         state.score.currentBowler = openingBowler;
+
+        if (state.usingDatabase) {
+           const matchPlayers = selectedXI.map(el => ({
+              match_id: match.id,
+              player_id: el.dataset.playerId,
+              player_name: el.dataset.playerName || el.parentElement.textContent.trim(),
+              team_id: el.dataset.teamId
+           }));
+           await supabase.from("match_players").delete().eq("match_id", match.id);
+           await supabase.from("match_players").insert(matchPlayers);
+        }
       }
 
       safeSetText("#startMatchBtn", "Loading...");
@@ -11402,6 +11406,23 @@
           alert("Error starting match: " + error.message);
         }
       } else {
+         if (match.status !== "Live") {
+           const selectedXI = Array.from(document.querySelectorAll("input[name='playingXI']:checked"));
+           const teamAXI = selectedXI.filter(el => String(el.dataset.teamId) === String(match.teamAId));
+           const teamBXI = selectedXI.filter(el => String(el.dataset.teamId) === String(match.teamBId));
+           const tossWinnerIdLocal = document.querySelector("#tossWinnerSelect")?.value;
+           const openingStriker = document.querySelector("#openingStrikerSelect")?.value;
+           const openingNonStriker = document.querySelector("#openingNonStrikerSelect")?.value;
+           const openingBowler = document.querySelector("#openingBowlerSelect")?.value;
+           if (!teamAXI.length || !teamBXI.length) return alert("Select playing XI for both teams before starting.");
+           if (!tossWinnerIdLocal) return alert("Please select the Toss Winner before starting the match.");
+           if (!openingStriker || !openingNonStriker || openingStriker === openingNonStriker) return alert("Please select two different opening batters.");
+           if (!openingBowler) return alert("Please select the first bowler.");
+           match.status = "Live";
+           state.score.striker = openingStriker;
+           state.score.nonStriker = openingNonStriker;
+           state.score.currentBowler = openingBowler;
+         }
          if (isScoringLockedByOther(match)) return alert("This match is already being scored by another scorer.");
          match.scoringLockedBy = state.user?.id || "local-scorer";
          state.currentMatch = match;
