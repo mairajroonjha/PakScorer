@@ -2557,12 +2557,24 @@
       font-size: 1.6rem;
       font-weight: 950;
       box-shadow: 0 20px 40px rgba(0,0,0,0.28);
+      border: 0;
+      cursor: pointer;
     }
 
     .profile-avatar-large img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center;
+      padding: 0;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .profile-avatar-failed {
+      padding: 10px;
+      text-align: center;
+      font-size: 0.82rem;
+      line-height: 1.25;
     }
 
     .profile-hero h2 {
@@ -3352,6 +3364,19 @@
       </div>
     </div>
 
+    <div id="imagePreviewModal" class="modal-overlay" style="display:none;">
+      <div class="modal-content glass" style="max-width:min(920px,94vw);padding:18px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;">
+          <h3 id="imagePreviewTitle" style="margin:0;">Profile image</h3>
+          <button class="btn ghost btn-sm" type="button" id="closeImagePreview">Close</button>
+        </div>
+        <div style="display:grid;place-items:center;background:rgba(255,255,255,0.04);border:1px solid var(--line);border-radius:18px;min-height:280px;overflow:hidden;">
+          <img id="imagePreviewImg" alt="Profile image preview" style="max-width:100%;max-height:76vh;object-fit:contain;">
+        </div>
+        <p class="muted" id="imagePreviewUrl" style="margin-top:10px;overflow-wrap:anywhere;"></p>
+      </div>
+    </div>
+
     <main class="main">
       <header class="topbar">
         <div class="title-block">
@@ -3481,7 +3506,7 @@
       <section class="page" id="profile">
         <section class="panel">
           <div class="profile-hero">
-            <div id="profileAvatarPreview" class="profile-avatar-large">PS</div>
+            <button id="profileAvatarPreview" class="profile-avatar-large" type="button" title="Open profile image">PS</button>
             <div style="min-width:0;">
               <span class="tag green" id="profileRoleBadge">Viewer</span>
               <h2 id="profileDisplayName">Guest User</h2>
@@ -5075,7 +5100,7 @@
       const profile = getUserProfile();
       const displayName = profile.name || state.user?.email?.split("@")[0] || "Guest User";
       const username = state.user?.email ? `@${state.user.email.split("@")[0]}` : "@guest";
-      const avatar = profile.avatar || "";
+      const avatar = normalizeMediaUrl(profile.avatar || "");
 
       if (emailEl) emailEl.textContent = state.user?.email || "Not logged in";
       if (userIdEl) userIdEl.textContent = state.user ? `User ID: ${state.user.id}` : "Login to manage teams, tournaments, and scoring.";
@@ -5084,7 +5109,10 @@
       safeSetText("#profileUsername", username);
       const avatarPreview = document.querySelector("#profileAvatarPreview");
       if (avatarPreview) {
-        avatarPreview.innerHTML = avatar ? `<img src="${avatar}" alt="${displayName}">` : initials(displayName);
+        avatarPreview.dataset.avatarUrl = avatar || "";
+        avatarPreview.innerHTML = avatar
+          ? `<img src="${avatar}" alt="${displayName}" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('#profileAvatarPreview').innerHTML='<span class=&quot;profile-avatar-failed&quot;>Image failed<br>Tap to open</span>';">`
+          : initials(displayName);
       }
       const profileName = document.querySelector("#profileName");
       const profilePhone = document.querySelector("#profilePhone");
@@ -5161,7 +5189,7 @@
         name: row.display_name || "",
         phone: row.phone || "",
         city: row.city || "",
-        avatar: row.avatar_url || "",
+        avatar: normalizeMediaUrl(row.avatar_url || ""),
         bio: row.bio || "",
         email: row.email || state.user?.email || ""
       };
@@ -5209,6 +5237,7 @@
     }
 
     async function saveUserProfile(profile, options = {}) {
+      profile.avatar = normalizeMediaUrl(profile.avatar || "");
       state.profile = profile;
       saveLocalProfile(profile);
 
@@ -5528,6 +5557,12 @@
       return `${R2_PUBLIC_BASE_URL.replace(/\/$/, "")}/${key.replace(/^\//, "")}`;
     }
 
+    function normalizeMediaUrl(url) {
+      if (!url) return "";
+      return String(url).trim()
+        .replace("https://pub5a5234b682214c14abc65ead18b20926.r2.dev", "https://pub-5a5234b682214c14abc65ead18b20926.r2.dev");
+    }
+
     async function uploadMediaToR2(file, context) {
       if (!file) throw new Error("Please select a file first.");
       if (!isR2Configured()) {
@@ -5552,7 +5587,7 @@
       const upload = await uploadResponse.json();
       if (!uploadResponse.ok) throw new Error(upload.error || "R2 upload failed.");
 
-      const publicUrl = upload.publicUrl || r2PublicUrl(upload.key);
+      const publicUrl = r2PublicUrl(upload.key) || normalizeMediaUrl(upload.publicUrl);
       return { key: upload.key, publicUrl };
     }
 
@@ -5953,10 +5988,49 @@
                 <p class="muted">${player.role || "Player"}${player.age ? ` - ${player.age} yrs` : ""}</p>
                 <p class="muted">${player.batting_style || meta.batting || "Batting style"} / ${player.bowling_style || meta.bowling || "Bowling style"}</p>
               </div>
-              <button class="btn ghost danger btn-sm" type="button" data-delete-player="${player.id}">Remove</button>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+                <button class="btn ghost btn-sm" type="button" data-edit-player="${player.id}">Edit</button>
+                <button class="btn ghost danger btn-sm" type="button" data-delete-player="${player.id}">Remove</button>
+              </div>
             </article>
           `;
         }).join("") : `<article class="card"><h3>No players yet</h3><p class="muted">Use Add Players to build this squad.</p></article>`;
+      }
+    }
+
+    function fillPlayerFormForEdit(playerId) {
+      const player = state.players.find(p => String(p.id) === String(playerId));
+      if (!player) return;
+      const meta = getPlayerMeta(player.id);
+      switchTeamManagePanel("players");
+      document.querySelector("#teamPlayerForm")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const set = (selector, value) => {
+        const el = document.querySelector(selector);
+        if (el) el.value = value || "";
+      };
+      set("#teamPlayerName", player.name);
+      set("#teamPlayerAge", player.age || meta.age || "");
+      set("#teamPlayerBattingStyle", player.batting_style || meta.battingStyle || meta.batting || "");
+      set("#teamPlayerBowlingStyle", player.bowling_style || meta.bowlingStyle || meta.bowling || "");
+      set("#teamPlayerPhotoUrl", normalizeMediaUrl(player.photo_url || meta.photo || ""));
+      const roleText = String(player.role || "").toLowerCase();
+      const setCheck = (selector, checked) => {
+        const el = document.querySelector(selector);
+        if (el) el.checked = Boolean(checked);
+      };
+      setCheck("#teamPlayerBatter", roleText.includes("batter"));
+      setCheck("#teamPlayerFastBowler", roleText.includes("fast"));
+      setCheck("#teamPlayerSpinBowler", roleText.includes("spin"));
+      setCheck("#teamPlayerWicketKeeper", roleText.includes("wicket"));
+      setCheck("#teamPlayerAllRounder", roleText.includes("all-round") || roleText.includes("allround"));
+      const form = document.querySelector("#teamPlayerForm");
+      if (form) form.dataset.editPlayerId = String(player.id);
+      const submit = form?.querySelector("button[type='submit']");
+      if (submit) submit.textContent = "Save Player";
+      const msg = document.querySelector("#teamPlayerMessage");
+      if (msg) {
+        msg.className = "form-message";
+        msg.textContent = "Editing player. Add/change photo, then Save Player.";
       }
     }
 
@@ -9218,13 +9292,14 @@
       const meta = getPlayerMeta(player?.id);
       const photo = meta.photo || player?.photo_url || "";
       return photo
-        ? `<img src="${photo}" alt="${player.name}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;">`
+        ? `<img src="${photo}" alt="${player.name}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;object-position:center;">`
         : `<div class="avatar" style="width:${size}px;height:${size}px;">${initials(player?.name || "P")}</div>`;
     }
 
     function teamLogo(team, size = 58) {
-      return team?.logo_url
-        ? `<img src="${team.logo_url}" alt="${team.name}" style="width:${size}px;height:${size}px;border-radius:16px;object-fit:cover;">`
+      const logo = normalizeMediaUrl(team?.logo_url || "");
+      return logo
+        ? `<img src="${logo}" alt="${team.name}" style="width:${size}px;height:${size}px;border-radius:16px;object-fit:cover;object-position:center;">`
         : `<div class="avatar" style="width:${size}px;height:${size}px;">${initials(team?.name || "T")}</div>`;
     }
 
@@ -11756,6 +11831,12 @@
         return;
       }
 
+      const editPlayerBtn = event.target.closest("[data-edit-player]");
+      if (editPlayerBtn) {
+        fillPlayerFormForEdit(editPlayerBtn.dataset.editPlayer);
+        return;
+      }
+
       const publicTeamBtn = event.target.closest("[data-public-team]");
       if (publicTeamBtn) {
         renderPublicTeamDetail(publicTeamBtn.dataset.publicTeam);
@@ -12322,6 +12403,30 @@
       });
     }
 
+    const profileAvatarPreview = document.querySelector("#profileAvatarPreview");
+    if (profileAvatarPreview) {
+      profileAvatarPreview.addEventListener("click", () => {
+        const url = profileAvatarPreview.dataset.avatarUrl || document.querySelector("#profileAvatar")?.value?.trim() || "";
+        if (!url) return alert("No profile image URL is saved yet.");
+        const modal = document.querySelector("#imagePreviewModal");
+        const img = document.querySelector("#imagePreviewImg");
+        const urlText = document.querySelector("#imagePreviewUrl");
+        if (img) img.src = url;
+        if (urlText) urlText.textContent = url;
+        if (modal) modal.style.display = "grid";
+      });
+    }
+
+    const closeImagePreview = document.querySelector("#closeImagePreview");
+    if (closeImagePreview) {
+      closeImagePreview.addEventListener("click", () => {
+        const modal = document.querySelector("#imagePreviewModal");
+        const img = document.querySelector("#imagePreviewImg");
+        if (img) img.src = "";
+        if (modal) modal.style.display = "none";
+      });
+    }
+
     const mobileBtn = document.querySelector("#mobileProfileBtn");
     if (mobileBtn) {
       mobileBtn.addEventListener("click", () => {
@@ -12700,7 +12805,9 @@
         if (!canManageTeamFeature(team.id, "squad") && !isSuperAdmin()) return alert("You cannot add players to this team.");
 
         const name = document.querySelector("#teamPlayerName").value.trim();
-        const duplicate = state.players.some(player => String(player.team_id || "") === String(teamId) && player.name.trim().toLowerCase() === name.toLowerCase());
+        const editPlayerId = teamPlayerForm.dataset.editPlayerId || "";
+        const editingPlayer = state.players.find(player => String(player.id) === String(editPlayerId));
+        const duplicate = state.players.some(player => String(player.team_id || "") === String(teamId) && String(player.id) !== String(editPlayerId) && player.name.trim().toLowerCase() === name.toLowerCase());
         if (!name) return;
         if (duplicate) {
           if (msg) {
@@ -12723,7 +12830,7 @@
 
         try {
           if (msg) {
-            msg.textContent = "Saving player...";
+            msg.textContent = editPlayerId ? "Updating player..." : "Saving player...";
             msg.className = "form-message";
           }
           const photoFile = selectedFile("#teamPlayerPhotoFile");
@@ -12731,7 +12838,7 @@
             if (msg) msg.textContent = "Uploading player photo to R2...";
             const media = await uploadMediaToR2(photoFile, {
               entityType: "player",
-              entityId: `${teamId}-${name}`,
+              entityId: editPlayerId || `${teamId}-${name}`,
               mediaType: "image"
             });
             await attachMediaAsset({ entityType: "player", entityId: null, mediaType: "image" }, media, photoFile);
@@ -12754,12 +12861,19 @@
           };
 
           let savedPlayer;
-          if (state.usingDatabase) {
+          if (editPlayerId && editingPlayer) {
+            if (state.usingDatabase) {
+              const { error } = await supabase.from("players").update(player).eq("id", editPlayerId);
+              if (error) throw error;
+            }
+            Object.assign(editingPlayer, player);
+            savedPlayer = editingPlayer;
+          } else if (state.usingDatabase) {
             savedPlayer = await createPlayerInDatabase(player);
           } else {
             savedPlayer = { id: Date.now(), runs: 0, wickets: 0, ...player };
+            state.players.push(savedPlayer);
           }
-          state.players.push(savedPlayer);
           savePlayerMeta(savedPlayer.id, {
             age: player.age || "",
             batting: player.batting_style || "",
@@ -12768,12 +12882,15 @@
           });
 
           teamPlayerForm.reset();
+          delete teamPlayerForm.dataset.editPlayerId;
+          const submit = teamPlayerForm.querySelector("button[type='submit']");
+          if (submit) submit.textContent = "Add Player";
           document.querySelector("#teamPlayerTeamId").value = teamId;
           document.querySelector("#teamPlayerTeamName").value = teamName;
           renderTeams();
           openTeamManagement(teamId, "players");
           if (msg) {
-            msg.textContent = `${name} added to ${teamName}.`;
+            msg.textContent = editPlayerId ? `${name} updated.` : `${name} added to ${teamName}.`;
             msg.className = "form-message success";
           }
         } catch (error) {
