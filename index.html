@@ -3547,6 +3547,14 @@
                         <button class="btn primary" data-ball="4">4</button>
                         <button class="btn primary" data-ball="6">6</button>
                         <button class="btn" data-extra="Wd">Wd</button>
+                        <select id="wideExtraRuns" title="Additional runs on wide">
+                          <option value="">Wide options</option>
+                          <option value="0">Wd + 0 run</option>
+                          <option value="1">Wd + 1 run</option>
+                          <option value="2">Wd + 2 runs</option>
+                          <option value="3">Wd + 3 runs</option>
+                          <option value="4">Wd + 4 runs</option>
+                        </select>
                         <button class="btn" data-extra="Nb">Nb</button>
                         <select id="noBallBatRuns" title="Runs off bat on no-ball">
                           <option value="">No-ball options</option>
@@ -4244,6 +4252,7 @@
         runs: 0,
         wickets: 0,
         legalBalls: 0,
+        deliveryNumber: 0,
         target: 0,
         battingTeam: "Pak Lions",
         bowlingTeam: "Lahore Kings",
@@ -4642,6 +4651,11 @@
       return canManageTeam(team);
     }
 
+    function canManageTeamId(teamId) {
+      const team = state.teams.find(t => String(t.id) === String(teamId));
+      return canManageTeam(team);
+    }
+
     function isScoringLockedByOther(match) {
       const lockedBy = match?.scoringLockedBy || match?.scoring_locked_by;
       return Boolean(lockedBy && state.user && String(lockedBy) !== String(state.user.id));
@@ -4937,6 +4951,17 @@
         return;
       }
 
+      if (type.includes("match_scoring_transfer")) {
+        if (payload.matchId) {
+          openMatchScoring(payload.matchId);
+        } else {
+          document.querySelector('[data-page="teams"]')?.click();
+          switchTeamsSubPage("fixtures");
+          switchFixturePanel("scoring");
+        }
+        return;
+      }
+
       if (type.includes("series_challenge")) {
         document.querySelector('[data-page="tournaments"]')?.click();
         document.querySelector('[data-tourney-sub="series"]')?.click();
@@ -5046,6 +5071,18 @@
         fromTeamId: request.fromTeamId,
         toTeamId: request.toTeamId,
         status
+      });
+    }
+
+    async function notifyMatchScoringTransferred(match, toTeamId, fromTeamId) {
+      const toTeamName = String(toTeamId) === String(match.teamAId) ? match.teamA : match.teamB;
+      const fromTeamName = String(fromTeamId) === String(match.teamAId) ? match.teamA : match.teamB;
+      await notifyTeamUsers(toTeamId, "match_scoring_transfer", {
+        title: "Scoring transferred to your team",
+        message: `${fromTeamName || "Opponent"} transferred scoring control to ${toTeamName || "your team"} for ${match.teamA} vs ${match.teamB}.`,
+        matchId: match.id,
+        fromTeamId,
+        toTeamId
       });
     }
 
@@ -6119,6 +6156,7 @@
 
     async function transferMatchScoring(match) {
       if (!match || !canManageScoringTeam(match)) return alert("Only the current scoring team can transfer scoring.");
+      const fromTeamId = scoringTeamId(match);
       const nextTeamId = String(scoringTeamId(match)) === String(match.teamAId) ? match.teamBId : match.teamAId;
       const nextTeamName = String(nextTeamId) === String(match.teamAId) ? match.teamA : match.teamB;
       if (!confirm(`Transfer scoring control to ${nextTeamName}?`)) return;
@@ -6132,8 +6170,10 @@
           match.scoringTeamId = nextTeamId;
           match.scoringLockedBy = null;
         }
+        await notifyMatchScoringTransferred(match, nextTeamId, fromTeamId);
         renderMatches();
         renderScoringMatchSelect();
+        await closeScoringHandoff(match.id, `Scoring control was transferred to ${nextTeamName}.`);
         alert(`Scoring transferred to ${nextTeamName}.`);
       } catch (error) {
         alert("Could not transfer scoring: " + error.message);
@@ -7107,6 +7147,45 @@
       }
     }
 
+    function showScoringPage() {
+      document.querySelectorAll(".nav button").forEach((item) => item.classList.remove("active"));
+      document.querySelector("#mobileProfileBtn")?.classList.remove("active");
+      document.querySelectorAll(".page").forEach((item) => item.classList.remove("active"));
+      document.querySelector("#scoring")?.classList.add("active");
+      if (title) title.textContent = pages.scoring[0];
+      if (subtitle) subtitle.textContent = pages.scoring[1];
+    }
+
+    function activeScoringMatchId() {
+      return state.currentMatch?.id || document.querySelector("#scoringMatchSelect")?.value || null;
+    }
+
+    async function closeScoringHandoff(matchId, message = "Scoring control was transferred to the other team.") {
+      if (matchId && state.currentMatch && String(state.currentMatch.id) === String(matchId)) {
+        await releaseMatchScoringLock(matchId);
+        state.currentMatch = null;
+      }
+      const controls = document.querySelector("#scoringControls");
+      if (controls) {
+        controls.style.display = "none";
+        controls.style.opacity = "0.5";
+        controls.style.pointerEvents = "none";
+      }
+      const select = document.querySelector("#scoringMatchSelect");
+      if (select && (!matchId || String(select.value) === String(matchId))) select.value = "";
+      safeSetText("#activeMatchStatus", "Scoring transferred");
+      updateStartButtonText();
+
+      if (document.querySelector("#scoring")?.classList.contains("active")) {
+        document.querySelector('[data-page="teams"]')?.click();
+        switchTeamsSubPage("fixtures");
+        switchFixturePanel("list");
+      } else if (scoringPanel?.parentElement === scoringPanelOriginalParent) {
+        switchFixturePanel("list");
+      }
+      sendLocalNotification("Scoring transferred", message);
+    }
+
     function switchSeriesPanel(panelName) {
       document.querySelectorAll("[data-series-tab]").forEach(button => {
         const isActive = button.dataset.seriesTab === panelName;
@@ -7146,6 +7225,7 @@
     function openMatchScoring(matchId) {
       const scoringNav = document.querySelector('[data-page="scoring"]');
       if (scoringNav) scoringNav.click();
+      else showScoringPage();
       openStandaloneScoringPage(matchId);
     }
 
@@ -8763,10 +8843,32 @@
              renderScore();
           }
         })
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches' }, payload => {
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches' }, async payload => {
           console.log("Match updated", payload);
+          const localMatch = state.matches.find(m => String(m.id) === String(payload.new.id));
+          const previousScoringTeamId = payload.old.scoring_team_id || payload.old.team_a_id;
+          const nextScoringTeamId = payload.new.scoring_team_id || payload.new.team_a_id;
+          if (localMatch) {
+            localMatch.status = payload.new.status;
+            localMatch.resultText = payload.new.result_text;
+            localMatch.winnerTeamId = payload.new.winner_team_id;
+            localMatch.scoringTeamId = nextScoringTeamId;
+            localMatch.scoringLockedBy = payload.new.scoring_locked_by;
+          }
           renderPublicLiveView();
           renderMatches();
+
+          if (
+            previousScoringTeamId &&
+            nextScoringTeamId &&
+            String(previousScoringTeamId) !== String(nextScoringTeamId) &&
+            String(activeScoringMatchId()) === String(payload.new.id) &&
+            canManageTeamId(previousScoringTeamId) &&
+            !canManageTeamId(nextScoringTeamId)
+          ) {
+            const nextTeamName = String(nextScoringTeamId) === String(payload.new.team_a_id) ? payload.new.team_a : payload.new.team_b;
+            await closeScoringHandoff(payload.new.id, `Scoring control was transferred to ${nextTeamName || "the other team"}.`);
+          }
 
           // Match Started
           if (payload.new.status === 'Live' && payload.old.status !== 'Live') {
@@ -8792,6 +8894,7 @@
         runs: score.runs,
         wickets: score.wickets,
         legalBalls: score.legalBalls,
+        deliveryNumber: score.deliveryNumber || 0,
         currentBowler: score.currentBowler,
         previousBowler: score.previousBowler,
         lastEventType: score.lastEventType,
@@ -8812,6 +8915,7 @@
       score.runs = snapshot.runs;
       score.wickets = snapshot.wickets;
       score.legalBalls = snapshot.legalBalls;
+      score.deliveryNumber = snapshot.deliveryNumber || 0;
       score.currentBowler = snapshot.currentBowler;
       score.previousBowler = snapshot.previousBowler || "";
       score.lastEventType = snapshot.lastEventType;
@@ -8864,6 +8968,8 @@
       ensureBatter(score.striker);
       ensureBowler();
       const strikerName = score.striker;
+      score.deliveryNumber = Number(score.deliveryNumber || 0) + 1;
+      const deliveryNumber = score.deliveryNumber;
       score.runs += runs;
       score.legalBalls += 1;
       score.batterStats[strikerName].runs += runs;
@@ -8898,14 +9004,13 @@
       if (!isWicket && runs % 2 === 1) rotateStrike();
       askNextBowler();
       animatePublicScore(score.lastEventType);
-      checkInningsStatus();
 
       if (state.usingDatabase && state.currentInnings && state.currentMatch) {
         try {
           const ball = {
             match_id: state.currentMatch.id,
             innings_id: state.currentInnings.id,
-            ball_number: score.legalBalls,
+            ball_number: deliveryNumber,
             over_number: Math.floor((score.legalBalls - 1) / 6),
             ball_in_over: ((score.legalBalls - 1) % 6) + 1,
             batter_name: strikerName,
@@ -8929,6 +9034,8 @@
            console.error("Failed to save ball to DB", error);
         }
       }
+      await checkInningsStatus();
+      renderScore();
     }
 
     async function addExtra(label, batRuns = 0) {
@@ -8946,26 +9053,30 @@
       ensureBowler();
       const strikerName = score.striker;
       const extraRuns = 1;
-      const totalRuns = extraRuns + (label === "Nb" ? batRuns : 0);
+      const wideRuns = label === "Wd" ? Math.max(0, Number(batRuns || 0)) : 0;
+      const noBallBatRuns = label === "Nb" ? Math.max(0, Number(batRuns || 0)) : 0;
+      const totalRuns = extraRuns + (label === "Nb" ? noBallBatRuns : wideRuns);
+      score.deliveryNumber = Number(score.deliveryNumber || 0) + 1;
+      const deliveryNumber = score.deliveryNumber;
       score.runs += totalRuns;
       if (isLegalExtra) score.legalBalls += 1;
-      if (label === "Wd") score.extras.wides += 1;
+      if (label === "Wd") score.extras.wides += totalRuns;
       if (label === "Nb") score.extras.noBalls += 1;
       if (label === "B") score.extras.byes += 1;
       if (label === "Lb") score.extras.legByes += 1;
-      if (label === "Nb") score.batterStats[strikerName].runs += batRuns;
+      if (label === "Nb") score.batterStats[strikerName].runs += noBallBatRuns;
       score.bowlerStats[score.currentBowler].runs += label === "B" || label === "Lb" ? 0 : totalRuns;
       if (isLegalExtra) {
         score.batterStats[strikerName].balls += 1;
         score.bowlerStats[score.currentBowler].legalBalls += 1;
       }
-      score.last.push(label);
+      const displayLabel = label === "Wd" && wideRuns ? `Wd+${wideRuns}` : label === "Nb" && noBallBatRuns ? `Nb+${noBallBatRuns}` : label;
+      score.last.push(displayLabel);
       score.lastEventType = label === "Nb" ? "danger" : "normal";
-      score.history.unshift({ label: oversText(score.legalBalls), text: `${label} extra added${batRuns ? ` with ${batRuns} off the bat` : ""}.` });
-      if ((isLegalExtra || label === "Nb") && (label === "Nb" ? batRuns : 1) % 2 === 1) rotateStrike();
+      score.history.unshift({ label: oversText(score.legalBalls), text: `${label} extra added${label === "Nb" && noBallBatRuns ? ` with ${noBallBatRuns} off the bat` : label === "Wd" && wideRuns ? ` with ${wideRuns} run${wideRuns === 1 ? "" : "s"} completed` : ""}.` });
+      if ((isLegalExtra || label === "Nb" || label === "Wd") && (label === "Nb" ? noBallBatRuns : label === "Wd" ? wideRuns : 1) % 2 === 1) rotateStrike();
       if (isLegalExtra) askNextBowler();
       animatePublicScore(score.lastEventType);
-      checkInningsStatus();
 
       if (state.usingDatabase && state.currentInnings && state.currentMatch) {
         try {
@@ -8973,13 +9084,13 @@
           const ball = {
             match_id: state.currentMatch.id,
             innings_id: state.currentInnings.id,
-            ball_number: isLegalExtra ? score.legalBalls : score.legalBalls + 1,
+            ball_number: deliveryNumber,
             over_number: isLegalExtra ? Math.floor((score.legalBalls - 1) / 6) : Math.floor(score.legalBalls / 6),
             ball_in_over: isLegalExtra ? ((score.legalBalls - 1) % 6) + 1 : (score.legalBalls % 6) + 1,
             batter_name: strikerName,
             bowler_name: score.currentBowler,
-            runs_bat: label === "Nb" ? batRuns : 0,
-            runs_extra: extraRuns,
+            runs_bat: label === "Nb" ? noBallBatRuns : 0,
+            runs_extra: label === "Wd" ? totalRuns : extraRuns,
             extra_type: extraType,
             is_legal: isLegalExtra,
             is_wicket: false,
@@ -8996,6 +9107,8 @@
            console.error("Failed to save extra to DB", error);
         }
       }
+      await checkInningsStatus();
+      renderScore();
     }
 
     async function checkInningsStatus() {
@@ -9053,6 +9166,7 @@
       state.score.runs = 0;
       state.score.wickets = 0;
       state.score.legalBalls = 0;
+      state.score.deliveryNumber = 0;
       state.score.target = target;
       state.score.battingTeam = newBattingTeam;
       state.score.bowlingTeam = newBowlingTeam;
@@ -9602,11 +9716,24 @@
       if (!button || button.id === "undoBall") return;
       if (button.dataset.ball) addLegalBall(button.dataset.ball, Number(button.dataset.ball));
       if (button.dataset.extra) {
-        const batRuns = button.dataset.extra === "Nb" ? Number(document.querySelector("#noBallBatRuns")?.value || 0) : 0;
-        addExtra(button.dataset.extra, batRuns);
+        const selectedRuns = button.dataset.extra === "Nb"
+          ? Number(document.querySelector("#noBallBatRuns")?.value || 0)
+          : button.dataset.extra === "Wd"
+            ? Number(document.querySelector("#wideExtraRuns")?.value || 0)
+            : 0;
+        addExtra(button.dataset.extra, selectedRuns);
       }
       if (button.dataset.wicket) addLegalBall("W", Number(document.querySelector("#wicketRunsSelect")?.value || 0), true);
     });
+
+    const wideExtraRunsSelect = document.querySelector("#wideExtraRuns");
+    if (wideExtraRunsSelect) {
+      wideExtraRunsSelect.addEventListener("change", async (event) => {
+        if (event.target.value === "") return;
+        await addExtra("Wd", Number(event.target.value || 0));
+        event.target.value = "";
+      });
+    }
 
     const noBallBatRunsSelect = document.querySelector("#noBallBatRuns");
     if (noBallBatRunsSelect) {
@@ -9973,6 +10100,7 @@
           state.score.runs = innings.runs;
           state.score.wickets = innings.wickets;
           state.score.legalBalls = innings.legal_balls;
+          state.score.deliveryNumber = balls.length;
           state.score.battingTeam = innings.batting_team;
           state.score.bowlingTeam = innings.bowling_team;
           state.score.target = innings.target || 0;
