@@ -1907,10 +1907,57 @@
       gap: 12px;
       overflow-x: auto;
       overflow-y: hidden;
-      padding: 3px 2px 10px;
+      padding: 8px 8px 18px;
       scroll-snap-type: x proximity;
       scrollbar-color: rgba(29, 217, 255, 0.55) rgba(255, 255, 255, 0.06);
       scrollbar-width: thin;
+    }
+
+    .viewer-carousel-wrap {
+      position: relative;
+      min-width: 0;
+    }
+
+    .carousel-arrow {
+      position: absolute;
+      top: 50%;
+      z-index: 5;
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      color: var(--cyan);
+      background: transparent;
+      font-size: 2.35rem;
+      font-weight: 950;
+      box-shadow: none;
+      text-shadow: 0 8px 18px rgba(0,0,0,0.42);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-50%) scale(0.92);
+      cursor: pointer;
+      transition: transform 0.2s ease, filter 0.2s ease, opacity 0.2s ease;
+    }
+
+    .viewer-carousel-wrap:hover .carousel-arrow,
+    .viewer-carousel-wrap:focus-within .carousel-arrow {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .carousel-arrow:hover {
+      transform: translateY(-50%) translateZ(10px) scale(1.08);
+      filter: brightness(1.08);
+    }
+
+    .carousel-arrow.left {
+      left: -8px;
+    }
+
+    .carousel-arrow.right {
+      right: -8px;
     }
 
     .viewer-scroll-row::-webkit-scrollbar {
@@ -1930,8 +1977,8 @@
     .viewer-match-card,
     .viewer-series-card,
     .viewer-empty-card {
-      flex: 0 0 min(310px, 86vw);
-      min-height: 210px;
+      flex: 0 0 min(350px, 86vw);
+      height: 280px;
       scroll-snap-align: start;
       border: 1px solid rgba(255, 255, 255, 0.13);
       border-radius: 24px;
@@ -1945,6 +1992,7 @@
       gap: 10px;
       cursor: pointer;
       overflow-wrap: anywhere;
+      min-width: 0;
       box-shadow:
         0 22px 42px rgba(0, 0, 0, 0.46),
         inset 0 1px 0 rgba(255,255,255,0.13),
@@ -1960,6 +2008,52 @@
       background:
         radial-gradient(circle at 12% 0%, rgba(49,255,154,0.22), transparent 34%),
         linear-gradient(145deg, rgba(255,255,255,0.14), rgba(255,255,255,0.045));
+    }
+
+    .viewer-series-card {
+      cursor: pointer;
+    }
+
+    .viewer-series-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .viewer-series-list .viewer-series-card,
+    .viewer-series-list .viewer-empty-card {
+      width: 100%;
+      height: 300px;
+      flex: none;
+    }
+
+    .viewer-tournament-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .viewer-tournament-card {
+      cursor: pointer;
+      height: 300px;
+    }
+
+    .ranking-card {
+      display: flex;
+      flex-direction: column;
+      min-height: 420px;
+    }
+
+    .ranking-card .feed {
+      flex: 1;
+    }
+
+    .ranking-card .btn {
+      align-self: stretch;
+      justify-content: center;
+      margin-top: 12px;
     }
 
     .viewer-match-card strong,
@@ -2113,6 +2207,10 @@
       color: var(--green);
     }
 
+    .cricket-card-verdict.cyan {
+      color: var(--cyan);
+    }
+
     .cricket-card-verdict.gold {
       color: var(--gold);
     }
@@ -2250,9 +2348,25 @@
       border: 1px solid var(--line);
       border-radius: 14px;
       background: rgba(255,255,255,0.04);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .partnership-row::before {
+      content: "";
+      position: absolute;
+      left: 18%;
+      right: 18%;
+      top: 50%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--green), var(--cyan), var(--gold));
+      opacity: 0.45;
+      transform: translateY(-50%);
     }
 
     .partnership-pill {
+      position: relative;
+      z-index: 1;
       min-width: 72px;
       padding: 10px 12px;
       border-radius: 999px;
@@ -2260,6 +2374,66 @@
       color: #06151d;
       text-align: center;
       font-weight: 950;
+    }
+
+    .form-badge-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .form-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: inline-grid;
+      place-items: center;
+      color: #06151d;
+      font-weight: 950;
+      font-size: 0.72rem;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      animation: formPop 0.45s ease both;
+    }
+
+    .form-badge.win {
+      background: linear-gradient(135deg, var(--green), #b7ff6a);
+    }
+
+    .form-badge.loss {
+      color: #fff;
+      background: linear-gradient(135deg, var(--red), #ff7c7c);
+    }
+
+    @keyframes formPop {
+      from { transform: translateY(8px) scale(0.85); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .h2h-versus {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: center;
+      text-align: center;
+    }
+
+    .h2h-versus strong {
+      font-size: 1.2rem;
+      color: var(--green);
+    }
+
+    .h2h-versus .vs {
+      width: 48px;
+      height: 48px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      color: #06151d;
+      background: linear-gradient(135deg, var(--gold), var(--cyan));
+      font-weight: 950;
+      box-shadow: 0 16px 30px rgba(0,0,0,0.25);
     }
 
     .finish-ready {
@@ -2306,9 +2480,16 @@
 
     .ranking-player-row {
       display: grid !important;
-      grid-template-columns: 46px minmax(0, 1fr) auto;
+      grid-template-columns: 28px 46px minmax(0, 1fr) auto;
       align-items: center !important;
       gap: 10px !important;
+    }
+
+    .ranking-player-rank {
+      color: var(--gold);
+      font-size: 0.92rem;
+      font-weight: 950;
+      text-align: center;
     }
 
     .ranking-player-avatar {
@@ -2624,7 +2805,7 @@
     .match-page-scroll .viewer-empty-card {
       flex: 0 0 min(880px, 92vw);
       min-height: 0;
-      height: max-content;
+      height: 430px;
       justify-content: flex-start;
       scroll-snap-align: center;
     }
@@ -2787,9 +2968,14 @@
       .viewer-series-card,
       .viewer-empty-card {
         flex-basis: min(330px, 88vw);
-        min-height: 240px;
+        height: auto;
+        min-height: 260px;
         padding: 14px;
         border-radius: 20px;
+      }
+
+      .carousel-arrow {
+        display: none;
       }
 
       .viewer-match-card:hover,
@@ -3257,28 +3443,22 @@
           </div>
           <div class="panel-body">
             <div class="grid cols-3">
-              <article class="card">
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
-                  <h3>Top Batters</h3>
-                  <button class="btn ghost btn-sm" type="button" data-open-ranking="batters">See more</button>
-                </div>
+              <article class="card ranking-card">
+                <h3>Top Batters</h3>
                 <ul class="feed" id="homeRankingBatters"></ul>
+                <button class="btn ghost btn-sm" type="button" data-open-ranking="batters">See more</button>
               </article>
 
-              <article class="card">
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
-                  <h3>Top Bowlers</h3>
-                  <button class="btn ghost btn-sm" type="button" data-open-ranking="bowlers">See more</button>
-                </div>
+              <article class="card ranking-card">
+                <h3>Top Bowlers</h3>
                 <ul class="feed" id="homeRankingBowlers"></ul>
+                <button class="btn ghost btn-sm" type="button" data-open-ranking="bowlers">See more</button>
               </article>
 
-              <article class="card">
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
-                  <h3>Top All-rounders</h3>
-                  <button class="btn ghost btn-sm" type="button" data-open-ranking="allrounders">See more</button>
-                </div>
+              <article class="card ranking-card">
+                <h3>Top All-rounders</h3>
                 <ul class="feed" id="homeRankingAllrounders"></ul>
+                <button class="btn ghost btn-sm" type="button" data-open-ranking="allrounders">See more</button>
               </article>
             </div>
           </div>
@@ -3629,6 +3809,15 @@
                             <option value="Bowl">Bowl</option>
                           </select>
                         </label>
+                      </div>
+                      <div id="openingSetup" style="display:none;flex-direction:column;gap:14px;padding-top:16px;border-top:1px solid var(--border);">
+                        <h3 style="margin:0;">Opening Setup</h3>
+                        <div class="form-grid">
+                          <label>Striker <select id="openingStrikerSelect"></select></label>
+                          <label>Non-striker <select id="openingNonStrikerSelect"></select></label>
+                        </div>
+                        <label>First bowler <select id="openingBowlerSelect"></select></label>
+                        <p class="muted">Choose opening batters from the batting team and first bowler from the bowling team.</p>
                       </div>
 
                       <div style="display:flex; gap:8px; flex-wrap: wrap;">
@@ -6552,6 +6741,7 @@
         .from("matches")
         .select(`
           id, team_a, team_b, overs, venue,
+          status, match_date, match_time, result_text, winner_team_id, team_a_id, team_b_id, tournament_id, series_id, format,
           innings ( id, innings_number, runs, wickets, legal_balls, batting_team )
         `)
         .eq("status", "Live");
@@ -6805,6 +6995,16 @@
       return `${dateStr} Â· ${display}`;
     }
 
+    function matchCountdownText(match) {
+      const start = matchStartDateTime(match);
+      if (!start) return "";
+      const diff = start.getTime() - Date.now();
+      if (diff <= 0 || diff > 5 * 60 * 60 * 1000) return "";
+      const hours = Math.floor(diff / 3600000);
+      const minutes = Math.max(0, Math.floor((diff % 3600000) / 60000));
+      return hours ? `Starts in ${hours}h ${minutes}m` : `Starts in ${minutes}m`;
+    }
+
     function formatSeriesDateTime(series, matches = []) {
       const date = series?.start_date || series?.startDate || matches.find(match => match.matchDate || match.match_date)?.matchDate || matches.find(match => match.match_date)?.match_date;
       const time = series?.start_time || series?.startTime || matches.find(match => match.matchTime || match.match_time)?.matchTime || matches.find(match => match.match_time)?.match_time;
@@ -6922,6 +7122,7 @@
       const teamByNameOrId = (name, id) => state.teams.find(team => String(team.id) === String(id)) || state.teams.find(team => String(team.name || "").toLowerCase() === String(name || "").toLowerCase()) || {};
       const statusTagClass = (status = "") => status === "Live" ? "green" : status === "Completed" ? "cyan" : String(status).toLowerCase().includes("cancel") ? "red" : "gold";
       const inningsForMatch = (match) => {
+        if (Array.isArray(match.innings) && match.innings.length) return match.innings;
         const cached = state.innings.filter(inn => String(inn.match_id || inn.matchId) === String(match.id));
         const isCurrentMatch = state.currentMatch && String(state.currentMatch.id) === String(match.id);
         if (isCurrentMatch && !cached.length) {
@@ -7003,6 +7204,7 @@
         const teamB = teamByNameOrId(match.teamB, match.teamBId);
         const verdict = verdictFor(match);
         const dateTime = formatMatchDateTime(match.matchDate, match.matchTime);
+        const countdown = matchCountdownText(match);
         const balls = lastSix(match);
         return `
           <article class="viewer-match-card" data-view-match="${match.id}" tabindex="0" role="button" aria-label="Open ${match.teamA} vs ${match.teamB}">
@@ -7030,10 +7232,80 @@
               </div>
             </div>
             ${balls.length ? `<div class="cricket-ball-strip">${balls.map(ball => `<span class="cricket-ball-chip ${ballClass(ball)}">${ball}</span>`).join("")}</div>` : ""}
-            <div class="cricket-card-note">${chaseNote(match) || verdict.note}</div>
+            <div class="cricket-card-note">${countdown || chaseNote(match) || verdict.note}</div>
           </article>
         `;
       }).join("");
+    }
+
+    function setupCarouselControls(selector) {
+      const scroller = document.querySelector(selector);
+      if (!scroller) return;
+      const parent = scroller.parentElement;
+      if (!parent) return;
+      parent.classList.add("viewer-carousel-wrap");
+      parent.querySelectorAll(`[data-carousel-target="${selector}"]`).forEach(button => button.remove());
+      if (scroller.children.length <= 1) return;
+      parent.insertAdjacentHTML("afterbegin", `<button class="carousel-arrow left" type="button" data-carousel-target="${selector}" data-carousel-dir="-1" aria-label="Scroll left">&lsaquo;</button>`);
+      parent.insertAdjacentHTML("beforeend", `<button class="carousel-arrow right" type="button" data-carousel-target="${selector}" data-carousel-dir="1" aria-label="Scroll right">&rsaquo;</button>`);
+    }
+
+    function setupPublicCarousels() {
+      [
+        "#guestLiveMatches",
+        "#guestUpcomingMatches",
+        "#guestRecentResults",
+        "#guestSeriesMatches",
+        "#matchLiveList",
+        "#matchUpcomingList",
+        "#matchFinishedList",
+        "#publicDashboardGrid"
+      ].forEach(setupCarouselControls);
+    }
+
+    function renderSeriesCard(series, options = {}) {
+      const seriesMatches = state.matches.filter(match => String(match.seriesId || match.series_id || "") === String(series.id));
+      const bucket = publicStatusBucket(series.status, series.start_date, series.end_date);
+      const status = options.statusText || publicStatusLabel(bucket);
+      const tagClass = bucket === "progress" || ["Accepted", "Scheduled", "Live", "Running", "Ongoing"].includes(series.status) ? "green" : bucket === "finished" || series.status === "Completed" ? "cyan" : series.status === "Rejected" ? "red" : "gold";
+      const liveCount = seriesMatches.filter(match => match.status === "Live").length;
+      const completedCount = seriesMatches.filter(match => match.status === "Completed").length;
+      const nextMatch = seriesMatches.find(match => match.status === "Live") || seriesMatches.find(match => match.status === "Scheduled" || match.status === "Setup") || seriesMatches[0];
+      const teamAId = seriesTeamAId(series);
+      const teamBId = seriesTeamBId(series);
+      return `
+        <article class="viewer-series-card" data-view-series="${series.id}" tabindex="0" role="button" aria-label="Open ${series.name || "series"}">
+          <div class="cricket-card-kicker">
+            <span>${series.name || "Cricket Series"}</span>
+            <span class="tag ${tagClass}">${status}</span>
+          </div>
+          <div class="cricket-card-location">${series.team_a_name || "Team A"} vs ${series.team_b_name || "Team B"}</div>
+          <div class="cricket-card-body">
+            <div class="cricket-team-stack">
+              <div class="cricket-team-row">
+                <span class="cricket-team-mark">${shortTeamCode(series.team_a_name || "Team A").slice(0, 2)}</span>
+                <span class="cricket-team-code">${shortTeamCode(series.team_a_name || "Team A")}</span>
+                <span class="cricket-team-score">${seriesMatches.filter(match => String(match.winnerTeamId || match.winner_team_id || "") === String(teamAId)).length} wins</span>
+              </div>
+              <div class="cricket-team-row">
+                <span class="cricket-team-mark">${shortTeamCode(series.team_b_name || "Team B").slice(0, 2)}</span>
+                <span class="cricket-team-code">${shortTeamCode(series.team_b_name || "Team B")}</span>
+                <span class="cricket-team-score">${seriesMatches.filter(match => String(match.winnerTeamId || match.winner_team_id || "") === String(teamBId)).length} wins</span>
+              </div>
+            </div>
+            <div class="cricket-card-verdict ${tagClass}">
+              <span>${seriesMatches.length || series.num_matches || 0}</span>
+              <small>matches</small>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span class="tag green">${liveCount} live</span>
+            <span class="tag cyan">${completedCount} finished</span>
+            <span class="tag gold">${series.overs || 20} overs</span>
+          </div>
+          <div class="cricket-card-note">${nextMatch ? `Next: ${nextMatch.teamA} vs ${nextMatch.teamB}` : formatSeriesDateTime(series, seriesMatches)}</div>
+        </article>
+      `;
     }
 
     function renderPublicHome() {
@@ -7146,6 +7418,7 @@
         const teamA = teamByNameOrId(match.teamA, match.teamAId);
         const teamB = teamByNameOrId(match.teamB, match.teamBId);
         const verdict = verdictForMatch(match, mode);
+        const countdown = matchCountdownText(match);
         const tournament = state.tournaments.find(item => String(item.id) === String(match.tournamentId || ""));
         const series = state.series.find(item => String(item.id) === String(match.seriesId || match.series_id || ""));
         const title = series?.name || tournament?.name || `${match.format || "Cricket"} Match`;
@@ -7176,7 +7449,7 @@
               </div>
             </div>
             ${ballStrip(match)}
-            <div class="cricket-card-note">${verdict.note}</div>
+            <div class="cricket-card-note">${countdown || verdict.note}</div>
           </article>
         `;
       };
@@ -7206,39 +7479,12 @@
 
       const seriesEl = document.querySelector("#guestSeriesMatches");
       if (seriesEl) {
-        seriesEl.innerHTML = visibleSeries.length ? visibleSeries.map(series => {
-          const seriesMatches = state.matches.filter(match => String(match.seriesId || match.series_id || "") === String(series.id));
-          const liveCount = seriesMatches.filter(match => match.status === "Live").length;
-          const completedCount = seriesMatches.filter(match => match.status === "Completed").length;
-          const bucket = publicStatusBucket(series.status, series.start_date, series.end_date);
-          const status = publicStatusLabel(bucket);
-          return `
-            <article class="viewer-series-card" data-view-series="${series.id}" style="cursor:pointer;">
-              <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
-                <strong>${series.name || "Cricket Series"}</strong>
-                <span class="tag ${bucket === "progress" ? "green" : bucket === "finished" ? "cyan" : "gold"}">${status}</span>
-              </div>
-              <span class="viewer-card-meta">${series.team_a_name || "Team A"} vs ${series.team_b_name || "Team B"}</span>
-              <span class="viewer-card-meta">${formatSeriesDateTime(series, seriesMatches)}</span>
-              <span class="viewer-card-meta">${series.num_matches || seriesMatches.length || 0} matches - ${series.overs || 20} overs${series.venue ? ` - ${series.venue}` : ""}</span>
-              <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <span class="tag green">${liveCount} live</span>
-                <span class="tag cyan">${completedCount} completed</span>
-                <span class="tag gold">${seriesMatches.length} total</span>
-              </div>
-              <div style="display:flex; flex-direction:column; gap:8px;">
-                ${seriesMatches.length ? seriesMatches.slice(0, 4).map((match, index) => `
-                  <div class="viewer-series-match" data-view-match="${match.id}">
-                    <span>Match ${index + 1}: ${match.teamA} vs ${match.teamB}</span>
-                    <span class="tag ${statusTagClass(match.status)}">${match.status}</span>
-                  </div>
-                `).join("") : `<span class="viewer-card-meta">Series matches will appear after fixtures are created.</span>`}
-              </div>
-            </article>
-          `;
-        }).join("") : emptyCard("No series yet", "Series matches will appear here when a series is created.");
+        seriesEl.innerHTML = visibleSeries.length
+          ? visibleSeries.map(series => renderSeriesCard(series)).join("")
+          : emptyCard("No series yet", "Series matches will appear here when a series is created.");
       }
 
+      setupPublicCarousels();
       renderPublicSearch();
     }
 
@@ -7333,9 +7579,10 @@
         };
         const renderRows = (visible) => visible.length ? visible.map((player, index) => `
           <li class="ranking-player-row" data-public-player="${player.id || ""}" style="cursor:pointer;">
+            <span class="ranking-player-rank">${index + 1}</span>
             ${playerAvatar(player)}
             <span class="ranking-player-name">
-              <strong>#${index + 1} ${player.name}</strong>
+              <strong>${player.name}</strong>
               <span>${player.team || "No team"}</span>
             </span>
             <span style="text-align:right; font-weight:900; color:var(--green);">${config.primary(player)}</span>
@@ -7397,6 +7644,7 @@
       const finishedList = document.querySelector("#matchFinishedList");
       if (finishedList) finishedList.innerHTML = renderViewerMatchCards(history, "No finished matches yet", "Completed scorecards will appear here.");
 
+      setupPublicCarousels();
       renderScoringMatchSelect();
       renderPublicHome();
       renderPlayerRankings();
@@ -7951,16 +8199,16 @@
             <h3 style="margin:0;">${heading} Tournaments</h3>
             <span class="tag">${list.length}</span>
           </div>
-          <div class="grid cols-2">
+          <div class="viewer-tournament-list">
             ${list.length ? list.map(tournament => {
               const approvedTeams = state.applications.filter(a => String(a.tournamentId) === String(tournament.id) && a.status === "Approved");
               const fixtures = state.matches.filter(match => String(match.tournamentId || "") === String(tournament.id));
               const bucket = publicStatusBucket(tournament.status, tournament.start_date, tournament.end_date);
               const statusClass = bucket === "progress" ? "green" : bucket === "finished" ? "cyan" : "gold";
               return `
-                <article class="card" data-view-tournament="${tournament.id}" style="cursor:pointer;display:flex;flex-direction:column;gap:12px;">
+                <article class="viewer-series-card viewer-tournament-card" data-view-tournament="${tournament.id}" style="cursor:pointer;">
                   ${tournament.banner_url ? `<img src="${tournament.banner_url}" alt="${tournament.name}" style="width:100%;height:150px;object-fit:cover;border-radius:8px;">` : ""}
-                  <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+                  <div class="cricket-card-kicker">
                     <div>
                       <h3 style="margin:0;">${tournament.name}</h3>
                       <p class="muted" style="margin-top:4px;">${tournament.format || "Cricket"} - ${tournament.venue || "Venue TBA"}</p>
@@ -7972,7 +8220,7 @@
                     <span class="tag">${fixtures.length} matches</span>
                     <span class="tag">${tournament.overs || 20} overs</span>
                   </div>
-                  <p class="muted" style="font-size:0.84rem;">${tournament.start_date ? `Starts ${new Date(tournament.start_date).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}` : "Schedule will be announced soon."}</p>
+                  <p class="cricket-card-note">${tournament.start_date ? `Starts ${new Date(tournament.start_date).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}` : "Schedule will be announced soon."}</p>
                   <button class="btn ghost" type="button" data-view-tournament="${tournament.id}">View Tournament Details</button>
                 </article>
               `;
@@ -8375,6 +8623,54 @@
 
       teamAList.innerHTML = pA.length ? pA.map(renderPlayerRow).join("") : "No players found";
       teamBList.innerHTML = pB.length ? pB.map(renderPlayerRow).join("") : "No players found";
+      updateOpeningSetup(match);
+    }
+
+    function selectedXIPlayers(teamId) {
+      return Array.from(document.querySelectorAll(`input[name='playingXI'][data-team-id='${teamId}']:checked`))
+        .map(input => state.players.find(player => String(player.id) === String(input.dataset.playerId)))
+        .filter(Boolean);
+    }
+
+    function matchBattingBowlingIdsFromSetup(match) {
+      const tossWinnerId = document.querySelector("#tossWinnerSelect")?.value;
+      const tossDecision = document.querySelector("#tossDecisionSelect")?.value || "Bat";
+      if (!match || !tossWinnerId) return { battingTeamId: null, bowlingTeamId: null };
+      const teamAWinsAndBats = String(tossWinnerId) === String(match.teamAId) && tossDecision === "Bat";
+      const teamBWinsAndBowls = String(tossWinnerId) === String(match.teamBId) && tossDecision === "Bowl";
+      const teamABats = teamAWinsAndBats || teamBWinsAndBowls;
+      return {
+        battingTeamId: teamABats ? match.teamAId : match.teamBId,
+        bowlingTeamId: teamABats ? match.teamBId : match.teamAId
+      };
+    }
+
+    function playerOption(player) {
+      const meta = getPlayerMeta(player.id);
+      const role = [player.role, player.batting_style || meta.battingStyle, player.bowling_style || meta.bowlingStyle].filter(Boolean).join(" - ");
+      return `<option value="${player.name}">${player.name}${role ? ` (${role})` : ""}</option>`;
+    }
+
+    function updateOpeningSetup(match) {
+      const openingSetup = document.querySelector("#openingSetup");
+      const strikerSelect = document.querySelector("#openingStrikerSelect");
+      const nonStrikerSelect = document.querySelector("#openingNonStrikerSelect");
+      const bowlerSelect = document.querySelector("#openingBowlerSelect");
+      if (!openingSetup || !strikerSelect || !nonStrikerSelect || !bowlerSelect || !match || match.status === "Live") return;
+      const { battingTeamId, bowlingTeamId } = matchBattingBowlingIdsFromSetup(match);
+      if (!battingTeamId || !bowlingTeamId) {
+        openingSetup.style.display = "none";
+        return;
+      }
+      const batters = selectedXIPlayers(battingTeamId);
+      const bowlers = selectedXIPlayers(bowlingTeamId).filter(player => !String(player.bowling_style || "").toLowerCase().includes("does not bowl")) || selectedXIPlayers(bowlingTeamId);
+      strikerSelect.innerHTML = `<option value="">Select striker</option>${batters.map(playerOption).join("")}`;
+      nonStrikerSelect.innerHTML = `<option value="">Select non-striker</option>${batters.map(playerOption).join("")}`;
+      bowlerSelect.innerHTML = `<option value="">Select first bowler</option>${(bowlers.length ? bowlers : selectedXIPlayers(bowlingTeamId)).map(playerOption).join("")}`;
+      if (!strikerSelect.value && batters[0]) strikerSelect.value = batters[0].name;
+      if (!nonStrikerSelect.value && batters[1]) nonStrikerSelect.value = batters[1].name;
+      if (!bowlerSelect.value && bowlers[0]) bowlerSelect.value = bowlers[0].name;
+      openingSetup.style.display = "flex";
     }
 
     async function generateTournamentFixtures(tournamentId) {
@@ -8475,30 +8771,7 @@
         seriesNavCountEl.style.display = visiblePendingSeries.length ? "inline-flex" : "none";
       }
 
-      const publicSeriesCard = (s) => {
-        const seriesMatches = state.matches.filter(m => String(m.seriesId || m.series_id || "") === String(s.id));
-        const bucket = publicStatusBucket(s.status, s.start_date, s.end_date);
-        const tagClass = bucket === "progress" ? "green" : bucket === "finished" ? "cyan" : "gold";
-        return `
-          <article class="card" data-view-series="${s.id}" style="cursor:pointer;display:flex;flex-direction:column;gap:12px;">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
-              <div>
-                <h3 style="margin:0;">${s.name || "Cricket Series"}</h3>
-                <p class="muted" style="margin-top:4px;">${s.team_a_name || "Team A"} vs ${s.team_b_name || "Team B"}</p>
-                <p class="muted" style="margin-top:4px;font-weight:800;color:var(--cyan);">${formatSeriesDateTime(s, seriesMatches)}</p>
-              </div>
-              <span class="tag ${tagClass}">${publicStatusLabel(bucket)}</span>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <span class="tag">${s.num_matches || seriesMatches.length || 0} matches</span>
-              <span class="tag">${seriesMatches.filter(match => match.status === "Live").length} live</span>
-              <span class="tag">${seriesMatches.filter(match => match.status === "Completed").length} finished</span>
-            </div>
-            <p class="muted" style="font-size:0.84rem;">${s.venue || "Venue TBA"}${s.overs ? ` - ${s.overs} overs` : ""}</p>
-            <button class="btn ghost" type="button" data-view-series="${s.id}">View Series Details</button>
-          </article>
-        `;
-      };
+      const publicSeriesCard = (s) => renderSeriesCard(s);
 
       if (!state.user) {
         const groups = [
@@ -8514,7 +8787,7 @@
                 <h3 style="margin:0;">${heading} Series</h3>
                 <span class="tag">${list.length}</span>
               </div>
-              <div class="grid cols-2">
+              <div class="viewer-series-list">
                 ${list.length ? list.map(publicSeriesCard).join("") : `<article class="card"><h3>No ${heading.toLowerCase()} series</h3><p class="muted">Public series will appear here when available.</p></article>`}
               </div>
             </section>
@@ -8562,28 +8835,8 @@
       safeSetText("#mySeriesCount", `${mySeries.length} series`);
       const mySeriesList = document.querySelector("#mySeriesList");
       if (mySeriesList) {
-        mySeriesList.innerHTML = mySeries.length ? mySeries.map(series => {
-          const matches = state.matches.filter(match => String(match.seriesId || match.series_id || "") === String(series.id));
-          const tagClass = series.status === "Rejected" ? "red" : series.status === "Completed" ? "cyan" : series.status === "Pending" ? "gold" : "green";
-          return `
-            <article class="card">
-              <div style="display:flex;justify-content:space-between;gap:12px;">
-                <div>
-                  <h3 style="margin:0;">${series.name || "Series"}</h3>
-                  <p class="muted">${series.team_a_name || "Team A"} vs ${series.team_b_name || "Team B"}</p>
-                  <p class="muted" style="font-weight:800;color:var(--cyan);">${formatSeriesDateTime(series, matches)}</p>
-                </div>
-                <span class="tag ${tagClass}">${series.status || "Scheduled"}</span>
-              </div>
-              <p class="muted" style="margin-top:8px;">${series.num_matches || matches.length || 0} matches - ${series.overs || 20} overs${series.venue ? ` - ${series.venue}` : ""}</p>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-                <span class="tag">${matches.filter(match => match.status === "Live").length} live</span>
-                <span class="tag">${matches.filter(match => match.status === "Completed").length} completed</span>
-                <span class="tag">${matches.length} total</span>
-              </div>
-            </article>
-          `;
-        }).join("") : `<article class="card"><h3>No series yet</h3><p class="muted">Series you challenge or receive will appear here.</p></article>`;
+        mySeriesList.classList.add("viewer-series-list");
+        mySeriesList.innerHTML = mySeries.length ? mySeries.map(series => renderSeriesCard(series, { statusText: series.status || "Scheduled" })).join("") : `<article class="card"><h3>No series yet</h3><p class="muted">Series you challenge or receive will appear here.</p></article>`;
       }
 
       const groups = [
@@ -8598,53 +8851,7 @@
             <h3 style="margin:0; font-size: 1rem;">${heading}</h3>
             <span class="tag">${list.length}</span>
           </div>
-          ${list.length ? list.map(s => {
-            const seriesMatches = state.matches.filter(m => String(m.seriesId || m.series_id || "") === String(s.id));
-            const liveCount = seriesMatches.filter(m => m.status === "Live").length;
-            const completedCount = seriesMatches.filter(m => m.status === "Completed").length;
-            const sender = isSeriesChallengeSender(s);
-            const receiver = isSeriesChallengeReceiver(s);
-            return `
-              <article class="card">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                  <div>
-                    <h3 style="margin: 0;">${s.name}</h3>
-                    <p class="muted" style="margin: 4px 0;">${s.num_matches} matches - ${s.overs} overs</p>
-                    <p class="muted" style="margin: 4px 0;font-weight:800;color:var(--cyan);">${formatSeriesDateTime(s, seriesMatches)}</p>
-                  </div>
-                  <span class="tag ${s.status === 'Live' || s.status === 'Running' || s.status === 'Ongoing' ? 'green' : s.status === 'Completed' ? 'cyan' : 'gold'}">${s.status || "Scheduled"}</span>
-                </div>
-                <p style="font-weight: 700; margin: 8px 0;">${s.team_a_name} vs ${s.team_b_name}</p>
-                ${s.status === "Pending" ? `<p class="muted" style="font-weight:800;">${sender ? "Series challenge sent" : receiver ? "Series challenge received" : "Pending challenge"}</p>` : ""}
-                ${s.status === "Accepted" || s.status === "Scheduled" ? `<p class="muted" style="font-weight:800;color:var(--green);">Series challenge accepted</p>` : ""}
-                ${s.venue ? `<p class="muted" style="font-size:0.82rem;">${s.venue}</p>` : ""}
-                <div style="display:flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
-                  <span class="tag">${liveCount} live</span>
-                  <span class="tag">${completedCount} completed</span>
-                  <span class="tag">${seriesMatches.length} total</span>
-                </div>
-                ${s.status === "Pending" && receiver && !sender ? `
-                  <div class="actions" style="margin-top:12px;">
-                    <button class="btn primary" data-series-action="Accepted" data-id="${s.id}">Accept</button>
-                    <button class="btn danger" data-series-action="Rejected" data-id="${s.id}">Reject</button>
-                  </div>
-                ` : ""}
-                ${s.status === "Pending" && sender ? `<button class="btn ghost danger" style="margin-top: 12px; font-size: 0.75rem; align-self: flex-end;" data-cancel-series="${s.id}">Cancel Challenge</button>` : ""}
-                <div style="margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px;">
-                   <p class="muted" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase;">Matches</p>
-                   <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
-                      ${seriesMatches.length ? seriesMatches.map((m, idx) => `
-                        <li style="font-size: 0.85rem; display: flex; justify-content: space-between; background: rgba(255,255,255,0.02); padding: 6px 10px; border-radius: 6px;">
-                          <span>Match ${idx + 1}: ${m.teamA} vs ${m.teamB}</span>
-                          <span class="tag ${m.status === 'Live' ? 'green' : m.status === 'Completed' ? 'cyan' : 'gold'}" style="font-size: 0.7rem;">${m.status}</span>
-                        </li>
-                      `).join("") : `<li class="muted">No matches created yet.</li>`}
-                   </ul>
-                </div>
-                ${(isSuperAdmin() || isOwner(s)) && s.status !== "Pending" ? `<button class="btn ghost danger" style="margin-top: 12px; font-size: 0.7rem; align-self: flex-end;" data-delete-series="${s.id}">Delete Series</button>` : ""}
-              </article>
-            `;
-          }).join("") : `<div class="card"><p class="muted">No ${heading.toLowerCase()} yet.</p></div>`}
+          ${list.length ? `<div class="viewer-series-list">${list.map(s => renderSeriesCard(s)).join("")}</div>` : `<div class="card"><p class="muted">No ${heading.toLowerCase()} yet.</p></div>`}
         </div>
       `).join("");
 
@@ -8857,11 +9064,16 @@
 
     async function renderPublicLiveView() {
       renderPublicOverviewSections();
+      const liveCount = document.querySelector("#publicLiveCount");
+      const grid = document.querySelector("#publicDashboardGrid");
       if (!state.usingDatabase) {
-        const liveCount = document.querySelector("#publicLiveCount");
-        const grid = document.querySelector("#publicDashboardGrid");
-        if (liveCount) liveCount.textContent = "Local mode (Supabase unavailable)";
-        if (grid) grid.innerHTML = `<div class="card"><p class="muted">Live view requires database connection.</p></div>`;
+        const localLive = state.matches.filter(match => publicMatchIsVisible(match) && match.status === "Live");
+        if (liveCount) liveCount.textContent = `${localLive.length} active match${localLive.length !== 1 ? "es" : ""}`;
+        if (grid) {
+          grid.className = "viewer-scroll-row match-page-scroll";
+          grid.innerHTML = renderViewerMatchCards(localLive, "No live matches right now", "Live matches will appear here as scoring starts.");
+        }
+        setupPublicCarousels();
         return;
       }
 
@@ -8872,43 +9084,50 @@
         }
 
         const matches = await loadLiveMatchesWithInningsFromDatabase();
-        const liveCount = document.querySelector("#publicLiveCount");
-        const grid = document.querySelector("#publicDashboardGrid");
         if (liveCount) liveCount.textContent = `${matches.length} active match${matches.length !== 1 ? 'es' : ''}`;
 
         if (matches.length === 0) {
-          if (grid) grid.innerHTML = `
-            <div class="card" style="text-align:center; padding: 48px 24px; border-style: dashed;">
-              <h3 style="margin-bottom: 8px;">No live matches right now</h3>
-              <p class="muted">Check back later when a match starts.</p>
-            </div>
-          `;
+          if (grid) {
+            grid.className = "viewer-scroll-row match-page-scroll";
+            grid.innerHTML = renderViewerMatchCards([], "No live matches right now", "Check back later when a match starts.");
+          }
+          setupPublicCarousels();
           return;
         }
 
-        if (grid) grid.innerHTML = matches.map(match => {
+        const adaptedMatches = matches.map(match => {
           let currentInnings = null;
           if (match.innings && match.innings.length > 0) {
             currentInnings = match.innings.reduce((prev, current) => (prev.innings_number > current.innings_number) ? prev : current);
           }
-
-          const runs = currentInnings ? currentInnings.runs : 0;
-          const wickets = currentInnings ? currentInnings.wickets : 0;
-          const legalBalls = currentInnings ? currentInnings.legal_balls : 0;
-          const battingTeam = currentInnings ? currentInnings.batting_team : match.team_a;
-
-          return `
-            <div class="public-score public-match-card" data-match-id="${match.id}" style="margin: 0; padding: 24px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-              <span class="tag green" style="animation: pulse 2s infinite;">LIVE</span>
-              <h3 style="margin: 12px 0 4px; font-size: 1.1rem; color: var(--muted);">${match.team_a} vs ${match.team_b}</h3>
-              <h2 style="font-size: 2.5rem; margin-bottom: 4px;">${battingTeam} <span style="color: var(--cyan);">${runs}/${wickets}</span></h2>
-              <p class="muted">${oversText(legalBalls)} overs Â· ${match.overs} over match</p>
-            </div>
-          `;
-        }).join("");
+          return {
+            id: match.id,
+            teamA: match.team_a,
+            teamB: match.team_b,
+            teamAId: match.team_a_id,
+            teamBId: match.team_b_id,
+            overs: match.overs,
+            venue: match.venue,
+            status: match.status || "Live",
+            matchDate: match.match_date,
+            matchTime: match.match_time,
+            resultText: match.result_text,
+            winnerTeamId: match.winner_team_id,
+            tournamentId: match.tournament_id,
+            seriesId: match.series_id,
+            format: match.format,
+            innings: match.innings,
+            lastBalls: [],
+            currentInnings
+          };
+        });
+        if (grid) {
+          grid.className = "viewer-scroll-row match-page-scroll";
+          grid.innerHTML = renderViewerMatchCards(adaptedMatches, "No live matches right now", "Live matches will appear here as scoring starts.");
+        }
+        setupPublicCarousels();
       } catch (error) {
         console.error("Failed to fetch live matches", error);
-        const liveCount = document.querySelector("#publicLiveCount");
         if (liveCount) liveCount.textContent = "Error loading matches";
       }
     }
@@ -9275,6 +9494,44 @@
       return { batters, bowlers, extras, fall, partnerships };
     }
 
+    function playerAvatarSmallByName(name) {
+      const player = state.players.find(p => p.name === name);
+      const meta = player ? getPlayerMeta(player.id) : {};
+      const photo = meta.photo || player?.photo_url || "";
+      return photo
+        ? `<span class="ranking-player-avatar" style="width:34px;height:34px;"><img src="${photo}" alt="${name}"></span>`
+        : `<span class="ranking-player-avatar" style="width:34px;height:34px;">${initials(name)}</span>`;
+    }
+
+    function formBadges(teamId) {
+      const recent = state.matches
+        .filter(m => String(m.teamAId) === String(teamId) || String(m.teamBId) === String(teamId))
+        .filter(m => m.status === "Completed")
+        .slice(0, 5)
+        .map((m, index) => {
+          const won = String(m.winnerTeamId || m.winner_team_id || "") === String(teamId);
+          return `<span class="form-badge ${won ? "win" : "loss"}" style="animation-delay:${index * 0.06}s;">${won ? "W" : "L"}</span>`;
+        });
+      return recent.length ? `<div class="form-badge-row">${recent.join("")}</div>` : `<p class="muted">No completed matches</p>`;
+    }
+
+    function scorecardCsv(match) {
+      const innings = state.innings.filter(inn => String(inn.match_id || inn.matchId) === String(match.id));
+      const rows = [["Team", "Runs", "Wickets", "Overs"]];
+      innings.forEach(inn => rows.push([inn.batting_team || "", inn.runs || 0, inn.wickets || 0, oversText(inn.legal_balls || 0)]));
+      return rows.map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(",")).join("\n");
+    }
+
+    function downloadTextFile(filename, content, type = "text/plain") {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
     function ballDisplayScoreAtBall(balls, targetBall) {
       let runs = 0;
       let wickets = 0;
@@ -9456,7 +9713,10 @@
             <td><strong>${bowler.name}</strong></td><td>${oversText(bowler.balls)}</td><td>${bowler.maidens}</td><td>${bowler.runs}</td><td>${bowler.wickets}</td><td>${bowler.economy}</td>
           </tr>`;
         }).join("");
-        const didNotBat = Object.values(stats.batters).filter(b => !b.didBat).map(b => `<span class="tag">${b.name}</span>`).join(" ");
+        const didNotBat = Object.values(stats.batters).filter(b => !b.didBat).map(b => {
+          const player = state.players.find(p => p.name === b.name);
+          return `<span class="tag" data-public-player="${player?.id || ""}" style="gap:6px;cursor:pointer;">${playerAvatarSmallByName(b.name)} ${b.name}</span>`;
+        }).join(" ");
         const fallRows = stats.fall.length ? stats.fall.map((f, wicketIndex) => `<li><strong>${wicketIndex + 1}. ${f.batter}</strong><span>${f.score} at ${f.over} overs</span></li>`).join("") : `<li><strong>No wickets yet</strong><span>Fall of wickets will appear here.</span></li>`;
         const partnershipRows = stats.partnerships.length ? stats.partnerships.map(p => `<div class="partnership-row"><strong>${p.players[0] || "Batter"}</strong><span class="partnership-pill">${p.runs}/${p.balls}</span><strong style="text-align:right;">${p.players[1] || "Partner"}</strong></div>`).join("") : `<p class="muted">Partnerships will appear as the innings progresses.</p>`;
         return `<section data-scorecard-panel="${inn.id}" style="display:${index === 0 ? "block" : "none"};">
@@ -9515,6 +9775,10 @@
             </div>
           `},
           { id: "scorecard", label: "Scorecard", html: `
+            <div class="actions" style="margin-bottom:14px;">
+              <button class="btn ghost btn-sm" type="button" data-download-scorecard="${match.id}">Download Scorecard</button>
+              <button class="btn ghost btn-sm" type="button" data-share-scorecard="${match.id}">Share Scorecard</button>
+            </div>
             <div class="sub-nav" style="display:flex;gap:10px;overflow-x:auto;margin-bottom:16px;">${inningsButtonHtml}</div>
             <div data-scorecard-root>${inningsPanelHtml}</div>
           `},
@@ -9524,9 +9788,9 @@
               <div class="card"><span class="muted">Venue</span><h3>${match.venue || "Venue TBA"}</h3></div>
               <div class="card"><span class="muted">Date & Time</span><h3>${formatMatchDateTime(match.matchDate, match.matchTime) || "TBA"}</h3></div>
               <div class="card"><span class="muted">Toss</span><h3>${tossWinnerName}</h3></div>
-              <div class="card"><span class="muted">${match.teamA} last 5</span><h3>${lastFive(match.teamAId)}</h3></div>
-              <div class="card"><span class="muted">${match.teamB} last 5</span><h3>${lastFive(match.teamBId)}</h3></div>
-              <div class="card"><span class="muted">Head to head</span><h3>${h2h.length} completed</h3></div>
+              <div class="card"><span class="muted">${match.teamA} last 5</span>${formBadges(match.teamAId)}</div>
+              <div class="card"><span class="muted">${match.teamB} last 5</span>${formBadges(match.teamBId)}</div>
+              <div class="card"><span class="muted">Head to head</span><div class="h2h-versus"><strong>${match.teamA}</strong><span class="vs">VS</span><strong>${match.teamB}</strong></div><p class="muted" style="margin-top:8px;">${h2h.length} completed</p></div>
             </div>
             <div class="grid cols-2" style="margin-top:16px;">
               <article class="card" data-public-team="${teams.a?.id || ""}" style="cursor:pointer;"><h3>${match.teamA} Playing XI</h3><ul class="feed" style="margin-top:10px;">${infoXi(match.teamAId, match.teamA)}</ul></article>
@@ -10909,6 +11173,21 @@
       updateStartButtonText();
     });
 
+    ["#tossWinnerSelect", "#tossDecisionSelect"].forEach(selector => {
+      document.querySelector(selector)?.addEventListener("change", () => {
+        const matchId = document.querySelector("#scoringMatchSelect")?.value;
+        const match = state.matches.find(m => String(m.id) === String(matchId));
+        updateOpeningSetup(match);
+      });
+    });
+
+    document.querySelector("#squadSetup")?.addEventListener("change", (event) => {
+      if (!event.target.matches("input[name='playingXI']")) return;
+      const matchId = document.querySelector("#scoringMatchSelect")?.value;
+      const match = state.matches.find(m => String(m.id) === String(matchId));
+      updateOpeningSetup(match);
+    });
+
     const transferScoringBtn = document.querySelector("#transferScoringBtn");
     if (transferScoringBtn) {
       transferScoringBtn.addEventListener("click", async () => {
@@ -10971,6 +11250,15 @@
           battingTeamName = match.teamB;
           bowlingTeamName = match.teamA;
         }
+        updateOpeningSetup(match);
+        const openingStriker = document.querySelector("#openingStrikerSelect")?.value;
+        const openingNonStriker = document.querySelector("#openingNonStrikerSelect")?.value;
+        const openingBowler = document.querySelector("#openingBowlerSelect")?.value;
+        if (!openingStriker || !openingNonStriker || openingStriker === openingNonStriker) return alert("Please select two different opening batters.");
+        if (!openingBowler) return alert("Please select the first bowler.");
+        state.score.striker = openingStriker;
+        state.score.nonStriker = openingNonStriker;
+        state.score.currentBowler = openingBowler;
       }
 
       safeSetText("#startMatchBtn", "Loading...");
@@ -11004,10 +11292,21 @@
           state.score.battingTeam = innings.batting_team;
           state.score.bowlingTeam = innings.bowling_team;
           state.score.target = innings.target || 0;
-          state.score.currentBowler = bowlingTeamPlayers()[0]?.name || state.score.currentBowler;
+          state.score.currentBowler = state.score.currentBowler || bowlingTeamPlayers()[0]?.name || "Bowler";
           state.score.previousBowler = "";
           state.score.batterChangeAllowed = false;
+          const openingStrikerSnapshot = state.score.striker;
+          const openingNonStrikerSnapshot = state.score.nonStriker;
+          const openingBowlerSnapshot = state.score.currentBowler;
           resetInningsScoreExtras();
+          if (!balls.length) {
+            state.score.striker = openingStrikerSnapshot || state.score.striker;
+            state.score.nonStriker = openingNonStrikerSnapshot || state.score.nonStriker;
+            state.score.currentBowler = openingBowlerSnapshot || state.score.currentBowler;
+            ensureBatter(state.score.striker);
+            ensureBatter(state.score.nonStriker);
+            ensureBowler(state.score.currentBowler);
+          }
           state.score.last = balls.slice(-6).map(b => b.is_wicket ? "W" : b.extra_type ? (b.extra_type==="Wide"?"Wd":b.extra_type==="No Ball"?"Nb":b.extra_type==="Bye"?"B":"Lb") : b.runs_bat.toString());
           state.score.history = balls.slice(-10).reverse().map(b => ({
             label: `${b.over_number}.${b.ball_in_over}`,
@@ -11246,6 +11545,16 @@
         return;
       }
 
+      const carouselBtn = event.target.closest("[data-carousel-target]");
+      if (carouselBtn) {
+        const scroller = document.querySelector(carouselBtn.dataset.carouselTarget);
+        if (scroller) {
+          const direction = Number(carouselBtn.dataset.carouselDir || 1);
+          scroller.scrollBy({ left: direction * Math.max(320, scroller.clientWidth * 0.86), behavior: "smooth" });
+        }
+        return;
+      }
+
       const notificationItem = event.target.closest("[data-open-notification]");
       if (notificationItem) {
         const notification = state.notifications[Number(notificationItem.dataset.notificationIndex)];
@@ -11367,6 +11676,32 @@
           }
         } catch (error) {
           if (error?.name !== "AbortError") prompt("Copy this match link:", url);
+        }
+        return;
+      }
+
+      const downloadScorecardBtn = event.target.closest("[data-download-scorecard]");
+      if (downloadScorecardBtn) {
+        const match = state.matches.find(m => String(m.id) === String(downloadScorecardBtn.dataset.downloadScorecard));
+        if (!match) return;
+        downloadTextFile(`pakscorer-${match.teamA}-vs-${match.teamB}.csv`, scorecardCsv(match), "text/csv");
+        return;
+      }
+
+      const shareScorecardBtn = event.target.closest("[data-share-scorecard]");
+      if (shareScorecardBtn) {
+        const match = state.matches.find(m => String(m.id) === String(shareScorecardBtn.dataset.shareScorecard));
+        if (!match) return;
+        const url = `${window.location.origin}${window.location.pathname}#match-${match.id}`;
+        const text = `${match.teamA} vs ${match.teamB} scorecard: ${match.resultText || match.result_text || match.status}`;
+        try {
+          if (navigator.share) await navigator.share({ title: `${match.teamA} vs ${match.teamB}`, text, url });
+          else {
+            await navigator.clipboard.writeText(`${text}\n${url}`);
+            alert("Scorecard share text copied.");
+          }
+        } catch (error) {
+          if (error?.name !== "AbortError") prompt("Copy scorecard link:", url);
         }
         return;
       }
