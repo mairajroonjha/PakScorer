@@ -3850,6 +3850,10 @@
                 <div class="profile-panel" data-profile-panel-content="notifications" style="display:none;">
                   <h3 style="margin-bottom:12px;">Notifications</h3>
                   <button class="btn ghost" id="notifyBtn" type="button" style="width:max-content; margin-bottom:12px;">Enable Notifications</button>
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,0.035);">
+                    <span id="matchAlarmSettingText">Alarm sound and vibration are enabled on this device.</span>
+                    <button class="btn ghost btn-sm" data-match-alarm-toggle type="button" style="width:max-content;">Turn alarm off</button>
+                  </div>
                   <ul class="feed" id="profileNotificationsList"></ul>
                 </div>
 
@@ -3858,6 +3862,11 @@
                   <ul class="feed">
                     <li><strong>Account role</strong><span id="profileGlobalRole">Viewer</span></li>
                     <li><strong>User ID</strong><span id="profileUserId">Login to manage teams and matches.</span></li>
+                    <li>
+                      <strong>Match start alarm</strong>
+                      <span data-match-alarm-text>Rings on this device when a scheduled match is late.</span>
+                      <button class="btn ghost btn-sm" data-match-alarm-toggle type="button" style="width:max-content;margin-top:10px;">Turn alarm off</button>
+                    </li>
                   </ul>
                 </div>
 
@@ -4896,6 +4905,7 @@
       selectedTeamManagementId: null,
       inningsBreak: null,
       pendingMatchResult: null,
+      matchStartAlarm: null,
       expandedRankings: {
         batters: false,
         bowlers: false,
@@ -5431,6 +5441,7 @@
       if (notificationsList) {
         notificationsList.innerHTML = notificationRowsHtml({ compact: true });
       }
+      updateMatchAlarmSettingUI();
       if (historyEl) {
         const history = getRoleHistory();
         historyEl.innerHTML = history.length ? history.slice(-8).reverse().map(item => `<li><strong>${item.title}</strong><span>${item.detail}</span></li>`).join("") : `<li><strong>No invitations yet</strong><span>Team and scorer invites will appear here.</span></li>`;
@@ -5639,6 +5650,16 @@
 
       if (type.includes("match_scoring_available")) {
         if (payload.matchId) openMatchScoring(payload.matchId);
+        return;
+      }
+
+      if (type.includes("match_start") || type.includes("match_live")) {
+        if (payload.matchId) {
+          if (type.includes("late_alarm") || type.includes("start_time")) openMatchScoring(payload.matchId);
+          else openPublicMatchPage(payload.matchId);
+        } else {
+          document.querySelector('[data-page="matches"]')?.click();
+        }
         return;
       }
 
@@ -7391,6 +7412,193 @@
       const now = new Date();
       if (now < start) return { open: false, message: `Scoring opens at ${formatMatchDateTime(match.matchDate, match.matchTime)}` };
       return { open: true, message: "Scoring available now" };
+    }
+
+    function matchTimingKey(match, kind) {
+      return `pakscorer_match_timing_${kind}_${match.id}_${match.matchDate || "any"}_${match.matchTime || "any"}`;
+    }
+
+    function matchAlarmSettingKey() {
+      return state.user ? `pakscorer_match_alarm_enabled_${state.user.id}` : "pakscorer_match_alarm_enabled_guest";
+    }
+
+    function isMatchAlarmEnabledOnDevice() {
+      return localStorage.getItem(matchAlarmSettingKey()) !== "off";
+    }
+
+    function setMatchAlarmEnabledOnDevice(enabled) {
+      localStorage.setItem(matchAlarmSettingKey(), enabled ? "on" : "off");
+      if (!enabled) stopMatchStartAlarm();
+      updateMatchAlarmSettingUI();
+    }
+
+    function updateMatchAlarmSettingUI() {
+      const enabled = isMatchAlarmEnabledOnDevice();
+      const text = enabled
+        ? "Alarm sound and vibration are enabled on this device."
+        : "Alarm sound and vibration are off on this device. Normal notifications still work.";
+      safeSetText("#matchAlarmSettingText", text);
+      document.querySelectorAll("[data-match-alarm-text]").forEach(item => {
+        item.textContent = text;
+      });
+      document.querySelectorAll("[data-match-alarm-toggle]").forEach(button => {
+        button.textContent = enabled ? "Turn alarm off" : "Turn alarm on";
+        button.classList.toggle("primary", !enabled);
+        button.classList.toggle("ghost", enabled);
+      });
+    }
+
+    function isMatchTimingWatchable(match) {
+      if (!state.user || !match) return false;
+      return isUserMatch(match) || ownsTeam(match.teamAId) || ownsTeam(match.teamBId) || hasScoringAccess(match);
+    }
+
+    async function notifyBothMatchTeams(match, type, payload = {}) {
+      const teamIds = [match.teamAId, match.teamBId].filter(Boolean);
+      if (!state.usingDatabase) {
+        sendLocalNotification(payload.title || "PakScorer match alert", payload.message || "You have a match update.");
+        return;
+      }
+      await Promise.all(teamIds.map(teamId => notifyTeamUsers(teamId, type, payload)));
+    }
+
+    function stopMatchStartAlarm(matchId) {
+      if (!state.matchStartAlarm) return;
+      if (matchId && String(state.matchStartAlarm.matchId) !== String(matchId)) return;
+      clearInterval(state.matchStartAlarm.timer);
+      clearInterval(state.matchStartAlarm.titleTimer);
+      clearTimeout(state.matchStartAlarm.stopTimer);
+      if (state.matchStartAlarm.originalTitle) document.title = state.matchStartAlarm.originalTitle;
+      state.matchStartAlarm = null;
+    }
+
+    function playMatchAlarmTick() {
+      try {
+        if ("vibrate" in navigator) navigator.vibrate([260, 110, 260]);
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+        [0, 0.32, 0.64].forEach((offset, index) => {
+          const oscillator = ctx.createOscillator();
+          const gain = ctx.createGain();
+          oscillator.type = "sine";
+          oscillator.frequency.setValueAtTime(index === 1 ? 880 : 660, now + offset);
+          gain.gain.setValueAtTime(0.0001, now + offset);
+          gain.gain.exponentialRampToValueAtTime(0.22, now + offset + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.26);
+          oscillator.connect(gain);
+          gain.connect(ctx.destination);
+          oscillator.start(now + offset);
+          oscillator.stop(now + offset + 0.28);
+        });
+        setTimeout(() => ctx.close().catch(() => {}), 1300);
+      } catch (error) {
+        console.warn("Match alarm audio unavailable:", error.message);
+      }
+    }
+
+    function startMatchStartAlarm(match) {
+      if (!match || state.matchStartAlarm?.matchId === match.id) return;
+      if (!isMatchAlarmEnabledOnDevice()) return;
+      stopMatchStartAlarm();
+      playMatchAlarmTick();
+      const originalTitle = document.title;
+      const titleA = "Match time! Start scoring";
+      const titleB = originalTitle || "PakScorer";
+      let titleFlip = false;
+      const timer = setInterval(() => {
+        const current = state.matches.find(item => String(item.id) === String(match.id)) || match;
+        if (!["Scheduled", "Setup"].includes(String(current.status || ""))) {
+          stopMatchStartAlarm(match.id);
+          return;
+        }
+        playMatchAlarmTick();
+      }, 4200);
+      const titleTimer = setInterval(() => {
+        titleFlip = !titleFlip;
+        document.title = titleFlip ? titleA : titleB;
+      }, 1200);
+      const stopTimer = null;
+      state.matchStartAlarm = { matchId: match.id, timer, titleTimer, stopTimer, originalTitle };
+    }
+
+    async function maybeNotifyMatchTiming(match) {
+      if (!isMatchTimingWatchable(match)) return;
+      const start = matchStartDateTime(match);
+      if (!start) return;
+      const status = String(match.status || "");
+      const now = Date.now();
+      const diff = start.getTime() - now;
+      const titleBase = `${match.teamA} vs ${match.teamB}`;
+      const scheduleText = formatMatchDateTime(match.matchDate, match.matchTime) || "the scheduled time";
+
+      if (status === "Live") {
+        stopMatchStartAlarm(match.id);
+        const key = matchTimingKey(match, "live");
+        if (!localStorage.getItem(key)) {
+          localStorage.setItem(key, "sent");
+          const payload = {
+            title: "Match is live",
+            message: `${titleBase} is live now. Open the match page for live score and scoring updates.`,
+            matchId: match.id
+          };
+          await notifyBothMatchTeams(match, "match_live", payload);
+        }
+        return;
+      }
+
+      if (!["Scheduled", "Setup"].includes(status)) {
+        stopMatchStartAlarm(match.id);
+        return;
+      }
+
+      if (diff <= 30 * 60 * 1000 && diff > 0) {
+        const key = matchTimingKey(match, "30min");
+        if (!localStorage.getItem(key)) {
+          localStorage.setItem(key, "sent");
+          const payload = {
+            title: "Match starts in 30 minutes",
+            message: `${titleBase} is scheduled for ${scheduleText}. Please be ready for toss, playing XI, and scoring setup.`,
+            matchId: match.id
+          };
+          await notifyBothMatchTeams(match, "match_start_30min", payload);
+        }
+      }
+
+      if (diff <= 0) {
+        const key = matchTimingKey(match, "start");
+        if (!localStorage.getItem(key)) {
+          localStorage.setItem(key, "sent");
+          const payload = {
+            title: "Match time reached",
+            message: `${titleBase} should start now. Open Match Scoring to complete XI, toss, openers, and first bowler setup.`,
+            matchId: match.id
+          };
+          await notifyBothMatchTeams(match, "match_start_time", payload);
+        }
+      }
+
+      if (diff <= -2 * 60 * 1000 && diff > -60 * 60 * 1000) {
+        const key = matchTimingKey(match, "late_alarm");
+        if (!localStorage.getItem(key)) {
+          localStorage.setItem(key, "sent");
+          const payload = {
+            title: "Match start is late",
+            message: `${titleBase} has not started 2 minutes after scheduled time. Start scoring or reschedule the match.`,
+            matchId: match.id
+          };
+          await notifyBothMatchTeams(match, "match_start_late_alarm", payload);
+          startMatchStartAlarm(match);
+        }
+      }
+    }
+
+    function maybeNotifyAllMatchTiming() {
+      if (!state.user) return;
+      state.matches
+        .filter(match => ["Scheduled", "Setup", "Live"].includes(match.status))
+        .forEach(match => maybeNotifyMatchTiming(match));
     }
 
     function maybeNotifyScoringAvailable(match) {
@@ -10234,6 +10442,9 @@
           }
           renderPublicLiveView();
           renderMatches();
+          if (localMatch) {
+            await maybeNotifyMatchTiming(localMatch);
+          }
 
           if (
             previousScoringTeamId &&
@@ -10250,10 +10461,12 @@
           // Match Started
           if (payload.new.status === 'Live' && payload.old.status !== 'Live') {
              sendLocalNotification("ðŸ Match Started!", `${payload.new.team_a} vs ${payload.new.team_b} is now LIVE!`);
+             stopMatchStartAlarm(payload.new.id);
           }
           // Match Completed
           if (payload.new.status === 'Completed' && payload.old.status !== 'Completed') {
              sendLocalNotification("ðŸ† Match Completed!", `${payload.new.team_a} vs ${payload.new.team_b}: ${payload.new.result_text}`);
+             stopMatchStartAlarm(payload.new.id);
           }
         })
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, async payload => {
@@ -11641,6 +11854,7 @@
           if (match.status !== "Live") {
             await startMatchInDatabase(match.id, tossWinnerId, battingFirstId);
             match.status = "Live";
+            await maybeNotifyMatchTiming(match);
           }
 
           let innings = await loadInningsFromDatabase(match.id);
@@ -11711,6 +11925,7 @@
            if (!openingStriker || !openingNonStriker || openingStriker === openingNonStriker) return alert("Please select two different opening batters.");
            if (!openingBowler) return alert("Please select the first bowler.");
            match.status = "Live";
+           await maybeNotifyMatchTiming(match);
            state.score.striker = openingStriker;
            state.score.nonStriker = openingNonStriker;
            state.score.currentBowler = openingBowler;
@@ -12868,10 +13083,25 @@
       }
     }
 
+    document.querySelectorAll("[data-match-alarm-toggle]").forEach(button => {
+      button.addEventListener("click", () => {
+        const nextEnabled = !isMatchAlarmEnabledOnDevice();
+        setMatchAlarmEnabledOnDevice(nextEnabled);
+        sendLocalNotification(
+          nextEnabled ? "Match alarm enabled" : "Match alarm turned off",
+          nextEnabled
+            ? "This device will ring if your scheduled match is late."
+            : "This device will still receive notifications, but it will not ring."
+        );
+      });
+    });
+    updateMatchAlarmSettingUI();
+
     setInterval(() => {
       maybeNotifyAllScoringAvailable();
+      maybeNotifyAllMatchTiming();
       renderScoringMatchSelect();
-    }, 60000);
+    }, 30000);
 
     const markAllNotificationsReadBtn = document.querySelector("#markAllNotificationsRead");
     if (markAllNotificationsReadBtn) {
