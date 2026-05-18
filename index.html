@@ -3700,6 +3700,31 @@
       margin: 0;
     }
 
+    .collapsible-bowler-card {
+      position: relative;
+      transition: min-height 0.2s ease, padding 0.2s ease;
+    }
+
+    .collapsible-bowler-card.collapsed {
+      min-height: 58px;
+    }
+
+    .collapsible-bowler-card.collapsed [data-bowler-card-body] {
+      display: none;
+    }
+
+    .collapsible-bowler-card .collapse-card-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      min-width: 34px;
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 950;
+    }
+
     @media (max-width: 760px) {
       .setup-player-columns {
         grid-template-columns: 1fr;
@@ -8653,6 +8678,67 @@
       return state.currentMatch?.id || document.querySelector("#scoringMatchSelect")?.value || null;
     }
 
+    async function resumeLiveScoringMatch(match) {
+      if (!match || !state.usingDatabase) return false;
+      try {
+        const innings = await loadInningsFromDatabase(match.id);
+        if (!innings) return false;
+        const balls = await loadBallsFromDatabase(innings.id);
+        const xi = await matchPlayingXI(match.id);
+        const playerNameFromId = (id) => xi.find(player => String(player.player_id) === String(id))?.player_name || state.players.find(player => String(player.id) === String(id))?.name || "";
+        const currentBowlerName = playerNameFromId(innings.current_bowler_id) || balls.slice().reverse().find(ball => ball.bowler_name)?.bowler_name || match.currentBowlerName || "";
+        const strikerName = playerNameFromId(innings.current_striker_id);
+        const nonStrikerName = playerNameFromId(innings.current_non_striker_id);
+        const battingXi = xi.filter(player => String(player.team_id) === String(innings.batting_team_id));
+
+        state.currentMatch = match;
+        state.currentInnings = innings;
+        state.score.runs = innings.runs || 0;
+        state.score.wickets = innings.wickets || 0;
+        state.score.legalBalls = innings.legal_balls || 0;
+        state.score.deliveryNumber = balls.length;
+        state.score.battingTeam = innings.batting_team;
+        state.score.bowlingTeam = innings.bowling_team;
+        state.score.target = innings.target || 0;
+        state.score.currentBowler = currentBowlerName || bowlingTeamPlayers()[0]?.name || "Bowler";
+        state.score.previousBowler = "";
+        const restoredStriker = strikerName || battingXi[0]?.player_name || "";
+        const restoredNonStriker = nonStrikerName || battingXi.find(player => player.player_name !== restoredStriker)?.player_name || "";
+        state.score.striker = restoredStriker;
+        state.score.nonStriker = restoredNonStriker;
+        state.score.last = balls.slice(-6).map(b => b.is_wicket ? "W" : b.extra_type ? (b.extra_type === "Wide" ? "Wd" : b.extra_type === "No Ball" ? "Nb" : b.extra_type === "Bye" ? "B" : "Lb") : String(b.runs_bat || 0));
+        state.score.history = balls.slice(-10).reverse().map(b => ({
+          label: `${b.over_number}.${b.ball_in_over}`,
+          text: b.is_wicket ? "Wicket." : b.extra_type ? `${b.extra_type} added.` : `${b.runs_bat || 0} runs added.`
+        }));
+        state.score.undoStack = [];
+        state.score.batterChangeAllowed = false;
+        state.score.needsBowler = state.score.legalBalls > 0 && state.score.legalBalls % 6 === 0;
+        rebuildScoreMetaFromBalls(balls);
+        state.score.striker = restoredStriker || state.score.striker;
+        state.score.nonStriker = restoredNonStriker || state.score.nonStriker;
+        state.score.currentBowler = currentBowlerName || state.score.currentBowler;
+        ensureBatter(state.score.striker);
+        ensureBatter(state.score.nonStriker);
+        ensureBowler(state.score.currentBowler);
+        hideScoringSetupFlow();
+        const controls = document.querySelector("#scoringControls");
+        if (controls) {
+          controls.style.display = "";
+          controls.style.opacity = "1";
+          controls.style.pointerEvents = "auto";
+        }
+        safeSetText("#activeMatchStatus", `Live: ${match.teamA} vs ${match.teamB}`);
+        localStorage.setItem("pakscorer_active_scoring_match", String(match.id));
+        await publishLiveScoringState(false);
+        renderScore();
+        return true;
+      } catch (error) {
+        console.warn("Could not resume live scoring session:", error.message);
+        return false;
+      }
+    }
+
     async function closeScoringHandoff(matchId, message = "Scoring control was transferred to the other team.") {
       if (matchId && state.currentMatch && String(state.currentMatch.id) === String(matchId)) {
         await releaseMatchScoringLock(matchId);
@@ -8716,7 +8802,7 @@
       });
     }
 
-    function openMatchScoring(matchId) {
+    async function openMatchScoring(matchId) {
       const match = state.matches.find(m => String(m.id) === String(matchId));
       if (match && !hasScoringAccess(match)) {
         alert("You are not assigned to score this match.");
@@ -8731,6 +8817,9 @@
       if (scoringNav) scoringNav.click();
       else showScoringPage();
       openStandaloneScoringPage(matchId);
+      if (match?.status === "Live") {
+        await resumeLiveScoringMatch(match);
+      }
     }
 
     function restoreScoringSession() {
@@ -9659,6 +9748,25 @@
       return player?.id || null;
     }
 
+    function playerIdByNameForTeam(name, teamId) {
+      if (!name) return null;
+      const player = state.players.find(p =>
+        String(p.name) === String(name) &&
+        (!teamId || String(p.team_id) === String(teamId))
+      ) || state.players.find(p => String(p.name) === String(name));
+      return player?.id || null;
+    }
+
+    function currentInningsLiveFields() {
+      const match = state.currentMatch;
+      const battingTeamId = state.currentInnings?.batting_team_id || (String(state.score.battingTeam) === String(match?.teamA) ? match?.teamAId : String(state.score.battingTeam) === String(match?.teamB) ? match?.teamBId : null);
+      return {
+        current_striker_id: playerIdByNameForTeam(state.score.striker, battingTeamId),
+        current_non_striker_id: playerIdByNameForTeam(state.score.nonStriker, battingTeamId),
+        current_bowler_id: currentBowlerPlayerId(state.score.currentBowler)
+      };
+    }
+
     async function publishCurrentBowlerToLive(persist = true) {
       const bowler = state.score.currentBowler;
       if (!bowler) return;
@@ -9675,6 +9783,26 @@
           await updateInningsInDatabase(state.currentInnings.id, { current_bowler_id: playerId });
         } catch (error) {
           console.warn("Could not publish current bowler to innings:", error.message);
+        }
+      }
+    }
+
+    async function publishLiveScoringState(persist = true) {
+      if (!state.currentInnings) return;
+      const fields = currentInningsLiveFields();
+      Object.assign(state.currentInnings, fields);
+      if (state.currentMatch) state.currentMatch.currentBowlerName = state.score.currentBowler;
+      renderMatches();
+      renderPublicHome();
+      renderPublicLiveView();
+      if (persist && state.usingDatabase && state.currentInnings.id) {
+        const updates = Object.fromEntries(Object.entries(fields).filter(([, value]) => Boolean(value)));
+        if (Object.keys(updates).length) {
+          try {
+            await updateInningsInDatabase(state.currentInnings.id, updates);
+          } catch (error) {
+            console.warn("Could not persist live scoring state:", error.message);
+          }
         }
       }
     }
@@ -10798,7 +10926,14 @@
             <div style="margin-top:16px;">${buildOverScroller(currentBalls)}</div>
             <div class="grid cols-2" style="margin-top:16px;">
               ${visibleBatters.length ? visibleBatters.map(batterCard).join("") : `<article class="card"><h3>No active batters yet</h3><p class="muted">Batter stats will appear once scoring starts.</p></article>`}
-              <article class="card"><span class="muted">Current Bowler</span><h3>${currentBowlerName || "Not selected"}</h3><p class="muted">${currentBowler ? `${oversText(currentBowler.balls)} overs, ${currentBowler.wickets} wickets, ${currentBowler.runs} runs, Econ ${currentBowler.economy}` : "Bowler spell will appear here."}</p></article>
+              <article class="card collapsible-bowler-card" data-current-bowler-card>
+                <button class="btn ghost btn-sm collapse-card-btn" type="button" data-collapse-bowler-card>Hide</button>
+                <span class="muted">Current Bowler</span>
+                <div data-bowler-card-body>
+                  <h3>${currentBowlerName || "Not selected"}</h3>
+                  <p class="muted">${currentBowler ? `${oversText(currentBowler.balls)} overs, ${currentBowler.wickets} wickets, ${currentBowler.runs} runs, Econ ${currentBowler.economy}` : "Bowler spell will appear here."}</p>
+                </div>
+              </article>
             </div>
           `},
           { id: "scorecard", label: "Scorecard", html: `
@@ -11080,7 +11215,8 @@
             runs: score.runs,
             wickets: score.wickets,
             legal_balls: score.legalBalls,
-            status: (score.wickets >= 10 || score.legalBalls >= (state.currentMatch.overs * 6)) ? "Completed" : "Live"
+            status: (score.wickets >= 10 || score.legalBalls >= (state.currentMatch.overs * 6)) ? "Completed" : "Live",
+            ...currentInningsLiveFields()
           });
         } catch (error) {
            console.error("Failed to save ball to DB", error);
@@ -11161,7 +11297,8 @@
             runs: score.runs,
             wickets: score.wickets,
             legal_balls: score.legalBalls,
-            status: (score.wickets >= 10 || score.legalBalls >= (state.currentMatch.overs * 6)) ? "Completed" : "Live"
+            status: (score.wickets >= 10 || score.legalBalls >= (state.currentMatch.overs * 6)) ? "Completed" : "Live",
+            ...currentInningsLiveFields()
           });
         } catch (error) {
            console.error("Failed to save extra to DB", error);
@@ -11944,6 +12081,7 @@
 
       restoreScore(previous);
       state.score.batterChangeAllowed = Boolean(previous.batterChangeAllowed);
+      await publishLiveScoringState(true);
       notice.textContent = "Last ball undone. Score, over, wicket, bowler, and feed restored.";
       notice.className = "form-message success";
       renderScore();
@@ -11993,7 +12131,7 @@
       score.currentBowler = bowler;
       score.needsBowler = false;
       score.batterChangeAllowed = false;
-      await publishCurrentBowlerToLive(true);
+      await publishLiveScoringState(true);
       score.history.unshift({ label: oversText(score.legalBalls), text: `${bowler} selected from ${score.bowlingTeam} to bowl the next over.` });
       notice.textContent = `${bowler} confirmed as next bowler.`;
       notice.className = "form-message success";
@@ -12016,6 +12154,7 @@
           ensureBatter(striker);
           ensureBatter(nonStriker);
           state.score.batterChangeAllowed = false;
+          publishLiveScoringState(true);
           renderScore();
         });
       }
@@ -12438,7 +12577,7 @@
             ensureBatter(state.score.nonStriker);
             ensureBowler(state.score.currentBowler);
           }
-          await publishCurrentBowlerToLive(!balls.length);
+          await publishLiveScoringState(!balls.length);
           state.score.last = balls.slice(-6).map(b => b.is_wicket ? "W" : b.extra_type ? (b.extra_type==="Wide"?"Wd":b.extra_type==="No Ball"?"Nb":b.extra_type==="Bye"?"B":"Lb") : b.runs_bat.toString());
           state.score.history = balls.slice(-10).reverse().map(b => ({
             label: `${b.over_number}.${b.ball_in_over}`,
@@ -12823,6 +12962,15 @@
       if (transferScoringBtn) {
         const match = state.matches.find(m => String(m.id) === String(transferScoringBtn.dataset.transferScoring));
         await transferMatchScoring(match);
+        return;
+      }
+
+      const collapseBowlerBtn = event.target.closest("[data-collapse-bowler-card]");
+      if (collapseBowlerBtn) {
+        const card = collapseBowlerBtn.closest("[data-current-bowler-card]");
+        if (!card) return;
+        const collapsed = card.classList.toggle("collapsed");
+        collapseBowlerBtn.textContent = collapsed ? "Show" : "Hide";
         return;
       }
 
