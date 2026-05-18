@@ -6236,14 +6236,25 @@
 
     function bowlingTeamPlayers() {
       const bowlingTeam = (state.score.bowlingTeam || "").trim().toLowerCase();
-      const bowlers = state.players.filter((player) => (
-        (player.team || "").trim().toLowerCase() === bowlingTeam &&
-        ((player.role || "").includes("Bowler") || (player.role || "").includes("All-rounder"))
-      ));
+      const match = state.currentMatch;
+      const bowlingTeamId = match
+        ? (String(state.score.bowlingTeam || "") === String(match.teamA) ? match.teamAId : String(state.score.bowlingTeam || "") === String(match.teamB) ? match.teamBId : null)
+        : null;
+      const sameBowlingTeam = (player) => (
+        (bowlingTeamId && String(player.team_id) === String(bowlingTeamId)) ||
+        (player.team || "").trim().toLowerCase() === bowlingTeam
+      );
+      const canBowl = (player) => {
+        const role = String(player.role || "").toLowerCase();
+        const bowlingStyle = String(player.bowling_style || getPlayerMeta(player.id).bowlingStyle || "").toLowerCase();
+        return role.includes("bowler") || role.includes("all") || role.includes("spin") || role.includes("fast") || Boolean(bowlingStyle && !bowlingStyle.includes("does not bowl") && !bowlingStyle.includes("tba"));
+      };
+      const bowlingSquad = state.players.filter(sameBowlingTeam);
+      const bowlers = bowlingSquad.filter(canBowl);
 
       if (bowlers.length) return bowlers;
 
-      return state.players.filter((player) => (player.team || "").trim().toLowerCase() === bowlingTeam);
+      return bowlingSquad;
     }
 
     function battingTeamPlayers() {
@@ -7405,10 +7416,25 @@
       if (!select) return;
 
       const bowlers = bowlingTeamPlayers();
-      select.innerHTML = bowlers.map((player) => `<option ${player.name === state.score.previousBowler ? "disabled" : ""}>${player.name}${player.name === state.score.previousBowler ? " (previous over)" : ""}</option>`).join("");
+      select.innerHTML = bowlers.length
+        ? bowlers.map((player) => `<option value="${player.name}" ${player.name === state.score.previousBowler ? "disabled" : ""}>${player.name}${player.name === state.score.previousBowler ? " (previous over)" : ""}</option>`).join("")
+        : `<option value="">No bowlers found for ${state.score.bowlingTeam || "bowling team"}</option>`;
 
       const currentIndex = bowlers.findIndex((player) => player.name === state.score.currentBowler);
       select.selectedIndex = currentIndex >= 0 ? currentIndex : 0;
+    }
+
+    function matchTossSummary(match) {
+      if (!match?.tossWinnerTeamId) return "";
+      const winnerName = String(match.tossWinnerTeamId) === String(match.teamAId) ? match.teamA : String(match.tossWinnerTeamId) === String(match.teamBId) ? match.teamB : "";
+      if (!winnerName) return "";
+      let decision = match.tossDecision || "";
+      if (!decision && match.battingFirstTeamId) {
+        const tossWinnerBats = String(match.tossWinnerTeamId) === String(match.battingFirstTeamId);
+        decision = tossWinnerBats ? "Bat" : "Bowl";
+      }
+      const decisionText = decision === "Bowl" ? "bowl first" : decision === "Bat" ? "bat first" : "choose first";
+      return `${winnerName} won the toss and elected to ${decisionText}`;
     }
 
     function renderBatterSelects() {
@@ -7864,7 +7890,8 @@
 
     function markMatchStartedAnnouncement(match) {
       if (!match) return;
-      match.startAnnouncement = "Match started";
+      const tossText = matchTossSummary(match);
+      match.startAnnouncement = tossText ? `Match started - ${tossText}` : "Match started";
       const text = `${match.teamA} vs ${match.teamB} match started.`;
       const alreadyLogged = state.score.history?.some(item => item.label === "Live" && item.text === text);
       if (!alreadyLogged) {
@@ -9608,7 +9635,7 @@
       const decisionText = tossDecision === "Bowl" ? "bowl first" : "bat first";
       match.tossWinnerTeamId = tossWinnerId;
       match.tossDecision = tossDecision;
-      match.startAnnouncement = `${winnerName} won the toss and elected to ${decisionText}`;
+      match.startAnnouncement = matchTossSummary(match) || `${winnerName} won the toss and elected to ${decisionText}`;
       renderMatches();
       renderPublicHome();
       renderPublicLiveView();
@@ -9882,7 +9909,7 @@
 
       const bowlerChooser = document.querySelector("#bowlerChooser");
       if (bowlerChooser) bowlerChooser.hidden = !score.needsBowler;
-      if (score.needsBowler) renderBowlerSelect();
+      renderBowlerSelect();
 
       const breakNotice = inningsBreakNotice();
       const endBtn = document.querySelector("#endMatchBtn");
@@ -10547,6 +10574,7 @@
 
       const overStrip = currentInnings ? currentOverStrip(balls.filter(ball => String(ball.innings_id) === String(currentInnings.id)), legalBalls) : "";
       const shareUrl = `${window.location.origin}${window.location.pathname}#match-${match.id}`;
+      const tossText = matchTossSummary(match);
 
       return `
         <div class="match-detail-hero">
@@ -10567,6 +10595,7 @@
                   <span class="match-detail-overs">${scoreOvers}</span>
                 </div>
                 <p class="muted" style="margin:10px 0 0; font-weight:800;">${match.teamA} vs ${match.teamB} - ${match.venue || "Venue TBA"}</p>
+                ${tossText ? `<p style="margin:6px 0 0;color:var(--logo-green-soft);font-weight:900;">${tossText}</p>` : ""}
                 ${overStrip}
               </div>
             </div>
@@ -10694,7 +10723,7 @@
         (String(m.teamAId) === String(match.teamBId) && String(m.teamBId) === String(match.teamAId))) &&
         m.status === "Completed"
       );
-      const tossWinnerName = String(match.tossWinnerTeamId) === String(match.teamAId) ? match.teamA : String(match.tossWinnerTeamId) === String(match.teamBId) ? match.teamB : "Toss not updated";
+      const tossWinnerName = matchTossSummary(match) || "Toss not updated";
 
       detailPageShell({
         label: "Match Detail",
