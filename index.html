@@ -3606,7 +3606,7 @@
 
     .setup-player-card {
       display: grid;
-      grid-template-columns: 42px minmax(0, 1fr);
+      grid-template-columns: 42px minmax(0, 1fr) 40px;
       align-items: center;
       gap: 10px;
       padding: 9px;
@@ -3615,6 +3615,29 @@
       background: rgba(255,255,255,0.045);
       cursor: grab;
       user-select: none;
+    }
+
+    .setup-player-action {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid rgba(205,221,211,0.18);
+      display: inline-grid;
+      place-items: center;
+      font-size: 1.1rem;
+      font-weight: 950;
+      line-height: 1;
+      color: #03110b;
+      background: linear-gradient(180deg, var(--logo-green-soft), var(--logo-green));
+      box-shadow: 0 8px 18px rgba(47,191,113,0.22);
+      cursor: pointer;
+    }
+
+    .setup-player-action.remove {
+      color: #ffd9d9;
+      background: rgba(255,74,104,0.14);
+      border-color: rgba(255,74,104,0.36);
+      box-shadow: none;
     }
 
     .setup-player-card:active {
@@ -9439,6 +9462,7 @@
                <span class="muted" style="font-size:0.74rem;">${p.role || "Player"}${age ? ` - ${age} yrs` : ""}</span>
                <span class="muted" style="font-size:0.7rem;">${battingStyle} / ${bowlingStyle}</span>
              </span>
+             <button class="setup-player-action" type="button" data-setup-player-action aria-label="Add player to Playing XI">+</button>
           </div>
         `;
       };
@@ -9483,6 +9507,12 @@
       target.appendChild(card);
       const input = card.querySelector("input[name='playingXI']");
       if (input) input.checked = Boolean(toXI);
+      const action = card.querySelector("[data-setup-player-action]");
+      if (action) {
+        action.textContent = toXI ? "-" : "+";
+        action.classList.toggle("remove", Boolean(toXI));
+        action.setAttribute("aria-label", toXI ? "Remove player from Playing XI" : "Add player to Playing XI");
+      }
       updateXISetupCounts();
       const matchId = document.querySelector("#scoringMatchSelect")?.value;
       const match = state.matches.find(m => String(m.id) === String(matchId));
@@ -12081,6 +12111,7 @@
       }
       const card = event.target.closest(".setup-player-card");
       if (card) {
+        event.preventDefault();
         const side = card.dataset.setupSide;
         moveSetupPlayerCard(card.dataset.setupPlayer, !card.parentElement.matches("[data-team-xi]"), side);
       }
