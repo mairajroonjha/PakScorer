@@ -9564,16 +9564,35 @@
         openingSetup.style.display = "none";
         return;
       }
+      const previousStriker = strikerSelect.value;
+      const previousNonStriker = nonStrikerSelect.value;
+      const previousBowler = bowlerSelect.value;
       const batters = selectedXIPlayers(battingTeamId);
       const bowlers = selectedXIPlayers(bowlingTeamId).filter(player => !String(player.bowling_style || "").toLowerCase().includes("does not bowl")) || selectedXIPlayers(bowlingTeamId);
       strikerSelect.innerHTML = `<option value="">Select striker</option>${batters.map(playerOption).join("")}`;
       nonStrikerSelect.innerHTML = `<option value="">Select non-striker</option>${batters.map(playerOption).join("")}`;
       bowlerSelect.innerHTML = `<option value="">Select first bowler</option>${(bowlers.length ? bowlers : selectedXIPlayers(bowlingTeamId)).map(playerOption).join("")}`;
-      if (!strikerSelect.value && batters[0]) strikerSelect.value = batters[0].name;
-      if (!nonStrikerSelect.value && batters[1]) nonStrikerSelect.value = batters[1].name;
-      if (!bowlerSelect.value && bowlers[0]) bowlerSelect.value = bowlers[0].name;
+      const batterNames = batters.map(player => player.name);
+      const bowlerNames = (bowlers.length ? bowlers : selectedXIPlayers(bowlingTeamId)).map(player => player.name);
+      strikerSelect.value = batterNames.includes(previousStriker) ? previousStriker : (batters[0]?.name || "");
+      nonStrikerSelect.value = batterNames.includes(previousNonStriker) && previousNonStriker !== strikerSelect.value ? previousNonStriker : (batters.find(player => player.name !== strikerSelect.value)?.name || "");
+      bowlerSelect.value = bowlerNames.includes(previousBowler) ? previousBowler : (bowlerNames[0] || "");
       const openersStepActive = document.querySelector("[data-setup-step-pill='openers']")?.classList.contains("active");
       openingSetup.style.display = openersStepActive ? "flex" : "none";
+    }
+
+    function readOpeningSetupValues(match) {
+      const setupIds = matchBattingBowlingIdsFromSetup(match);
+      const battingTeam = state.teams.find(team => String(team.id) === String(setupIds.battingTeamId));
+      const bowlingTeam = state.teams.find(team => String(team.id) === String(setupIds.bowlingTeamId));
+      return {
+        ...setupIds,
+        battingTeamName: battingTeam?.name || (String(setupIds.battingTeamId) === String(match?.teamAId) ? match?.teamA : match?.teamB),
+        bowlingTeamName: bowlingTeam?.name || (String(setupIds.bowlingTeamId) === String(match?.teamAId) ? match?.teamA : match?.teamB),
+        openingStriker: document.querySelector("#openingStrikerSelect")?.value || "",
+        openingNonStriker: document.querySelector("#openingNonStrikerSelect")?.value || "",
+        openingBowler: document.querySelector("#openingBowlerSelect")?.value || ""
+      };
     }
 
     async function generateTournamentFixtures(tournamentId) {
@@ -12092,6 +12111,18 @@
       });
     });
 
+    ["#openingStrikerSelect", "#openingNonStrikerSelect"].forEach(selector => {
+      document.querySelector(selector)?.addEventListener("change", () => {
+        const strikerSelect = document.querySelector("#openingStrikerSelect");
+        const nonStrikerSelect = document.querySelector("#openingNonStrikerSelect");
+        if (!strikerSelect || !nonStrikerSelect) return;
+        if (strikerSelect.value && strikerSelect.value === nonStrikerSelect.value) {
+          const next = Array.from(nonStrikerSelect.options).find(option => option.value && option.value !== strikerSelect.value);
+          nonStrikerSelect.value = next?.value || "";
+        }
+      });
+    });
+
     document.querySelector("#squadSetup")?.addEventListener("change", (event) => {
       if (!event.target.matches("input[name='playingXI']")) return;
       const matchId = document.querySelector("#scoringMatchSelect")?.value;
@@ -12234,23 +12265,15 @@
 
         if (!tossWinnerId) return alert("Please select the Toss Winner before starting the match.");
 
-        if ((tossWinnerId === String(match.teamAId) && tossDecision === "Bat") || (tossWinnerId === String(match.teamBId) && tossDecision === "Bowl")) {
-          battingFirstId = match.teamAId;
-          battingTeamId = match.teamAId;
-          bowlingTeamId = match.teamBId;
-          battingTeamName = match.teamA;
-          bowlingTeamName = match.teamB;
-        } else {
-          battingFirstId = match.teamBId;
-          battingTeamId = match.teamBId;
-          bowlingTeamId = match.teamAId;
-          battingTeamName = match.teamB;
-          bowlingTeamName = match.teamA;
-        }
-        updateOpeningSetup(match);
-        const openingStriker = document.querySelector("#openingStrikerSelect")?.value;
-        const openingNonStriker = document.querySelector("#openingNonStrikerSelect")?.value;
-        const openingBowler = document.querySelector("#openingBowlerSelect")?.value;
+        const openingSetupValues = readOpeningSetupValues(match);
+        battingFirstId = openingSetupValues.battingTeamId;
+        battingTeamId = openingSetupValues.battingTeamId;
+        bowlingTeamId = openingSetupValues.bowlingTeamId;
+        battingTeamName = openingSetupValues.battingTeamName;
+        bowlingTeamName = openingSetupValues.bowlingTeamName;
+        const openingStriker = openingSetupValues.openingStriker;
+        const openingNonStriker = openingSetupValues.openingNonStriker;
+        const openingBowler = openingSetupValues.openingBowler;
         if (!openingStriker || !openingNonStriker || openingStriker === openingNonStriker) return alert("Please select two different opening batters.");
         if (!openingBowler) return alert("Please select the first bowler.");
         state.score.striker = openingStriker;
@@ -12344,9 +12367,10 @@
            const teamAXI = selectedXI.filter(el => String(el.dataset.teamId) === String(match.teamAId));
            const teamBXI = selectedXI.filter(el => String(el.dataset.teamId) === String(match.teamBId));
            const tossWinnerIdLocal = document.querySelector("#tossWinnerSelect")?.value;
-           const openingStriker = document.querySelector("#openingStrikerSelect")?.value;
-           const openingNonStriker = document.querySelector("#openingNonStrikerSelect")?.value;
-           const openingBowler = document.querySelector("#openingBowlerSelect")?.value;
+           const openingSetupValues = readOpeningSetupValues(match);
+           const openingStriker = openingSetupValues.openingStriker;
+           const openingNonStriker = openingSetupValues.openingNonStriker;
+           const openingBowler = openingSetupValues.openingBowler;
            if (teamAXI.length !== 11 || teamBXI.length !== 11) return alert("Both teams must have exactly 11 players before starting.");
            if (!tossWinnerIdLocal) return alert("Please select the Toss Winner before starting the match.");
            if (!openingStriker || !openingNonStriker || openingStriker === openingNonStriker) return alert("Please select two different opening batters.");
@@ -12357,6 +12381,8 @@
            state.score.striker = openingStriker;
            state.score.nonStriker = openingNonStriker;
            state.score.currentBowler = openingBowler;
+           state.score.battingTeam = openingSetupValues.battingTeamName;
+           state.score.bowlingTeam = openingSetupValues.bowlingTeamName;
          }
          if (isScoringLockedByOther(match)) return alert("This match is already being scored by another scorer.");
          match.scoringLockedBy = state.user?.id || "local-scorer";
