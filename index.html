@@ -3680,6 +3680,26 @@
       width: 100%;
     }
 
+    .scoring-setup-block {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .scoring-setup-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .scoring-setup-head h2 {
+      margin: 0;
+    }
+
     @media (max-width: 760px) {
       .setup-player-columns {
         grid-template-columns: 1fr;
@@ -4232,8 +4252,8 @@
               </section>
 
               <section class="fixture-panel" id="fixtureScoringPanel" data-fixture-panel="scoring" style="display:none;">
-                <section class="panel" style="margin-bottom: 16px;">
-                  <div class="panel-head">
+                <section class="scoring-setup-block" style="margin-bottom: 16px;">
+                  <div class="scoring-setup-head">
                     <h2>Match Setup & Scoring</h2>
                     <span id="activeMatchStatus">No match selected</span>
                   </div>
@@ -4326,7 +4346,7 @@
                       </div>
 
                       <div style="display:flex; gap:8px; flex-wrap: wrap;">
-                        <button class="btn" id="cancelMatchBtn" style="flex: 1;">Cancel</button>
+                        <button class="btn primary" id="openScoringBtn" type="button" style="flex: 1;">Start Scoring</button>
                         <button class="btn danger" id="endMatchBtn" style="flex: 1;">End Match</button>
                       </div>
                     </div>
@@ -12437,6 +12457,10 @@
       safeSetText("#startMatchBtn", "Start Scoring");
     });
 
+    document.querySelector("#openScoringBtn")?.addEventListener("click", () => {
+      document.querySelector("#startMatchBtn")?.click();
+    });
+
     document.querySelector("#endMatchBtn").addEventListener("click", async () => {
        if (!state.currentMatch) return;
        if (state.pendingMatchResult) {
@@ -12512,7 +12536,7 @@
        renderMatches();
     });
 
-    document.querySelector("#cancelMatchBtn").addEventListener("click", async () => {
+    document.querySelector("#cancelMatchBtn")?.addEventListener("click", async () => {
        if (!state.currentMatch) return;
        if (state.currentMatch.status === "Live" && !state.inningsBreak?.active) {
          alert("You cannot close scoring before the innings is complete. Use End Match for no-result reasons, or wait for the innings break.");
