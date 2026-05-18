@@ -3555,6 +3555,82 @@
     .timeline-line {
       background: linear-gradient(90deg, var(--logo-green-dark), var(--logo-green), var(--logo-green-dark)) !important;
     }
+
+    .setup-steps {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .setup-step-pill {
+      min-height: 34px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: rgba(255,255,255,0.04);
+      font-size: 0.78rem;
+      font-weight: 900;
+    }
+
+    .setup-step-pill.active {
+      color: #03110b;
+      background: linear-gradient(180deg, var(--logo-green-soft), var(--logo-green));
+    }
+
+    .setup-player-columns {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .setup-dropzone {
+      min-height: 280px;
+      padding: 12px;
+      border: 1px dashed rgba(205,221,211,0.24);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      display: grid;
+      align-content: start;
+      gap: 8px;
+    }
+
+    .setup-dropzone.drag-over {
+      border-color: var(--logo-green);
+      background: rgba(47,191,113,0.10);
+    }
+
+    .setup-player-card {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      align-items: center;
+      gap: 10px;
+      padding: 9px;
+      border: 1px solid rgba(205,221,211,0.13);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.045);
+      cursor: grab;
+      user-select: none;
+    }
+
+    .setup-player-card:active {
+      cursor: grabbing;
+    }
+
+    .setup-player-card img,
+    .setup-player-card .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    @media (max-width: 760px) {
+      .setup-player-columns {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -3665,7 +3741,7 @@
         <div style="display:grid;place-items:center;background:rgba(255,255,255,0.04);border:1px solid var(--line);border-radius:18px;min-height:280px;overflow:hidden;">
           <img id="imagePreviewImg" alt="Profile image preview" style="max-width:100%;max-height:76vh;object-fit:contain;">
         </div>
-        <p class="muted" id="imagePreviewUrl" style="margin-top:10px;overflow-wrap:anywhere;"></p>
+        <p class="muted" id="imagePreviewUrl" style="display:none;margin-top:10px;overflow-wrap:anywhere;"></p>
       </div>
     </div>
 
@@ -3839,9 +3915,9 @@
                     </div>
                     <div class="form-grid">
                       <label>City <input id="profileCity" placeholder="Your city"></label>
-                      <label>Avatar URL <input id="profileAvatar" placeholder="https://..."></label>
+                      <label>Avatar Photo <input id="profileAvatarFile" type="file" accept="image/*"></label>
                     </div>
-                    <label>Upload Avatar <input id="profileAvatarFile" type="file" accept="image/*"></label>
+                    <input id="profileAvatar" type="hidden">
                     <button class="btn primary" type="submit">Save Profile</button>
                     <p class="form-message" id="profileMessage" aria-live="polite"></p>
                   </form>
@@ -4109,22 +4185,43 @@
                       </label>
                       <button class="btn ghost" id="transferScoringBtn" type="button" style="display:none;">Transfer scoring to opponent</button>
 
-                      <div id="squadSetup" style="display: none; flex-direction: column; gap: 20px; margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--line);">
-                         <h3>Select Playing XI</h3>
-                         <div class="grid cols-2" style="gap: 20px;">
-                            <div id="teamASquad" class="card" style="padding: 12px;">
-                               <h4 id="teamANameHeader">Team A</h4>
-                               <div id="teamAList" style="display: flex; flex-direction: column; gap: 4px; margin-top: 10px; max-height: 300px; overflow-y: auto;"></div>
-                            </div>
-                            <div id="teamBSquad" class="card" style="padding: 12px;">
-                               <h4 id="teamBNameHeader">Team B</h4>
-                               <div id="teamBList" style="display: flex; flex-direction: column; gap: 4px; margin-top: 10px; max-height: 300px; overflow-y: auto;"></div>
-                            </div>
+                      <div id="squadSetup" style="display: none; flex-direction: column; gap: 18px; margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--line);">
+                         <div class="setup-steps">
+                           <span class="setup-step-pill active" data-setup-step-pill="teamA">1. Team A XI</span>
+                           <span class="setup-step-pill" data-setup-step-pill="teamB">2. Team B XI</span>
+                           <span class="setup-step-pill" data-setup-step-pill="toss">3. Toss</span>
+                           <span class="setup-step-pill" data-setup-step-pill="openers">4. Openers</span>
                          </div>
-                         <p class="muted" style="font-size: 0.8rem;">Select playing eleven for both teams, then choose the toss winner and batting/bowling decision.</p>
+
+                         <section data-setup-step="teamA">
+                           <h3 id="teamANameHeader">Team A Playing XI</h3>
+                           <p class="muted">Drag players into Playing XI. Tap a player to move it quickly.</p>
+                           <div class="setup-player-columns">
+                             <div class="card"><h4>Available players</h4><div id="teamAList" class="setup-dropzone" data-team-pool="A"></div></div>
+                             <div class="card"><h4>Playing XI <span id="teamAXICount" class="tag gold">0/11</span></h4><div id="teamAXIList" class="setup-dropzone" data-team-xi="A"></div></div>
+                           </div>
+                           <div class="actions" style="margin-top:14px;"><button class="btn primary" type="button" data-setup-next="teamB">Next: Team B XI</button></div>
+                         </section>
+
+                         <section data-setup-step="teamB" style="display:none;">
+                           <h3 id="teamBNameHeader">Team B Playing XI</h3>
+                           <p class="muted">Drag players into Playing XI. Tap a player to move it quickly.</p>
+                           <div class="setup-player-columns">
+                             <div class="card"><h4>Available players</h4><div id="teamBList" class="setup-dropzone" data-team-pool="B"></div></div>
+                             <div class="card"><h4>Playing XI <span id="teamBXICount" class="tag gold">0/11</span></h4><div id="teamBXIList" class="setup-dropzone" data-team-xi="B"></div></div>
+                           </div>
+                           <div class="actions" style="margin-top:14px;">
+                             <button class="btn ghost" type="button" data-setup-next="teamA">Back</button>
+                             <button class="btn primary" type="button" data-setup-next="toss">Next: Toss</button>
+                           </div>
+                         </section>
+
+                         <input type="hidden" id="matchStartMode" value="instant">
+                         <p class="muted" style="font-size: 0.8rem;">Playing XI, toss, opening batters, and first bowler are completed before live scoring opens.</p>
                       </div>
 
-                      <div id="tossSetup" class="form-grid" style="display: none; padding-top: 16px; border-top: 1px solid var(--border);">
+                      <div id="tossSetup" style="display: none; flex-direction:column; gap:14px; padding-top: 16px; border-top: 1px solid var(--border);">
+                        <div class="form-grid">
                         <label>Toss Winner
                           <select id="tossWinnerSelect">
                             <option value="">-- Select Winner --</option>
@@ -4136,6 +4233,24 @@
                             <option value="Bowl">Bowl</option>
                           </select>
                         </label>
+                        </div>
+                        <div class="actions">
+                          <button class="btn ghost" type="button" data-setup-next="teamB">Back</button>
+                          <button class="btn primary" type="button" data-setup-next="openers">Next: Openers</button>
+                        </div>
+                      </div>
+                      <div id="matchStartSetup" style="display:none;flex-direction:column;gap:14px;padding-top:16px;border-top:1px solid var(--border);" hidden>
+                        <h3 style="margin:0;">Announce Start Time</h3>
+                        <div class="form-grid">
+                          <label style="display:flex;align-items:center;gap:8px;"><input type="radio" name="matchStartModeChoice" value="instant" checked style="width:auto;"> Instant start</label>
+                          <label style="display:flex;align-items:center;gap:8px;"><input type="radio" name="matchStartModeChoice" value="30min" style="width:auto;"> Starts in 30 minutes</label>
+                          <label style="display:flex;align-items:center;gap:8px;"><input type="radio" name="matchStartModeChoice" value="scheduled" style="width:auto;"> Use scheduled time</label>
+                        </div>
+                        <p class="muted">This sends an update to the live match feed/notifications before scoring starts.</p>
+                        <div class="actions">
+                          <button class="btn ghost" type="button" data-setup-next="toss">Back</button>
+                          <button class="btn primary" type="button" data-announce-start>Confirm Start Timing</button>
+                        </div>
                       </div>
                       <div id="openingSetup" style="display:none;flex-direction:column;gap:14px;padding-top:16px;border-top:1px solid var(--border);">
                         <h3 style="margin:0;">Opening Setup</h3>
@@ -4145,10 +4260,14 @@
                         </div>
                         <label>First bowler <select id="openingBowlerSelect"></select></label>
                         <p class="muted">Choose opening batters from the batting team and first bowler from the bowling team.</p>
+                        <div class="actions">
+                          <button class="btn ghost" type="button" data-setup-next="toss">Back</button>
+                          <button class="btn primary" id="startMatchBtn" type="button" style="flex: 1; min-width: 140px;">Start Match</button>
+                        </div>
                       </div>
 
                       <div style="display:flex; gap:8px; flex-wrap: wrap;">
-                        <button class="btn primary" id="startMatchBtn" style="flex: 1; min-width: 140px;">Start/Resume</button>
+                        <button class="btn primary" id="resumeMatchBtn" type="button" style="flex: 1; min-width: 140px;">Resume</button>
                         <button class="btn" id="cancelMatchBtn" style="flex: 1;">Cancel</button>
                         <button class="btn danger" id="endMatchBtn" style="flex: 1;">End Match</button>
                       </div>
@@ -5745,6 +5864,16 @@
     async function createNotification(userId, type, payload = {}) {
       if (!userId || !state.usingDatabase) return;
       try {
+        if (payload.notificationKey) {
+          const { data: existing, error: existingError } = await supabase
+            .from("notifications")
+            .select("id")
+            .eq("user_id", userId)
+            .eq("type", type)
+            .contains("payload", { notificationKey: payload.notificationKey })
+            .limit(1);
+          if (!existingError && existing?.length) return;
+        }
         const { error } = await supabase.from("notifications").insert({
           user_id: userId,
           type,
@@ -5772,7 +5901,11 @@
         await Promise.all(userIds.map(userId => createNotification(userId, type, payload)));
       }
       if (!state.usingDatabase || userIds.includes(String(state.user?.id))) {
-        sendLocalNotification(payload.title || "PakScorer notification", payload.message || "You have a new update.");
+        const localNoticeKey = payload.notificationKey ? `pakscorer_local_notice_${type}_${payload.notificationKey}` : "";
+        if (!localNoticeKey || !localStorage.getItem(localNoticeKey)) {
+          if (localNoticeKey) localStorage.setItem(localNoticeKey, "sent");
+          sendLocalNotification(payload.title || "PakScorer notification", payload.message || "You have a new update.");
+        }
         await loadNotificationsFromDatabase();
         renderProfile();
       }
@@ -7456,7 +7589,11 @@
     async function notifyBothMatchTeams(match, type, payload = {}) {
       const teamIds = [match.teamAId, match.teamBId].filter(Boolean);
       if (!state.usingDatabase) {
-        sendLocalNotification(payload.title || "PakScorer match alert", payload.message || "You have a match update.");
+        const localNoticeKey = payload.notificationKey ? `pakscorer_local_notice_${type}_${payload.notificationKey}` : "";
+        if (!localNoticeKey || !localStorage.getItem(localNoticeKey)) {
+          if (localNoticeKey) localStorage.setItem(localNoticeKey, "sent");
+          sendLocalNotification(payload.title || "PakScorer match alert", payload.message || "You have a match update.");
+        }
         return;
       }
       await Promise.all(teamIds.map(teamId => notifyTeamUsers(teamId, type, payload)));
@@ -7474,25 +7611,25 @@
 
     function playMatchAlarmTick() {
       try {
-        if ("vibrate" in navigator) navigator.vibrate([260, 110, 260]);
+        if ("vibrate" in navigator) navigator.vibrate([420, 120, 420, 120, 620]);
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (!AudioCtx) return;
         const ctx = new AudioCtx();
         const now = ctx.currentTime;
-        [0, 0.32, 0.64].forEach((offset, index) => {
+        [0, 0.24, 0.48, 0.72, 1.02].forEach((offset, index) => {
           const oscillator = ctx.createOscillator();
           const gain = ctx.createGain();
-          oscillator.type = "sine";
-          oscillator.frequency.setValueAtTime(index === 1 ? 880 : 660, now + offset);
+          oscillator.type = index % 2 ? "square" : "sawtooth";
+          oscillator.frequency.setValueAtTime(index % 2 ? 1180 : 760, now + offset);
           gain.gain.setValueAtTime(0.0001, now + offset);
-          gain.gain.exponentialRampToValueAtTime(0.22, now + offset + 0.03);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.26);
+          gain.gain.exponentialRampToValueAtTime(0.55, now + offset + 0.025);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.22);
           oscillator.connect(gain);
           gain.connect(ctx.destination);
           oscillator.start(now + offset);
-          oscillator.stop(now + offset + 0.28);
+          oscillator.stop(now + offset + 0.24);
         });
-        setTimeout(() => ctx.close().catch(() => {}), 1300);
+        setTimeout(() => ctx.close().catch(() => {}), 1600);
       } catch (error) {
         console.warn("Match alarm audio unavailable:", error.message);
       }
@@ -7514,7 +7651,7 @@
           return;
         }
         playMatchAlarmTick();
-      }, 4200);
+      }, 2600);
       const titleTimer = setInterval(() => {
         titleFlip = !titleFlip;
         document.title = titleFlip ? titleA : titleB;
@@ -7541,7 +7678,8 @@
           const payload = {
             title: "Match is live",
             message: `${titleBase} is live now. Open the match page for live score and scoring updates.`,
-            matchId: match.id
+            matchId: match.id,
+            notificationKey: key
           };
           await notifyBothMatchTeams(match, "match_live", payload);
         }
@@ -7553,27 +7691,29 @@
         return;
       }
 
-      if (diff <= 30 * 60 * 1000 && diff > 0) {
+      if (diff <= 30 * 60 * 1000 && diff > 29 * 60 * 1000) {
         const key = matchTimingKey(match, "30min");
         if (!localStorage.getItem(key)) {
           localStorage.setItem(key, "sent");
           const payload = {
             title: "Match starts in 30 minutes",
             message: `${titleBase} is scheduled for ${scheduleText}. Please be ready for toss, playing XI, and scoring setup.`,
-            matchId: match.id
+            matchId: match.id,
+            notificationKey: key
           };
           await notifyBothMatchTeams(match, "match_start_30min", payload);
         }
       }
 
-      if (diff <= 0) {
+      if (diff <= 0 && diff > -60 * 1000) {
         const key = matchTimingKey(match, "start");
         if (!localStorage.getItem(key)) {
           localStorage.setItem(key, "sent");
           const payload = {
             title: "Match time reached",
             message: `${titleBase} should start now. Open Match Scoring to complete XI, toss, openers, and first bowler setup.`,
-            matchId: match.id
+            matchId: match.id,
+            notificationKey: key
           };
           await notifyBothMatchTeams(match, "match_start_time", payload);
         }
@@ -7586,11 +7726,12 @@
           const payload = {
             title: "Match start is late",
             message: `${titleBase} has not started 2 minutes after scheduled time. Start scoring or reschedule the match.`,
-            matchId: match.id
+            matchId: match.id,
+            notificationKey: key
           };
           await notifyBothMatchTeams(match, "match_start_late_alarm", payload);
-          startMatchStartAlarm(match);
         }
+        startMatchStartAlarm(match);
       }
     }
 
@@ -7624,6 +7765,63 @@
       state.matches
         .filter(match => ["Scheduled", "Setup", "Live"].includes(match.status))
         .forEach(match => maybeNotifyScoringAvailable(match));
+    }
+
+    async function announceMatchStartTiming(match, mode) {
+      if (!match) return;
+      const now = new Date();
+      let title = "Match setup update";
+      let message = `${match.teamA} vs ${match.teamB} setup is ready.`;
+      if (mode === "30min") {
+        const start = new Date(now.getTime() + 30 * 60 * 1000);
+        match.matchDate = start.toISOString().slice(0, 10);
+        match.matchTime = start.toTimeString().slice(0, 5);
+        match.startAnnouncement = "Match starts in 30 minutes";
+        title = "Match starts in 30 minutes";
+        message = `${match.teamA} vs ${match.teamB} will start in 30 minutes. Toss and Playing XI are ready.`;
+        if (state.usingDatabase) {
+          await supabase.from("matches").update({ match_date: match.matchDate, match_time: match.matchTime }).eq("id", match.id);
+        }
+      } else if (mode === "scheduled") {
+        match.startAnnouncement = `Match starts at ${formatMatchDateTime(match.matchDate, match.matchTime) || "scheduled time"}`;
+        title = "Match start time confirmed";
+        message = `${match.teamA} vs ${match.teamB} will start at ${formatMatchDateTime(match.matchDate, match.matchTime) || "the scheduled time"}.`;
+      } else {
+        match.startAnnouncement = "Match starts now";
+        title = "Match starts now";
+        message = `${match.teamA} vs ${match.teamB} is ready for instant start.`;
+      }
+      const key = matchTimingKey(match, `setup_${mode}`);
+      await notifyBothMatchTeams(match, "match_setup_start_time", {
+        title,
+        message,
+        matchId: match.id,
+        notificationKey: key
+      });
+      renderMatches();
+      renderPublicHome();
+      renderPublicLiveView();
+      updateStartButtonText();
+    }
+
+    function markMatchStartedAnnouncement(match) {
+      if (!match) return;
+      match.startAnnouncement = "Match started";
+      const text = `${match.teamA} vs ${match.teamB} match started.`;
+      const alreadyLogged = state.score.history?.some(item => item.label === "Live" && item.text === text);
+      if (!alreadyLogged) {
+        state.score.history = [{ label: "Live", text }, ...(state.score.history || [])].slice(0, 20);
+      }
+      renderMatches();
+      renderPublicHome();
+      renderPublicLiveView();
+    }
+
+    function hideScoringSetupFlow() {
+      ["#squadSetup", "#tossSetup", "#matchStartSetup", "#openingSetup"].forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el) el.style.display = "none";
+      });
     }
 
     function isUserMatch(match) {
@@ -7807,7 +8005,7 @@
               </div>
             </div>
             ${balls.length ? `<div class="cricket-ball-strip">${balls.map(ball => `<span class="cricket-ball-chip ${ballClass(ball)}">${ball}</span>`).join("")}</div>` : ""}
-            <div class="cricket-card-note">${countdown || chaseNote(match) || verdict.note}</div>
+            <div class="cricket-card-note">${match.startAnnouncement || countdown || chaseNote(match) || verdict.note}</div>
           </article>
         `;
       }).join("");
@@ -8024,7 +8222,7 @@
               </div>
             </div>
             ${ballStrip(match)}
-            <div class="cricket-card-note">${countdown || verdict.note}</div>
+            <div class="cricket-card-note">${match.startAnnouncement || countdown || verdict.note}</div>
           </article>
         `;
       };
@@ -8251,31 +8449,37 @@
     function updateStartButtonText() {
       const select = document.querySelector("#scoringMatchSelect");
       const btn = document.querySelector("#startMatchBtn");
+      const resumeBtn = document.querySelector("#resumeMatchBtn");
       const transferBtn = document.querySelector("#transferScoringBtn");
-      if (!select || !btn) return;
+      if (!select) return;
+
+      const setButtonState = (button, text, disabled, opacity = "1") => {
+        if (!button) return;
+        button.textContent = text;
+        button.disabled = Boolean(disabled);
+        button.style.opacity = opacity;
+      };
 
       const matchId = select.value;
       if (!matchId) {
-        btn.textContent = "Start Match";
-        btn.disabled = true;
-        btn.style.opacity = "0.5";
+        setButtonState(btn, "Start Match", true, "0.5");
+        setButtonState(resumeBtn, "Resume", true, "0.5");
         if (transferBtn) transferBtn.style.display = "none";
         return;
       }
 
-      btn.disabled = false;
-      btn.style.opacity = "1";
+      setButtonState(btn, "Start Match", false);
+      setButtonState(resumeBtn, "Resume", false);
       const match = state.matches.find(m => String(m.id) === String(matchId));
       const currentScoringTeam = state.teams.find(team => String(team.id) === String(scoringTeamId(match)));
       const opponentName = String(scoringTeamId(match)) === String(match?.teamAId) ? match?.teamB : match?.teamA;
       const availability = matchScoringAvailability(match);
       if (!availability.open) {
-        btn.textContent = availability.message || "Scoring locked";
-        btn.disabled = true;
-        btn.style.opacity = "0.6";
+        setButtonState(btn, availability.message || "Scoring locked", true, "0.6");
+        setButtonState(resumeBtn, availability.message || "Scoring locked", true, "0.6");
       } else {
-        btn.disabled = false;
-        btn.style.opacity = "1";
+        setButtonState(btn, btn.textContent || "Start Match", false);
+        setButtonState(resumeBtn, "Resume", false);
       }
       if (transferBtn) {
         const canTransfer = match && canManageScoringTeam(match);
@@ -8288,9 +8492,12 @@
       }
 
       if (match && (match.status === "Live" || match.status === "Setup")) {
-        btn.textContent = "Resume Match";
+        setButtonState(btn, "Resume Match", false);
+        setButtonState(resumeBtn, "Resume Match", false);
       } else {
-        btn.textContent = currentScoringTeam ? `Start Match (${currentScoringTeam.name} scoring)` : "Start Match";
+        const text = currentScoringTeam ? `Start Match (${currentScoringTeam.name} scoring)` : "Start Match";
+        setButtonState(btn, text, false);
+        setButtonState(resumeBtn, "Continue Setup", false);
       }
     }
 
@@ -9166,39 +9373,93 @@
       const squadSetup = document.querySelector("#squadSetup");
       const teamAList = document.querySelector("#teamAList");
       const teamBList = document.querySelector("#teamBList");
+      const teamAXIList = document.querySelector("#teamAXIList");
+      const teamBXIList = document.querySelector("#teamBXIList");
 
-      document.querySelector("#teamANameHeader").textContent = match.teamA;
-      document.querySelector("#teamBNameHeader").textContent = match.teamB;
+      document.querySelector("#teamANameHeader").textContent = `${match.teamA} Playing XI`;
+      document.querySelector("#teamBNameHeader").textContent = `${match.teamB} Playing XI`;
 
       squadSetup.style.display = "flex";
       teamAList.innerHTML = "Loading...";
       teamBList.innerHTML = "Loading...";
+      teamAXIList.innerHTML = "";
+      teamBXIList.innerHTML = "";
 
       const pA = state.players.filter(p => String(p.team_id) === String(match.teamAId));
       const pB = state.players.filter(p => String(p.team_id) === String(match.teamBId));
 
-      const renderPlayerRow = (p) => {
+      const renderPlayerRow = (p, side) => {
         const meta = getPlayerMeta(p.id);
         const photo = meta.photo || p.photo_url || "";
         const age = p.age || meta.age || "";
         const battingStyle = p.batting_style || meta.battingStyle || "Batting style TBA";
         const bowlingStyle = p.bowling_style || meta.bowlingStyle || "Bowling style TBA";
         return `
-          <label style="display:grid;grid-template-columns:auto 46px minmax(0,1fr);align-items:center;gap:10px;padding:10px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.04);cursor:pointer;">
-             <input type="checkbox" name="playingXI" data-player-id="${p.id}" data-team-id="${p.team_id}" data-player-name="${p.name}" checked />
-             ${photo ? `<img src="${photo}" alt="${p.name}" style="width:46px;height:46px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.18);">` : `<span class="avatar" style="width:46px;height:46px;border-radius:50%;font-size:0.8rem;">${initials(p.name)}</span>`}
+          <div class="setup-player-card" draggable="true" data-setup-player="${p.id}" data-setup-side="${side}">
+             <input type="checkbox" name="playingXI" data-player-id="${p.id}" data-team-id="${p.team_id}" data-player-name="${p.name}" hidden />
+             ${photo ? `<img src="${photo}" alt="${p.name}">` : `<span class="avatar" style="font-size:0.8rem;">${initials(p.name)}</span>`}
              <span style="min-width:0;display:grid;gap:3px;">
                <strong style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</strong>
                <span class="muted" style="font-size:0.74rem;">${p.role || "Player"}${age ? ` - ${age} yrs` : ""}</span>
                <span class="muted" style="font-size:0.7rem;">${battingStyle} / ${bowlingStyle}</span>
              </span>
-          </label>
+          </div>
         `;
       };
 
-      teamAList.innerHTML = pA.length ? pA.map(renderPlayerRow).join("") : "No players found";
-      teamBList.innerHTML = pB.length ? pB.map(renderPlayerRow).join("") : "No players found";
+      teamAList.innerHTML = pA.length ? pA.map(p => renderPlayerRow(p, "A")).join("") : "No players found";
+      teamBList.innerHTML = pB.length ? pB.map(p => renderPlayerRow(p, "B")).join("") : "No players found";
+      pA.slice(0, 11).forEach(p => moveSetupPlayerCard(String(p.id), true, "A"));
+      pB.slice(0, 11).forEach(p => moveSetupPlayerCard(String(p.id), true, "B"));
+      selectScoringSetupStep("teamA");
+      updateXISetupCounts();
       updateOpeningSetup(match);
+    }
+
+    function selectScoringSetupStep(step) {
+      document.querySelectorAll("[data-setup-step], #tossSetup, #matchStartSetup, #openingSetup").forEach(el => {
+        el.style.display = "none";
+      });
+      const target = step === "toss" ? "#tossSetup" : step === "start" ? "#matchStartSetup" : step === "openers" ? "#openingSetup" : `[data-setup-step='${step}']`;
+      if (step === "openers") {
+        const matchId = document.querySelector("#scoringMatchSelect")?.value;
+        const match = state.matches.find(m => String(m.id) === String(matchId));
+        updateOpeningSetup(match);
+      }
+      const el = document.querySelector(target);
+      if (el) el.style.display = ["#tossSetup", "#matchStartSetup", "#openingSetup"].includes(target) ? "flex" : "";
+      document.querySelectorAll("[data-setup-step-pill]").forEach(pill => pill.classList.toggle("active", pill.dataset.setupStepPill === step));
+      updateStartButtonText();
+    }
+
+    function updateXISetupCounts() {
+      safeSetText("#teamAXICount", `${document.querySelectorAll("#teamAXIList input[name='playingXI']:checked").length}/11`);
+      safeSetText("#teamBXICount", `${document.querySelectorAll("#teamBXIList input[name='playingXI']:checked").length}/11`);
+    }
+
+    function moveSetupPlayerCard(playerId, toXI, side) {
+      const card = document.querySelector(`[data-setup-player='${CSS.escape(String(playerId))}']`);
+      if (!card) return;
+      const target = toXI ? document.querySelector(`[data-team-xi='${side}']`) : document.querySelector(`[data-team-pool='${side}']`);
+      if (!target) return;
+      const isNewToXI = toXI && !target.contains(card);
+      if (isNewToXI && target.querySelectorAll(".setup-player-card").length >= 11) return alert("Playing XI can only have 11 players.");
+      target.appendChild(card);
+      const input = card.querySelector("input[name='playingXI']");
+      if (input) input.checked = Boolean(toXI);
+      updateXISetupCounts();
+      const matchId = document.querySelector("#scoringMatchSelect")?.value;
+      const match = state.matches.find(m => String(m.id) === String(matchId));
+      updateOpeningSetup(match);
+    }
+
+    function validateSetupStep(nextStep) {
+      const matchId = document.querySelector("#scoringMatchSelect")?.value;
+      const match = state.matches.find(m => String(m.id) === String(matchId));
+      if (!match) return false;
+      if (nextStep === "teamB" && selectedXIPlayers(match.teamAId).length !== 11) return alert(`${match.teamA} playing XI must have exactly 11 players.`), false;
+      if (nextStep === "toss" && selectedXIPlayers(match.teamBId).length !== 11) return alert(`${match.teamB} playing XI must have exactly 11 players.`), false;
+      return true;
     }
 
     function selectedXIPlayers(teamId) {
@@ -9245,7 +9506,8 @@
       if (!strikerSelect.value && batters[0]) strikerSelect.value = batters[0].name;
       if (!nonStrikerSelect.value && batters[1]) nonStrikerSelect.value = batters[1].name;
       if (!bowlerSelect.value && bowlers[0]) bowlerSelect.value = bowlers[0].name;
-      openingSetup.style.display = "flex";
+      const openersStepActive = document.querySelector("[data-setup-step-pill='openers']")?.classList.contains("active");
+      openingSetup.style.display = openersStepActive ? "flex" : "none";
     }
 
     async function generateTournamentFixtures(tournamentId) {
@@ -11740,7 +12002,7 @@
       const tossWinnerSelect = document.querySelector("#tossWinnerSelect");
 
       if (match && match.status !== "Live") {
-        tossSetup.style.display = "flex";
+        tossSetup.style.display = "none";
         tossWinnerSelect.innerHTML = `
           <option value="">-- Select Winner --</option>
           <option value="${match.teamAId}">${match.teamA}</option>
@@ -11750,6 +12012,8 @@
       } else {
         tossSetup.style.display = "none";
         document.querySelector("#squadSetup").style.display = "none";
+        document.querySelector("#matchStartSetup").style.display = "none";
+        document.querySelector("#openingSetup").style.display = "none";
       }
       updateStartButtonText();
     });
@@ -11769,6 +12033,89 @@
       updateOpeningSetup(match);
     });
 
+    document.querySelector("#squadSetup")?.addEventListener("click", (event) => {
+      const next = event.target.closest("[data-setup-next]");
+      if (next) {
+        const nextStep = next.dataset.setupNext;
+        if (validateSetupStep(nextStep)) {
+          if (nextStep === "toss") updateOpeningSetup(state.matches.find(m => String(m.id) === String(document.querySelector("#scoringMatchSelect")?.value)));
+          selectScoringSetupStep(nextStep);
+        }
+        return;
+      }
+      const card = event.target.closest(".setup-player-card");
+      if (card) {
+        const side = card.dataset.setupSide;
+        moveSetupPlayerCard(card.dataset.setupPlayer, !card.parentElement.matches("[data-team-xi]"), side);
+      }
+    });
+
+    document.querySelector("#squadSetup")?.addEventListener("dragstart", (event) => {
+      const card = event.target.closest(".setup-player-card");
+      if (!card) return;
+      event.dataTransfer.setData("text/plain", JSON.stringify({ playerId: card.dataset.setupPlayer, side: card.dataset.setupSide }));
+    });
+
+    document.querySelector("#squadSetup")?.addEventListener("dragover", (event) => {
+      const zone = event.target.closest(".setup-dropzone");
+      if (!zone) return;
+      event.preventDefault();
+      zone.classList.add("drag-over");
+    });
+
+    document.querySelector("#squadSetup")?.addEventListener("dragleave", (event) => {
+      event.target.closest(".setup-dropzone")?.classList.remove("drag-over");
+    });
+
+    document.querySelector("#squadSetup")?.addEventListener("drop", (event) => {
+      const zone = event.target.closest(".setup-dropzone");
+      if (!zone) return;
+      event.preventDefault();
+      zone.classList.remove("drag-over");
+      const data = JSON.parse(event.dataTransfer.getData("text/plain") || "{}");
+      if (!data.playerId) return;
+      const side = zone.dataset.teamXi || zone.dataset.teamPool || data.side;
+      moveSetupPlayerCard(data.playerId, Boolean(zone.dataset.teamXi), side);
+    });
+
+    document.querySelectorAll("[data-setup-next]").forEach(button => {
+      if (button.closest("#squadSetup")) return;
+      button.addEventListener("click", () => {
+        const nextStep = button.dataset.setupNext;
+        if (validateSetupStep(nextStep)) {
+          updateOpeningSetup(state.matches.find(m => String(m.id) === String(document.querySelector("#scoringMatchSelect")?.value)));
+          selectScoringSetupStep(nextStep);
+        }
+      });
+    });
+
+    document.querySelectorAll("input[name='matchStartModeChoice']").forEach(input => {
+      input.addEventListener("change", () => {
+        document.querySelector("#matchStartMode").value = input.value;
+      });
+    });
+
+    document.querySelector("[data-announce-start]")?.addEventListener("click", async () => {
+      const matchId = document.querySelector("#scoringMatchSelect")?.value;
+      const match = state.matches.find(m => String(m.id) === String(matchId));
+      if (!match) return alert("Select a match first.");
+      const tossWinnerId = document.querySelector("#tossWinnerSelect")?.value;
+      if (!tossWinnerId) return alert("Please select the Toss Winner before confirming start time.");
+      const mode = document.querySelector("#matchStartMode")?.value || "instant";
+      try {
+        await announceMatchStartTiming(match, mode);
+        updateOpeningSetup(match);
+        if (mode === "instant") {
+          selectScoringSetupStep("openers");
+        } else {
+          alert(`${match.startAnnouncement || "Start timing announced."} You can select openers now, but scoring will unlock at match time.`);
+          selectScoringSetupStep("openers");
+        }
+      } catch (error) {
+        alert("Could not announce start timing: " + error.message);
+      }
+    });
+
     const transferScoringBtn = document.querySelector("#transferScoringBtn");
     if (transferScoringBtn) {
       transferScoringBtn.addEventListener("click", async () => {
@@ -11777,6 +12124,16 @@
         await transferMatchScoring(match);
       });
     }
+
+    document.querySelector("#resumeMatchBtn")?.addEventListener("click", () => {
+      const matchId = document.querySelector("#scoringMatchSelect")?.value;
+      const match = state.matches.find(m => String(m.id) === String(matchId));
+      if (match && match.status !== "Live") {
+        selectScoringSetupStep("teamA");
+        return;
+      }
+      document.querySelector("#startMatchBtn")?.click();
+    });
 
     document.querySelector("#startMatchBtn").addEventListener("click", async () => {
       const select = document.querySelector("#scoringMatchSelect");
@@ -11803,7 +12160,7 @@
         if (selectedXI.length === 0) return alert("Please select some players for the match.");
         const teamAXI = selectedXI.filter(el => String(el.dataset.teamId) === String(match.teamAId));
         const teamBXI = selectedXI.filter(el => String(el.dataset.teamId) === String(match.teamBId));
-        if (!teamAXI.length || !teamBXI.length) return alert("Select playing XI for both teams before starting.");
+        if (teamAXI.length !== 11 || teamBXI.length !== 11) return alert("Both teams must have exactly 11 players before starting.");
 
         tossWinnerId = document.querySelector("#tossWinnerSelect").value;
         const tossDecision = document.querySelector("#tossDecisionSelect").value;
@@ -11854,6 +12211,7 @@
           if (match.status !== "Live") {
             await startMatchInDatabase(match.id, tossWinnerId, battingFirstId);
             match.status = "Live";
+            markMatchStartedAnnouncement(match);
             await maybeNotifyMatchTiming(match);
           }
 
@@ -11900,8 +12258,10 @@
           rebuildScoreMetaFromBalls(balls);
           state.score.undoStack = [];
           state.score.needsBowler = innings.legal_balls > 0 && (innings.legal_balls % 6 === 0);
+          if (!balls.length) markMatchStartedAnnouncement(match);
 
           safeSetText("#activeMatchStatus", `Live: ${match.teamA} vs ${match.teamB}`);
+          hideScoringSetupFlow();
           document.querySelector("#scoringControls").style.display = "";
           document.querySelector("#scoringControls").style.opacity = "1";
           document.querySelector("#scoringControls").style.pointerEvents = "auto";
@@ -11920,11 +12280,12 @@
            const openingStriker = document.querySelector("#openingStrikerSelect")?.value;
            const openingNonStriker = document.querySelector("#openingNonStrikerSelect")?.value;
            const openingBowler = document.querySelector("#openingBowlerSelect")?.value;
-           if (!teamAXI.length || !teamBXI.length) return alert("Select playing XI for both teams before starting.");
+           if (teamAXI.length !== 11 || teamBXI.length !== 11) return alert("Both teams must have exactly 11 players before starting.");
            if (!tossWinnerIdLocal) return alert("Please select the Toss Winner before starting the match.");
            if (!openingStriker || !openingNonStriker || openingStriker === openingNonStriker) return alert("Please select two different opening batters.");
            if (!openingBowler) return alert("Please select the first bowler.");
            match.status = "Live";
+           markMatchStartedAnnouncement(match);
            await maybeNotifyMatchTiming(match);
            state.score.striker = openingStriker;
            state.score.nonStriker = openingNonStriker;
@@ -11934,6 +12295,7 @@
          match.scoringLockedBy = state.user?.id || "local-scorer";
          state.currentMatch = match;
           safeSetText("#activeMatchStatus", `Local: ${match.teamA} vs ${match.teamB}`);
+         hideScoringSetupFlow();
          document.querySelector("#scoringControls").style.display = "";
          document.querySelector("#scoringControls").style.opacity = "1";
          document.querySelector("#scoringControls").style.pointerEvents = "auto";
@@ -12754,7 +13116,7 @@
         const avatarInput = document.querySelector("#profileAvatar");
         const avatarFile = selectedFile("#profileAvatarFile");
         try {
-          let avatarUrl = avatarInput.value.trim();
+          let avatarUrl = avatarInput?.value?.trim() || getUserProfile().avatar || "";
           if (avatarFile) {
             if (msg) {
               msg.textContent = "Uploading avatar to R2...";
@@ -12767,7 +13129,7 @@
             });
             await attachMediaAsset({ entityType: "profile", entityId: state.user?.id || null, mediaType: "image" }, media, avatarFile);
             avatarUrl = media.publicUrl;
-            avatarInput.value = media.publicUrl;
+            if (avatarInput) avatarInput.value = media.publicUrl;
           }
 
           await saveUserProfile({
@@ -12940,7 +13302,7 @@
         const img = document.querySelector("#imagePreviewImg");
         const urlText = document.querySelector("#imagePreviewUrl");
         if (img) img.src = url;
-        if (urlText) urlText.textContent = url;
+        if (urlText) urlText.textContent = "";
         if (modal) modal.style.display = "grid";
       });
     }
