@@ -4321,12 +4321,11 @@
                         <p class="muted">Choose opening batters from the batting team and first bowler from the bowling team.</p>
                         <div class="actions">
                           <button class="btn ghost" type="button" data-setup-next="toss">Back</button>
-                          <button class="btn primary" id="startMatchBtn" type="button" style="flex: 1; min-width: 140px;">Start Match</button>
+                          <button class="btn primary" id="startMatchBtn" type="button" style="flex: 1; min-width: 140px;">Start Scoring</button>
                         </div>
                       </div>
 
                       <div style="display:flex; gap:8px; flex-wrap: wrap;">
-                        <button class="btn primary" id="resumeMatchBtn" type="button" style="flex: 1; min-width: 140px;">Resume</button>
                         <button class="btn" id="cancelMatchBtn" style="flex: 1;">Cancel</button>
                         <button class="btn danger" id="endMatchBtn" style="flex: 1;">End Match</button>
                       </div>
@@ -7881,6 +7880,8 @@
         const el = document.querySelector(selector);
         if (el) el.style.display = "none";
       });
+      const squadSetup = document.querySelector("#squadSetup");
+      if (squadSetup) squadSetup.dataset.activeSetupMatch = "";
     }
 
     function isUserMatch(match) {
@@ -8508,7 +8509,6 @@
     function updateStartButtonText() {
       const select = document.querySelector("#scoringMatchSelect");
       const btn = document.querySelector("#startMatchBtn");
-      const resumeBtn = document.querySelector("#resumeMatchBtn");
       const transferBtn = document.querySelector("#transferScoringBtn");
       if (!select) return;
 
@@ -8521,24 +8521,25 @@
 
       const matchId = select.value;
       if (!matchId) {
-        setButtonState(btn, "Start Match", true, "0.5");
-        setButtonState(resumeBtn, "Resume", true, "0.5");
+        const setupMatchId = document.querySelector("#squadSetup")?.dataset.activeSetupMatch;
+        if (setupMatchId) {
+          setButtonState(btn, "Start Scoring", false);
+          return;
+        }
+        setButtonState(btn, "Start Scoring", true, "0.5");
         if (transferBtn) transferBtn.style.display = "none";
         return;
       }
 
-      setButtonState(btn, "Start Match", false);
-      setButtonState(resumeBtn, "Resume", false);
+      setButtonState(btn, "Start Scoring", false);
       const match = state.matches.find(m => String(m.id) === String(matchId));
       const currentScoringTeam = state.teams.find(team => String(team.id) === String(scoringTeamId(match)));
       const opponentName = String(scoringTeamId(match)) === String(match?.teamAId) ? match?.teamB : match?.teamA;
       const availability = matchScoringAvailability(match);
       if (!availability.open) {
         setButtonState(btn, availability.message || "Scoring locked", true, "0.6");
-        setButtonState(resumeBtn, availability.message || "Scoring locked", true, "0.6");
       } else {
-        setButtonState(btn, btn.textContent || "Start Match", false);
-        setButtonState(resumeBtn, "Resume", false);
+        setButtonState(btn, btn.textContent || "Start Scoring", false);
       }
       if (transferBtn) {
         const canTransfer = match && canManageScoringTeam(match);
@@ -8551,12 +8552,10 @@
       }
 
       if (match && (match.status === "Live" || match.status === "Setup")) {
-        setButtonState(btn, "Resume Match", false);
-        setButtonState(resumeBtn, "Resume Match", false);
+        setButtonState(btn, "Open Scoring", false);
       } else {
-        const text = currentScoringTeam ? `Start Match (${currentScoringTeam.name} scoring)` : "Start Match";
+        const text = currentScoringTeam ? `Start Scoring (${currentScoringTeam.name})` : "Start Scoring";
         setButtonState(btn, text, false);
-        setButtonState(resumeBtn, "Continue Setup", false);
       }
     }
 
@@ -9439,6 +9438,8 @@
       document.querySelector("#teamBNameHeader").textContent = `${match.teamB} Playing XI`;
 
       squadSetup.style.display = "flex";
+      squadSetup.dataset.activeSetupMatch = String(match.id);
+      safeSetText("#activeMatchStatus", `${match.teamA} vs ${match.teamB}`);
       teamAList.innerHTML = "Loading...";
       teamBList.innerHTML = "Loading...";
       teamAXIList.innerHTML = "";
@@ -9482,9 +9483,7 @@
       });
       const target = step === "toss" ? "#tossSetup" : step === "start" ? "#matchStartSetup" : step === "openers" ? "#openingSetup" : `[data-setup-step='${step}']`;
       if (step === "openers") {
-        const matchId = document.querySelector("#scoringMatchSelect")?.value;
-        const match = state.matches.find(m => String(m.id) === String(matchId));
-        updateOpeningSetup(match);
+        updateOpeningSetup(activeScoringSetupMatch());
       }
       const el = document.querySelector(target);
       if (el) el.style.display = ["#tossSetup", "#matchStartSetup", "#openingSetup"].includes(target) ? "flex" : "";
@@ -9495,6 +9494,13 @@
     function updateXISetupCounts() {
       safeSetText("#teamAXICount", `${document.querySelectorAll("#teamAXIList input[name='playingXI']:checked").length}/11`);
       safeSetText("#teamBXICount", `${document.querySelectorAll("#teamBXIList input[name='playingXI']:checked").length}/11`);
+    }
+
+    function activeScoringSetupMatch() {
+      const selectValue = document.querySelector("#scoringMatchSelect")?.value;
+      const setupValue = document.querySelector("#squadSetup")?.dataset.activeSetupMatch;
+      const matchId = selectValue || setupValue;
+      return state.matches.find(m => String(m.id) === String(matchId));
     }
 
     function moveSetupPlayerCard(playerId, toXI, side) {
@@ -9514,14 +9520,12 @@
         action.setAttribute("aria-label", toXI ? "Remove player from Playing XI" : "Add player to Playing XI");
       }
       updateXISetupCounts();
-      const matchId = document.querySelector("#scoringMatchSelect")?.value;
-      const match = state.matches.find(m => String(m.id) === String(matchId));
+      const match = activeScoringSetupMatch();
       updateOpeningSetup(match);
     }
 
     function validateSetupStep(nextStep) {
-      const matchId = document.querySelector("#scoringMatchSelect")?.value;
-      const match = state.matches.find(m => String(m.id) === String(matchId));
+      const match = activeScoringSetupMatch();
       if (!match) return false;
       if (nextStep === "teamB" && selectedXIPlayers(match.teamAId).length !== 11) return alert(`${match.teamA} playing XI must have exactly 11 players.`), false;
       if (nextStep === "toss" && selectedXIPlayers(match.teamBId).length !== 11) return alert(`${match.teamB} playing XI must have exactly 11 players.`), false;
@@ -9593,6 +9597,21 @@
         openingNonStriker: document.querySelector("#openingNonStrikerSelect")?.value || "",
         openingBowler: document.querySelector("#openingBowlerSelect")?.value || ""
       };
+    }
+
+    function announceTossUpdate(match) {
+      if (!match) return;
+      const tossWinnerId = document.querySelector("#tossWinnerSelect")?.value;
+      const tossDecision = document.querySelector("#tossDecisionSelect")?.value || "Bat";
+      if (!tossWinnerId) return;
+      const winnerName = String(tossWinnerId) === String(match.teamAId) ? match.teamA : match.teamB;
+      const decisionText = tossDecision === "Bowl" ? "bowl first" : "bat first";
+      match.tossWinnerTeamId = tossWinnerId;
+      match.tossDecision = tossDecision;
+      match.startAnnouncement = `${winnerName} won the toss and elected to ${decisionText}`;
+      renderMatches();
+      renderPublicHome();
+      renderPublicLiveView();
     }
 
     async function generateTournamentFixtures(tournamentId) {
@@ -12087,6 +12106,7 @@
       const tossWinnerSelect = document.querySelector("#tossWinnerSelect");
 
       if (match && match.status !== "Live") {
+        document.querySelector("#squadSetup").dataset.activeSetupMatch = String(match.id);
         tossSetup.style.display = "none";
         tossWinnerSelect.innerHTML = `
           <option value="">-- Select Winner --</option>
@@ -12095,6 +12115,7 @@
         `;
         renderSquadSelector(match);
       } else {
+        document.querySelector("#squadSetup").dataset.activeSetupMatch = "";
         tossSetup.style.display = "none";
         document.querySelector("#squadSetup").style.display = "none";
         document.querySelector("#matchStartSetup").style.display = "none";
@@ -12105,8 +12126,8 @@
 
     ["#tossWinnerSelect", "#tossDecisionSelect"].forEach(selector => {
       document.querySelector(selector)?.addEventListener("change", () => {
-        const matchId = document.querySelector("#scoringMatchSelect")?.value;
-        const match = state.matches.find(m => String(m.id) === String(matchId));
+        const match = activeScoringSetupMatch();
+        announceTossUpdate(match);
         updateOpeningSetup(match);
       });
     });
@@ -12125,9 +12146,7 @@
 
     document.querySelector("#squadSetup")?.addEventListener("change", (event) => {
       if (!event.target.matches("input[name='playingXI']")) return;
-      const matchId = document.querySelector("#scoringMatchSelect")?.value;
-      const match = state.matches.find(m => String(m.id) === String(matchId));
-      updateOpeningSetup(match);
+      updateOpeningSetup(activeScoringSetupMatch());
     });
 
     document.querySelector("#squadSetup")?.addEventListener("click", (event) => {
@@ -12135,7 +12154,8 @@
       if (next) {
         const nextStep = next.dataset.setupNext;
         if (validateSetupStep(nextStep)) {
-          if (nextStep === "toss") updateOpeningSetup(state.matches.find(m => String(m.id) === String(document.querySelector("#scoringMatchSelect")?.value)));
+          if (nextStep === "toss") updateOpeningSetup(activeScoringSetupMatch());
+          if (nextStep === "openers") announceTossUpdate(activeScoringSetupMatch());
           selectScoringSetupStep(nextStep);
         }
         return;
@@ -12181,7 +12201,8 @@
       button.addEventListener("click", () => {
         const nextStep = button.dataset.setupNext;
         if (validateSetupStep(nextStep)) {
-          updateOpeningSetup(state.matches.find(m => String(m.id) === String(document.querySelector("#scoringMatchSelect")?.value)));
+          if (nextStep === "openers") announceTossUpdate(activeScoringSetupMatch());
+          updateOpeningSetup(activeScoringSetupMatch());
           selectScoringSetupStep(nextStep);
         }
       });
@@ -12223,19 +12244,9 @@
       });
     }
 
-    document.querySelector("#resumeMatchBtn")?.addEventListener("click", () => {
-      const matchId = document.querySelector("#scoringMatchSelect")?.value;
-      const match = state.matches.find(m => String(m.id) === String(matchId));
-      if (match && match.status !== "Live") {
-        selectScoringSetupStep("teamA");
-        return;
-      }
-      document.querySelector("#startMatchBtn")?.click();
-    });
-
     document.querySelector("#startMatchBtn").addEventListener("click", async () => {
       const select = document.querySelector("#scoringMatchSelect");
-      const matchId = select.value;
+      const matchId = select.value || document.querySelector("#squadSetup")?.dataset.activeSetupMatch;
       if (!matchId) return alert("Select a match first.");
 
       const match = state.matches.find(m => m.id === matchId || m.id === Number(matchId));
@@ -12394,7 +12405,7 @@
          document.querySelector("#scoringControls").style.pointerEvents = "auto";
          renderScore();
       }
-      safeSetText("#startMatchBtn", "Start/Resume Match");
+      safeSetText("#startMatchBtn", "Start Scoring");
     });
 
     document.querySelector("#endMatchBtn").addEventListener("click", async () => {
